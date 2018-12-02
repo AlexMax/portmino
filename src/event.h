@@ -15,17 +15,27 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event.h"
-#include "state.h"
-
-static state_t* gamestate;
+#pragma once
 
 /**
- * Run a single tic of gameplay.
+ * A single event that acts upon the game state
  */
-void game_frame(void) {
-    gamestate = state_new();
-    state_frame(gamestate, EVENT_NONE);
-    state_debug(gamestate);
-    state_delete(gamestate);
-}
+typedef int event_t;
+
+/**
+ * Possible event types
+ */
+enum {
+    EVENT_NONE,
+    EVENT_LEFT,
+    EVENT_RIGHT,
+    EVENT_SOFTDROP,
+    EVENT_HARDDROP,
+    EVENT_CCW,
+    EVENT_CW,
+    EVENT_HOLD,
+    EVENT_180,
+    MAX_EVENTS
+};
+
+const char* event_to_string(int event);

@@ -15,17 +15,8 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event.h"
-#include "state.h"
+#include "game.h"
 
-static state_t* gamestate;
-
-/**
- * Run a single tic of gameplay.
- */
-void game_frame(void) {
-    gamestate = state_new();
-    state_frame(gamestate, EVENT_NONE);
-    state_debug(gamestate);
-    state_delete(gamestate);
+int main(int argc, char** argv) {
+    game_frame();
 }

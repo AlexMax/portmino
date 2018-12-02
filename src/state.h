@@ -15,17 +15,25 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "event.h"
+#include "field.h"
 #include "state.h"
 
-static state_t* gamestate;
+typedef struct {
+    /**
+     * Current gametic
+     */
+    uint32_t tic;
 
-/**
- * Run a single tic of gameplay.
- */
-void game_frame(void) {
-    gamestate = state_new();
-    state_frame(gamestate, EVENT_NONE);
-    state_debug(gamestate);
-    state_delete(gamestate);
-}
+    /**
+     * Playfield
+     */
+    field_t* field;
+} state_t;
+
+state_t* state_new(void);
+void state_delete(state_t* state);
+void state_frame(state_t* state, event_t event);
+void state_debug(state_t* state);
