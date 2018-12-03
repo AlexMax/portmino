@@ -51,7 +51,7 @@ void state_delete(state_t* state) {
  * @param state The state to start from.
  * @param event The event to run on the gamestate.
  */
-void state_frame(state_t* state, event_t event) {
+void state_frame(state_t* state, events_t events) {
     // Whatever happens, our gamtic always increases by one.
     state->tic += 1;
 }

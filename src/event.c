@@ -16,29 +16,3 @@
  */
 
 #include "event.h"
-
-static const char* event_string[] = {
-    "EVENT_NONE",
-    "EVENT_LEFT",
-    "EVENT_RIGHT",
-    "EVENT_SOFTDROP",
-    "EVENT_HARDDROP",
-    "EVENT_CCW",
-    "EVENT_CW",
-    "EVENT_HOLD",
-    "EVENT_180",
-};
-
-/**
- * Turn an event into a visible string.
- * 
- * @param event Event to stringify.
- * @return const char* The stringified event.
- */
-const char* event_to_string(event_t event) {
-    if (event >= MAX_EVENTS) {
-        return "(unknown event)";
-    }
-
-    return event_string[event];
-}

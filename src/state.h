@@ -35,5 +35,5 @@ typedef struct {
 
 state_t* state_new(void);
 void state_delete(state_t* state);
-void state_frame(state_t* state, event_t event);
+void state_frame(state_t* state, events_t events);
 void state_debug(state_t* state);

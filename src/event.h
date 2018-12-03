@@ -17,25 +17,25 @@
 
 #pragma once
 
-/**
- * A single event that acts upon the game state
- */
-typedef int event_t;
+#include <stdint.h>
 
 /**
- * Possible event types
+ * An integer type that has enough room to contain all bits of the event
+ * bitfield.  If even a single bit is added, we need to expand to 16-bits.
+ */
+typedef uint8_t events_t;
+
+/**
+ * Event bits.
  */
 enum {
-    EVENT_NONE,
-    EVENT_LEFT,
-    EVENT_RIGHT,
-    EVENT_SOFTDROP,
-    EVENT_HARDDROP,
-    EVENT_CCW,
-    EVENT_CW,
-    EVENT_HOLD,
-    EVENT_180,
-    MAX_EVENTS
+    EVENT_NONE = 0,
+    EVENT_LEFT = 1,
+    EVENT_RIGHT = 1 << 1,
+    EVENT_SOFTDROP = 1 << 2,
+    EVENT_HARDDROP = 1 << 3,
+    EVENT_CCW = 1 << 4,
+    EVENT_CW = 1 << 5,
+    EVENT_HOLD = 1 << 6,
+    EVENT_180 = 1 << 7,
 };
-
-const char* event_to_string(int event);
