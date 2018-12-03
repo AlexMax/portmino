@@ -100,6 +100,9 @@ RETRO_API void retro_get_system_av_info(struct retro_system_av_info *info) {
     info->geometry.aspect_ratio = 0.0;
     info->timing.fps = 60;
     info->timing.sample_rate = 44100;
+
+    int fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
 }
 
 RETRO_API void retro_set_controller_port_device(unsigned port, unsigned device) {
@@ -111,12 +114,17 @@ RETRO_API void retro_reset(void) {
 }
 
 RETRO_API void retro_run(void) {
-    uint8_t buffer[320 * 240 * 4];
-    for (int i = 0;i < sizeof(buffer) * sizeof(uint8_t);i++) {
-        buffer[i] = rand() % 256;
+    static uint8_t buffer[320 * 240 * 4];
+    memset(&buffer, 0, sizeof(buffer));
+
+    for (int i = 0,j = 0;i < sizeof(buffer);i += 4,j += 1) {
+        buffer[i] = j % 256;
+        buffer[i + 1] = j % 256;
+        buffer[i + 2] = j % 256;
+        buffer[i + 3] = 0;
     }
 
-    video_cb(&buffer, 320, 240, 320);
+    video_cb(&buffer, 320, 240, 0);
 }
 
 RETRO_API size_t retro_serialize_size(void) {
