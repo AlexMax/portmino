@@ -124,7 +124,7 @@ RETRO_API void retro_run(void) {
         buffer[i + 3] = 0;
     }
 
-    video_cb(&buffer, 320, 240, 0);
+    video_cb(&buffer, 320, 240, 320 * 4);
 }
 
 RETRO_API size_t retro_serialize_size(void) {
