@@ -15,18 +15,15 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <string.h>
+#pragma once
 
-#include "render.h"
-#include "softrender.h"
+#include <stdint.h>
 
-render_module_t* render_init(void) {
-    // TODO: Figure out what kind of renderer that we want to use here.
-    soft_render_module.init();
-    return &soft_render_module;
-}
+typedef struct {
+    uint8_t* buffer;
+    size_t size;
+    uint16_t width;
+    uint16_t height;
+} softrender_context_t;
 
-void render_deinit(render_module_t* module) {
-    soft_render_module.deinit();
-}
+extern render_module_t soft_render_module;

@@ -17,10 +17,50 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <SDL.h>
 
 #include "game.h"
+#include "render.h"
+#include "softrender.h"
+
+static SDL_Window* g_window;
+static SDL_Renderer* g_renderer;
+static SDL_Texture* g_texture;
+
+static render_module_t* g_render_module;
+
+static void clean_exit(void) {
+    if (g_render_module != NULL) {
+        render_deinit(g_render_module);
+    }
+
+    if (g_texture != NULL) {
+        SDL_DestroyTexture(g_texture);
+    }
+
+    if (g_renderer != NULL) {
+        SDL_DestroyRenderer(g_renderer);
+    }
+
+    if (g_window != NULL) {
+        SDL_DestroyWindow(g_window);
+    }
+
+    SDL_Quit();
+}
+
+static void sdl_run(void) {
+    softrender_context_t* context;
+    g_render_module->draw(&context);
+
+    SDL_UpdateTexture(g_texture, NULL, context->buffer, context->width * 4);
+    SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
+    SDL_RenderPresent(g_renderer);
+
+    SDL_Delay(5000);
+}
 
 int main(int argc, char** argv) {
     (void)argc; (void)argv;
@@ -29,10 +69,10 @@ int main(int argc, char** argv) {
         fprintf(stderr, "SDL2_Init failure:  %s\n", SDL_GetError());
         return 1;
     }
-    atexit(SDL_Quit);
+    atexit(clean_exit);
 
-    SDL_Window* window = SDL_CreateWindow("Portmino", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, 0);
-    if (window == NULL) {
+    g_window = SDL_CreateWindow("Portmino", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
+    if (g_window == NULL) {
         char buffer[8192];
         if (snprintf(buffer, sizeof(buffer), "SDL_CreateWindow failure: %s\n", SDL_GetError()) < 0) {
             abort();
@@ -41,46 +81,31 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-    if (renderer == NULL) {
+    g_renderer = SDL_CreateRenderer(g_window, -1, 0);
+    if (g_renderer == NULL) {
         char buffer[8192];
         if (snprintf(buffer, sizeof(buffer), "SDL_Renderer failure: %s\n", SDL_GetError()) < 0) {
             abort();
         }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, window);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
         return 1;
     }
 
-    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 320, 240);
-    if (texture == NULL) {
+    g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 320, 240);
+    if (g_texture == NULL) {
         char buffer[8192];
         if (snprintf(buffer, sizeof(buffer), "SDL_CreateTexture failure: %s\n", SDL_GetError()) < 0) {
             abort();
         }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, window);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
         return 1;
     }
 
-    static uint8_t buffer[320 * 240 * 4];
-    memset(&buffer, 0, sizeof(buffer));
+    g_render_module = render_init();
 
-    for (int i = 0, j = 0;i < sizeof(buffer);i += 4, j += 1) {
-        buffer[i] = j % 256;
-        buffer[i + 1] = j % 256;
-        buffer[i + 2] = j % 256;
-        buffer[i + 3] = SDL_ALPHA_OPAQUE;
-    }
+    //for (;;) {
+        sdl_run();
+    //}
 
-    SDL_UpdateTexture(texture, NULL, &buffer[0], 320 * 4);
-
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
-    SDL_RenderPresent(renderer);
-
-    SDL_Delay(5000);
-
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-
-    return 0;
+    return 1;
 }

@@ -5,14 +5,15 @@ else()
 endif()
 
 set(GAME_SOURCES
-    event.c     event.h
-    field.c     field.h
-    game.c      game.h
-    picture.c   picture.h
-    render.c    render.h
-    state.c     state.h)
+    event.c         event.h
+    field.c         field.h
+    game.c          game.h
+    picture.c       picture.h
+    render.c        render.h
+    softrender.c    softrender.h
+    state.c         state.h)
 set(LIBRARY_SOURCES
-                stb_image.h)
+                    stb_image.h)
 
 add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES})
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -20,12 +20,16 @@
 #include <string.h>
 
 #include "libretro.h"
+#include "render.h"
+#include "softrender.h"
 
 static retro_environment_t environ_cb;
 static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
+
+static render_module_t* g_render_module;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
     (void)level;
@@ -71,11 +75,11 @@ RETRO_API void retro_set_input_state(retro_input_state_t cb) {
 }
 
 RETRO_API void retro_init(void) {
-
+    g_render_module = render_init();
 }
 
 RETRO_API void retro_deinit(void) {
-
+    render_deinit(g_render_module);
 }
 
 RETRO_API unsigned retro_api_version(void) {
@@ -114,17 +118,10 @@ RETRO_API void retro_reset(void) {
 }
 
 RETRO_API void retro_run(void) {
-    static uint8_t buffer[320 * 240 * 4];
-    memset(&buffer, 0, sizeof(buffer));
+    softrender_context_t* context;
+    g_render_module->draw(&context);
 
-    for (int i = 0,j = 0;i < sizeof(buffer);i += 4,j += 1) {
-        buffer[i] = j % 256;
-        buffer[i + 1] = j % 256;
-        buffer[i + 2] = j % 256;
-        buffer[i + 3] = 0;
-    }
-
-    video_cb(&buffer, 320, 240, 320 * 4);
+    video_cb(context->buffer, context->width, context->height, context->width * 4);
 }
 
 RETRO_API size_t retro_serialize_size(void) {

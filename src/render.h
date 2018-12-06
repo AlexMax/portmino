@@ -16,3 +16,41 @@
  */
 
 #pragma once
+
+/*
+ * Here we define the width and height of the smallest unit of addressable
+ * screen real-estate.  This has little to do with the actual resolution of
+ * the rendered screen, aside from serving as a lower bound.
+ */
+
+#define RENDER_WIDTH 320
+#define RENDER_HEIGHT 240
+
+enum {
+    RENDERER_SOFTWARE
+};
+
+typedef struct {
+    /**
+     * Type of renderer
+     */
+    int type;
+
+    /**
+     * This function is run when the renderer is initialized.
+     */
+    void (*init)(void);
+
+    /**
+     * This function is run when the renderer is destroyed.
+     */
+    void (*deinit)(void);
+
+    /**
+     * This function is run once pre frame to actually do the drawing.
+     */
+    void(*draw)(void**);
+} render_module_t;
+
+render_module_t* render_init(void);
+void render_deinit(render_module_t* module);
