@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#include "render.h"
+
 typedef struct {
     uint8_t* buffer;
     size_t size;

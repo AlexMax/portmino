@@ -28,5 +28,6 @@ render_module_t* render_init(void) {
 }
 
 void render_deinit(render_module_t* module) {
+    (void)module;
     soft_render_module.deinit();
 }

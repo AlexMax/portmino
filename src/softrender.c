@@ -34,8 +34,13 @@ static void softrender_init(void) {
     g_render_buffer.height = RENDER_HEIGHT;
 }
 
-static void softrender_draw(void** context) {
-    *context = &g_render_buffer;
+static void softrender_deinit(void) {
+    free(g_render_buffer.buffer);
+    g_render_buffer.buffer = NULL;
+}
+
+static void** softrender_draw(void) {
+    void* context = &g_render_buffer;
 
     uint8_t* buffer = g_render_buffer.buffer;
     memset(buffer, 0x88, g_render_buffer.size);
@@ -46,11 +51,8 @@ static void softrender_draw(void** context) {
         buffer[i + 2] = j % 256;
         buffer[i + 3] = 255;
     }
-}
 
-static void softrender_deinit(void) {
-    free(g_render_buffer.buffer);
-    g_render_buffer.buffer = NULL;
+    return context;
 }
 
 render_module_t soft_render_module = {

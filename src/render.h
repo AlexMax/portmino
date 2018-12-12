@@ -49,7 +49,7 @@ typedef struct {
     /**
      * This function is run once pre frame to actually do the drawing.
      */
-    void(*draw)(void**);
+    void* (*draw)(void);
 } render_module_t;
 
 render_module_t* render_init(void);

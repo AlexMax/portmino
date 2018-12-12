@@ -42,6 +42,7 @@ state_t* state_new(void) {
  * @param state The gamestate to delete.
  */
 void state_delete(state_t* state) {
+    field_delete(state->field);
     free(state);
 }
 

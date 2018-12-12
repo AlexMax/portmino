@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "event.h"
+
 typedef struct {
     events_t game;
     events_t interface;
@@ -26,3 +28,4 @@ typedef struct {
 void game_init(void);
 void game_deinit(void);
 void game_frame(gameinputs_t* inputs);
+void* game_draw(void);

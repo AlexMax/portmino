@@ -15,8 +15,8 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event.h"
 #include "game.h"
+#include "render.h"
 #include "state.h"
 
 /**
@@ -33,24 +33,29 @@ typedef enum {
  */
 typedef struct {
     gamescreen_t screen;
+    state_t* state;
+    render_module_t* render;
 } game_t;
 
-static game_t g_game = { SCREEN_INGAME };
-static state_t* g_gamestate;
+static game_t g_game;
 
 /**
  * Initialize the game.
  */
 void game_init(void) {
-    g_gamestate = state_new();
+    g_game.screen = SCREEN_INGAME;
+    g_game.state = state_new();
+    g_game.render = render_init();
 }
 
 /**
  * Clean up the game.
  */
 void game_deinit(void) {
-    state_delete(g_gamestate);
-    g_gamestate = NULL;
+    state_delete(g_game.state);
+    g_game.state = NULL;
+    render_deinit(g_game.render);
+    g_game.render = NULL;
 }
 
 /**
@@ -61,10 +66,17 @@ void game_frame(gameinputs_t* inputs) {
     case SCREEN_MENU:
         break;
     case SCREEN_INGAME:
-        state_frame(g_gamestate, inputs->game);
+        state_frame(g_game.state, inputs->game);
         break;
     default:
         // Do nothing
         break;
     }
+}
+
+/**
+ * Draw the frame, returning the render context so we can blit it.
+ */
+void* game_draw(void) {
+    return g_game.render->draw();
 }

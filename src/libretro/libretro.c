@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "game.h"
 #include "libretro.h"
-#include "render.h"
 #include "softrender.h"
 
 static retro_environment_t environ_cb;
@@ -28,8 +28,6 @@ static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
-
-static render_module_t* g_render_module;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
     (void)level;
@@ -75,11 +73,11 @@ RETRO_API void retro_set_input_state(retro_input_state_t cb) {
 }
 
 RETRO_API void retro_init(void) {
-    g_render_module = render_init();
+    game_init();
 }
 
 RETRO_API void retro_deinit(void) {
-    render_deinit(g_render_module);
+    game_deinit();
 }
 
 RETRO_API unsigned retro_api_version(void) {
@@ -120,9 +118,7 @@ RETRO_API void retro_reset(void) {
 RETRO_API void retro_run(void) {
     input_poll_cb();
 
-    softrender_context_t* context;
-    g_render_module->draw(&context);
-
+    softrender_context_t* context = game_draw();
     video_cb(context->buffer, context->width, context->height, context->width * 4);
 }
 

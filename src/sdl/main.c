@@ -23,14 +23,11 @@
 
 #include "event.h"
 #include "game.h"
-#include "render.h"
 #include "softrender.h"
 
 static SDL_Window* g_window;
 static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
-
-static render_module_t* g_render_module;
 
 static event_t sdl_scancode_to_event(int code) {
     switch (code) {
@@ -99,8 +96,7 @@ static void sdl_run(void) {
     game_frame(&inputs);
 
     // Render the screen.
-    softrender_context_t* context;
-    g_render_module->draw(&context);
+    softrender_context_t* context = game_draw();
 
     SDL_UpdateTexture(g_texture, NULL, context->buffer, context->width * 4);
     SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
@@ -111,10 +107,6 @@ static void sdl_run(void) {
 
 static void clean_exit(void) {
     game_deinit();
-
-    if (g_render_module != NULL) {
-        render_deinit(g_render_module);
-    }
 
     if (g_texture != NULL) {
         SDL_DestroyTexture(g_texture);
@@ -170,7 +162,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    g_render_module = render_init();
     game_init();
 
     for (;;) {
