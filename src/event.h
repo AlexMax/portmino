@@ -27,8 +27,10 @@ typedef uint8_t events_t;
 
 /**
  * Event bits.
+ *
+ * These events have a direct impact on gamestate.
  */
-enum {
+typedef enum {
     EVENT_NONE = 0,
     EVENT_LEFT = 1,
     EVENT_RIGHT = 1 << 1,
@@ -38,4 +40,31 @@ enum {
     EVENT_CW = 1 << 5,
     EVENT_HOLD = 1 << 6,
     EVENT_180 = 1 << 7,
-};
+} event_t;
+
+/**
+ * Interface Event bits
+ *
+ * These events occur when you're ingame, but don't have a direct effect on
+ * the state of the game.
+ */
+typedef enum {
+    IEVENT_NONE = 0,
+    IEVENT_PAUSE = 1,
+    IEVENT_RESTART = 1 << 1,
+    IEVENT_MAINMENU = 1 << 2,
+    IEVENT_QUIT = 1 << 3
+} ievent_t;
+
+/**
+ * Menu Event bits.
+ */
+typedef enum {
+    MEVENT_NONE = 0,
+    MEVENT_UP = 1,
+    MEVENT_DOWN = 1 << 1,
+    MEVENT_LEFT = 1 << 2,
+    MEVENT_RIGHT = 1 << 3,
+    MEVENT_OK = 1 << 4,
+    MEVENT_CANCEL = 1 << 5,
+} mevent_t;

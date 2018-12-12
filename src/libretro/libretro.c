@@ -118,6 +118,8 @@ RETRO_API void retro_reset(void) {
 }
 
 RETRO_API void retro_run(void) {
+    input_poll_cb();
+
     softrender_context_t* context;
     g_render_module->draw(&context);
 

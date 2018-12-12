@@ -16,16 +16,55 @@
  */
 
 #include "event.h"
+#include "game.h"
 #include "state.h"
 
-static state_t* gamestate;
+/**
+ * What kind of screen we're looking at.
+ */
+typedef enum {
+    SCREEN_MENU,
+    SCREEN_INGAME,
+    MAX_SCREENS
+} gamescreen_t;
 
 /**
- * Run a single tic of gameplay.
+ * The top-level "game" struct.
  */
-void game_frame(void) {
-    gamestate = state_new();
-    state_frame(gamestate, EVENT_NONE);
-    state_debug(gamestate);
-    state_delete(gamestate);
+typedef struct {
+    gamescreen_t screen;
+} game_t;
+
+static game_t g_game = { SCREEN_INGAME };
+static state_t* g_gamestate;
+
+/**
+ * Initialize the game.
+ */
+void game_init(void) {
+    g_gamestate = state_new();
+}
+
+/**
+ * Clean up the game.
+ */
+void game_deinit(void) {
+    state_delete(g_gamestate);
+    g_gamestate = NULL;
+}
+
+/**
+ * Run a single fame of the game.
+ */
+void game_frame(gameinputs_t* inputs) {
+    switch (g_game.screen) {
+    case SCREEN_MENU:
+        break;
+    case SCREEN_INGAME:
+        state_frame(g_gamestate, inputs->game);
+        break;
+    default:
+        // Do nothing
+        break;
+    }
 }

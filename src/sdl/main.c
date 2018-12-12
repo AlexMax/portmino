@@ -21,6 +21,7 @@
 
 #include <SDL.h>
 
+#include "event.h"
 #include "game.h"
 #include "render.h"
 #include "softrender.h"
@@ -31,7 +32,86 @@ static SDL_Texture* g_texture;
 
 static render_module_t* g_render_module;
 
+static event_t sdl_scancode_to_event(int code) {
+    switch (code) {
+    case SDL_SCANCODE_LEFT: return EVENT_LEFT;
+    case SDL_SCANCODE_RIGHT: return EVENT_RIGHT;
+    case SDL_SCANCODE_DOWN: return EVENT_SOFTDROP;
+    case SDL_SCANCODE_UP: return EVENT_HARDDROP;
+    case SDL_SCANCODE_Z: return EVENT_CCW;
+    case SDL_SCANCODE_X: return EVENT_CW;
+    default: return EVENT_NONE;
+    }
+}
+
+static ievent_t sdl_scancode_to_ievent(int code) {
+    switch (code) {
+    case SDL_SCANCODE_ESCAPE: return IEVENT_PAUSE;
+    case SDL_SCANCODE_F10: return IEVENT_RESTART;
+    case SDL_SCANCODE_F11: return IEVENT_MAINMENU;
+    case SDL_SCANCODE_F12: return IEVENT_QUIT;
+    default: return IEVENT_NONE;
+    }
+}
+
+static mevent_t sdl_scancode_to_mevent(int code) {
+    switch (code) {
+    case SDL_SCANCODE_UP: return MEVENT_UP;
+    case SDL_SCANCODE_DOWN: return MEVENT_DOWN;
+    case SDL_SCANCODE_LEFT: return MEVENT_LEFT;
+    case SDL_SCANCODE_RIGHT: return MEVENT_RIGHT;
+    case SDL_SCANCODE_RETURN: return MEVENT_OK;
+    case SDL_SCANCODE_BACKSPACE: return MEVENT_CANCEL;
+    default: return IEVENT_NONE;
+    }
+}
+
+static void sdl_run(void) {
+    // Assemble our game events from polled events.
+    SDL_Event event;
+    gameinputs_t inputs = { 0 };
+
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_KEYDOWN:
+            if (event.key.repeat != 0) {
+                break;
+            }
+            inputs.game |= sdl_scancode_to_event(event.key.keysym.scancode);
+            inputs.interface |= sdl_scancode_to_ievent(event.key.keysym.scancode);
+            inputs.menu |= sdl_scancode_to_mevent(event.key.keysym.scancode);
+            break;
+        case SDL_KEYUP:
+            if (event.key.repeat != 0) {
+                break;
+            }
+            inputs.game &= ~(sdl_scancode_to_event(event.key.keysym.scancode));
+            inputs.interface &= ~(sdl_scancode_to_ievent(event.key.keysym.scancode));
+            inputs.menu &= ~(sdl_scancode_to_mevent(event.key.keysym.scancode));
+            break;
+        case SDL_QUIT:
+            exit(0);
+            break;
+        }
+    }
+
+    // Run the game simulation.
+    game_frame(&inputs);
+
+    // Render the screen.
+    softrender_context_t* context;
+    g_render_module->draw(&context);
+
+    SDL_UpdateTexture(g_texture, NULL, context->buffer, context->width * 4);
+    SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
+    SDL_RenderPresent(g_renderer);
+
+    SDL_Delay(16);
+}
+
 static void clean_exit(void) {
+    game_deinit();
+
     if (g_render_module != NULL) {
         render_deinit(g_render_module);
     }
@@ -49,17 +129,6 @@ static void clean_exit(void) {
     }
 
     SDL_Quit();
-}
-
-static void sdl_run(void) {
-    softrender_context_t* context;
-    g_render_module->draw(&context);
-
-    SDL_UpdateTexture(g_texture, NULL, context->buffer, context->width * 4);
-    SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
-    SDL_RenderPresent(g_renderer);
-
-    SDL_Delay(5000);
 }
 
 int main(int argc, char** argv) {
@@ -102,10 +171,11 @@ int main(int argc, char** argv) {
     }
 
     g_render_module = render_init();
+    game_init();
 
-    //for (;;) {
+    for (;;) {
         sdl_run();
-    //}
+    }
 
     return 1;
 }

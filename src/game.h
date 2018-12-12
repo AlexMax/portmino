@@ -17,4 +17,12 @@
 
 #pragma once
 
-void game_frame(void);
+typedef struct {
+    events_t game;
+    events_t interface;
+    events_t menu;
+} gameinputs_t;
+
+void game_init(void);
+void game_deinit(void);
+void game_frame(gameinputs_t* inputs);
