@@ -16,6 +16,7 @@ set(LIBRARY_SOURCES
                     stb_image.h)
 
 add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES})
+set_property(TARGET portmino-core PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(portmino-core lua)
 

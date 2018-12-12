@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include "event.h"
 #include "field.h"
 #include "state.h"
