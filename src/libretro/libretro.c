@@ -119,7 +119,7 @@ RETRO_API void retro_run(void) {
     input_poll_cb();
 
     softrender_context_t* context = game_draw();
-    video_cb(context->buffer, context->width, context->height, context->width * 4);
+    video_cb(context->buffer.data, context->buffer.width, context->buffer.height, context->buffer.width * 4);
 }
 
 RETRO_API size_t retro_serialize_size(void) {

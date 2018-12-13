@@ -98,7 +98,7 @@ static void sdl_run(void) {
     // Render the screen.
     softrender_context_t* context = game_draw();
 
-    SDL_UpdateTexture(g_texture, NULL, context->buffer, context->width * 4);
+    SDL_UpdateTexture(g_texture, NULL, context->buffer.data, context->buffer.width * 4);
     SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
     SDL_RenderPresent(g_renderer);
 

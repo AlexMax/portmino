@@ -52,10 +52,15 @@ void game_init(void) {
  * Clean up the game.
  */
 void game_deinit(void) {
-    state_delete(g_game.state);
-    g_game.state = NULL;
-    render_deinit(g_game.render);
-    g_game.render = NULL;
+    if (g_game.state != NULL) {
+        state_delete(g_game.state);
+        g_game.state = NULL;
+    }
+
+    if (g_game.render != NULL) {
+        render_deinit(g_game.render);
+        g_game.render = NULL;
+    }
 }
 
 /**

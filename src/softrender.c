@@ -19,13 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "picture.h"
 #include "render.h"
 #include "softrender.h"
 
 #define BITS_PER_PIXEL 4
 
-static softrender_context_t g_render_buffer;
+static softrender_context_t g_render_ctx;
 
 // FIXME: Don't use a global picture
 static picture_t* g_back;
@@ -34,10 +33,12 @@ static picture_t* g_block;
 
 static void softrender_init(void) {
     size_t size = RENDER_WIDTH * RENDER_HEIGHT * BITS_PER_PIXEL;
-    g_render_buffer.size = size;
-    g_render_buffer.buffer = malloc(size);
-    g_render_buffer.width = RENDER_WIDTH;
-    g_render_buffer.height = RENDER_HEIGHT;
+
+    // Initialize the buffer picture in-place.
+    g_render_ctx.buffer.data = malloc(size);
+    g_render_ctx.buffer.size = size;
+    g_render_ctx.buffer.width = RENDER_WIDTH;
+    g_render_ctx.buffer.height = RENDER_HEIGHT;
 
     g_back = picture_new("../res/back.png");
     g_field = picture_new("../res/field.png");
@@ -45,33 +46,39 @@ static void softrender_init(void) {
 }
 
 static void softrender_deinit(void) {
-    picture_delete(g_block);
-    picture_delete(g_field);
-    picture_delete(g_back);
+    if (g_back != NULL) {
+        picture_delete(g_back);
+        g_back = NULL;
+    }
 
-    free(g_render_buffer.buffer);
-    g_render_buffer.buffer = NULL;
-}
+    if (g_field != NULL) {
+        picture_delete(g_field);
+        g_field = NULL;
+    }
 
-static void softbuffer_draw_picture(int x, int y, picture_t* pic) {
-    int cursor = (y * g_render_buffer.width * BITS_PER_PIXEL) + (x * BITS_PER_PIXEL);
-    int piccursor = 0;
-    for (int i = 0;i < pic->height;i++) {
-        memcpy(g_render_buffer.buffer + cursor, pic->data + piccursor, pic->width * BITS_PER_PIXEL);
-        cursor += g_render_buffer.width * BITS_PER_PIXEL;
-        piccursor += pic->width * BITS_PER_PIXEL;
+    if (g_block != NULL) {
+        picture_delete(g_block);
+        g_block = NULL;
+    }
+
+    if (g_render_ctx.buffer.data != NULL) {
+        free(g_render_ctx.buffer.data);
+        g_render_ctx.buffer.data = NULL;
+        g_render_ctx.buffer.size = 0;
+        g_render_ctx.buffer.width = 0;
+        g_render_ctx.buffer.height = 0;
     }
 }
 
 static void** softrender_draw(void) {
-    void* context = &g_render_buffer;
+    void* context = &g_render_ctx;
 
-    uint8_t* buffer = g_render_buffer.buffer;
-    memset(buffer, 0x00, g_render_buffer.size);
+    uint8_t* buffer = g_render_ctx.buffer.data;
+    memset(buffer, 0x00, g_render_ctx.buffer.size);
 
-    softbuffer_draw_picture(0, 0, g_back);
-    softbuffer_draw_picture(18, 42, g_field);
-    softbuffer_draw_picture(18, 42, g_block);
+    picture_copy(&g_render_ctx.buffer, g_back, 0, 0);
+    picture_copy(&g_render_ctx.buffer, g_field, 18, 42);
+    picture_copy(&g_render_ctx.buffer, g_block, 18, 42);
 
     return context;
 }

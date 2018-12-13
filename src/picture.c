@@ -21,6 +21,8 @@
 
 #include "picture.h"
 
+#define BITS_PER_PIXEL 4
+
 /**
  * Create a new picture from a file path.
  */
@@ -31,7 +33,7 @@ picture_t* picture_new(const char* path) {
     }
 
     int x, y, bpp;
-    pic->data = stbi_load(path, &x, &y, &bpp, 4);
+    pic->data = stbi_load(path, &x, &y, &bpp, BITS_PER_PIXEL);
 
     if (pic->data == NULL) {
         picture_delete(pic);
@@ -45,11 +47,12 @@ picture_t* picture_new(const char* path) {
 
     pic->width = x;
     pic->height = y;
+    pic->size = x * y * BITS_PER_PIXEL;
 
     // The library gives us the picture in RGBA format, but our renderers
     // expect ARGB, which is BGRA on little-endian machines.  So, swap the
     // red and blue channel.
-    for (int i = 0;i < x * y * 4;i += 4) {
+    for (int i = 0;i < pic->size;i += BITS_PER_PIXEL) {
         uint8_t tmp = pic->data[i];
         pic->data[i] = pic->data[i+2];
         pic->data[i+2] = tmp;
@@ -63,7 +66,23 @@ picture_t* picture_new(const char* path) {
  */
 void picture_delete(picture_t* pic) {
     if (pic->data != NULL) {
-        stbi_image_free(pic->data);
+        free(pic->data); // stbi_image_free is just "free"
     }
     free(pic);
+}
+
+/**
+ * Copy one picture on top of another.  Mostly useful for software rendering.
+ * 
+ * This function uses memcpy and is thus as fast as reasonably possible.
+ * Transparency values are completely ignored.
+ */
+void picture_copy(picture_t* dest, const picture_t* source, int x, int y) {
+    int cursor = (y * dest->width * BITS_PER_PIXEL) + (x * BITS_PER_PIXEL);
+    int piccursor = 0;
+    for (int i = 0;i < source->height;i++) {
+        memcpy(dest->data + cursor, source->data + piccursor, source->width * BITS_PER_PIXEL);
+        cursor += dest->width * BITS_PER_PIXEL;
+        piccursor += source->width * BITS_PER_PIXEL;
+    }
 }

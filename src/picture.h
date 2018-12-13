@@ -17,9 +17,20 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct {
+    /**
+     * Picture data.
+     */
+    uint8_t* data;
+
+    /**
+     * Size of picture data.
+     */
+    size_t size;
+
     /**
      * Width of the picture.
      */
@@ -29,12 +40,8 @@ typedef struct {
      * Height of the picture.
      */
     uint16_t height;
-
-    /**
-     * Picture data.
-     */
-    uint8_t* data;
 } picture_t;
 
 picture_t* picture_new(const char* path);
 void picture_delete(picture_t* pic);
+void picture_copy(picture_t* dest, const picture_t* source, int x, int y);
