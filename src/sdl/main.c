@@ -59,7 +59,7 @@ static mevent_t sdl_scancode_to_mevent(int code) {
     case SDL_SCANCODE_RIGHT: return MEVENT_RIGHT;
     case SDL_SCANCODE_RETURN: return MEVENT_OK;
     case SDL_SCANCODE_BACKSPACE: return MEVENT_CANCEL;
-    default: return IEVENT_NONE;
+    default: return MEVENT_NONE;
     }
 }
 

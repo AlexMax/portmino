@@ -70,7 +70,7 @@ static void softrender_deinit(void) {
     }
 }
 
-static void** softrender_draw(void) {
+static void* softrender_draw(void) {
     void* context = &g_render_ctx;
 
     uint8_t* buffer = g_render_ctx.buffer.data;
