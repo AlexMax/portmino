@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "state.h"
+
 /*
  * Here we define the width and height of the smallest unit of addressable
  * screen real-estate.  This has little to do with the actual resolution of
@@ -49,7 +51,7 @@ typedef struct {
     /**
      * This function is run once pre frame to actually do the drawing.
      */
-    void* (*draw)(void);
+    void* (*draw_state)(const state_t* state);
 } render_module_t;
 
 render_module_t* render_init(void);

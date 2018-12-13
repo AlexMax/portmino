@@ -35,9 +35,14 @@ typedef struct {
     char* background;
 
     /**
-     * Playfield
+     * Playfields
      */
-    field_t* field;
+    field_t** fields;
+
+    /**
+     * Playfield count
+     */
+    size_t field_count;
 } state_t;
 
 state_t* state_new(void);

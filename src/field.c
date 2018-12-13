@@ -27,7 +27,7 @@
 field_t* field_new(void) {
     field_t* field = malloc(sizeof(field_t));
     if (field == NULL) {
-        abort();
+        return NULL;
     }
 
     // Define our configuration

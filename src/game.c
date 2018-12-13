@@ -74,7 +74,6 @@ void game_frame(gameinputs_t* inputs) {
         state_frame(g_game.state, inputs->game);
         break;
     default:
-        // Do nothing
         break;
     }
 }
@@ -83,5 +82,16 @@ void game_frame(gameinputs_t* inputs) {
  * Draw the frame, returning the render context so we can blit it.
  */
 void* game_draw(void) {
-    return g_game.render->draw();
+    switch (g_game.screen) {
+    case SCREEN_MENU:
+        break;
+    case SCREEN_INGAME:
+        return g_game.render->draw_state(g_game.state);
+        break;
+    default:
+        break;
+    }
+
+    // Unreachable
+    return NULL;
 }

@@ -15,6 +15,7 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "state.h"
@@ -27,12 +28,21 @@
 state_t* state_new(void) {
     state_t* state = malloc(sizeof(state_t));
     if (state == NULL) {
-        abort();
+        return NULL;
     }
 
     state->background = NULL;
-    state->field = field_new();
+    state->field_count = 1;
     state->tic = 0;
+
+    state->fields = malloc(sizeof(field_t*) * state->field_count);
+    for (size_t i = 0;i < state->field_count;i++) {
+        state->fields[i] = field_new();
+        if (state->fields[i] == NULL) {
+            state_delete(state);
+            return NULL;
+        }
+    }
 
     return state;
 }
@@ -45,10 +55,19 @@ state_t* state_new(void) {
 void state_delete(state_t* state) {
     if (state->background != NULL) {
         free(state->background);
+        state->background = NULL;
     }
 
-    if (state->field != NULL) {
-        field_delete(state->field);
+    if (state->fields != NULL) {
+        for (size_t i = 0;i < state->field_count;i++) {
+            if (state->fields[i] != NULL) {
+                field_delete(state->fields[i]);
+                state->fields = NULL;
+            }
+        }
+
+        free(state->fields);
+        state->fields = NULL;
     }
 
     free(state);
@@ -61,41 +80,11 @@ void state_delete(state_t* state) {
  * @param event The event to run on the gamestate.
  */
 void state_frame(state_t* state, events_t events) {
+    field_t* field = state->fields[0];
+    for (int i = 0;i < field->data.size;i++) {
+        field->data.data[i] = i % 8;
+    }
+
     // Whatever happens, our gamtic always increases by one.
     state->tic += 1;
-}
-
-#include <stdio.h>
-
-/**
- * Dump the contents of state to standard out.
- * 
- * @param state The state to dump.
- */
-void state_debug(state_t* state) {
-    field_config_t config = state->field->config;
-
-    printf("tic: %d\n", state->tic);
-    printf("width: %d\n", config.width);
-    printf("height: %d\n",config.height);
-    printf("visible_height: %d\n", config.visible_height);
-
-    size_t invis = (config.height - config.visible_height) * config.width;
-    for (size_t i = 0;i < state->field->data.size;i++) {
-        field_cell_t c = state->field->data.data[i];
-        switch (c) {
-        case 1:
-            fputs("#", stderr);
-            break;
-        default:
-            if (invis > i) {
-                fputs(",", stderr);
-            } else {
-                fputs(".", stderr);
-            }
-        }
-        if (i % config.width == config.width - 1) {
-            fputs("\n", stderr);
-        }
-    }
 }
