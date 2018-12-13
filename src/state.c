@@ -30,6 +30,7 @@ state_t* state_new(void) {
         abort();
     }
 
+    state->background = NULL;
     state->field = field_new();
     state->tic = 0;
 
@@ -42,7 +43,14 @@ state_t* state_new(void) {
  * @param state The gamestate to delete.
  */
 void state_delete(state_t* state) {
-    field_delete(state->field);
+    if (state->background != NULL) {
+        free(state->background);
+    }
+
+    if (state->field != NULL) {
+        field_delete(state->field);
+    }
+
     free(state);
 }
 

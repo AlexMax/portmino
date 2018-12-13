@@ -20,10 +20,21 @@
 #include <stdint.h>
 
 typedef struct {
+    /**
+     * Width of the picture.
+     */
     uint16_t width;
+
+    /**
+     * Height of the picture.
+     */
     uint16_t height;
+
+    /**
+     * Picture data.
+     */
     uint8_t* data;
 } picture_t;
 
-picture_t* picture_new(void);
+picture_t* picture_new(const char* path);
 void picture_delete(picture_t* pic);

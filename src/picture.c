@@ -21,14 +21,17 @@
 
 #include "picture.h"
 
-picture_t* picture_new(void) {
+/**
+ * Create a new picture from a file path.
+ */
+picture_t* picture_new(const char* path) {
     picture_t* pic = malloc(sizeof(picture_t));
     if (pic == NULL) {
         return NULL;
     }
 
     int x, y, bpp;
-    pic->data = stbi_load("block.png", &x, &y, &bpp, 4);
+    pic->data = stbi_load(path, &x, &y, &bpp, 4);
 
     if (pic->data == NULL) {
         picture_delete(pic);
@@ -43,11 +46,23 @@ picture_t* picture_new(void) {
     pic->width = x;
     pic->height = y;
 
+    // The library gives us the picture in RGBA format, but our renderers
+    // expect ARGB, which is BGRA on little-endian machines.  So, swap the
+    // red and blue channel.
+    for (int i = 0;i < x * y * 4;i += 4) {
+        uint8_t tmp = pic->data[i];
+        pic->data[i] = pic->data[i+2];
+        pic->data[i+2] = tmp;
+    }
+
     return pic;
 }
 
+/**
+ * Delete a picture structure.
+ */
 void picture_delete(picture_t* pic) {
-    if (pic->data == NULL) {
+    if (pic->data != NULL) {
         stbi_image_free(pic->data);
     }
     free(pic);

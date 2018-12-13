@@ -21,12 +21,18 @@
 #include "render.h"
 #include "softrender.h"
 
+/**
+ * Initialize a renderer and return the function pointers for that renderer.
+ */
 render_module_t* render_init(void) {
     // TODO: Figure out what kind of renderer that we want to use here.
     soft_render_module.init();
     return &soft_render_module;
 }
 
+/**
+ * Destroy anything attached to the currently initialized renderer.
+ */
 void render_deinit(render_module_t* module) {
     (void)module;
     soft_render_module.deinit();

@@ -22,9 +22,26 @@
 #include "render.h"
 
 typedef struct {
+    /**
+     * Our render buffer which contains the actual picture to be rendered.
+     * 
+     * Each pixel is stored as ARGB, technically BGRA on little-endian machines.
+     */
     uint8_t* buffer;
+
+    /**
+     * Size of the render buffer in bytes.
+     */
     size_t size;
+
+    /**
+     * Width of the render buffer in bytes.
+     */
     uint16_t width;
+
+    /**
+     * Height of the render buffer in bytes.
+     */
     uint16_t height;
 } softrender_context_t;
 

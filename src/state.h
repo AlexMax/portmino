@@ -30,6 +30,11 @@ typedef struct {
     uint32_t tic;
 
     /**
+     * Current background picture
+     */
+    char* background;
+
+    /**
      * Playfield
      */
     field_t* field;
