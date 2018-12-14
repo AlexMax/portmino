@@ -20,6 +20,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "piece.h"
+
 /**
  * Configuration variables for the playfield.
  */
@@ -68,6 +70,11 @@ typedef struct {
      * Contents of playfield.
      */
     field_data_t data;
+
+    /**
+     * Current piece on playfield.
+     */
+    piece_t* piece;
 } field_t;
 
 field_t* field_new(void);

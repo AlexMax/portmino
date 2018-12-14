@@ -15,7 +15,6 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <assert.h>
 #include <stdlib.h>
 
 #include "state.h"
@@ -80,10 +79,10 @@ void state_delete(state_t* state) {
  * @param event The event to run on the gamestate.
  */
 void state_frame(state_t* state, events_t events) {
-    field_t* field = state->fields[0];
-    for (int i = 0;i < field->data.size;i++) {
-        field->data.data[i] = i % 8;
-    }
+    // field_t* field = state->fields[0];
+    // for (int i = 0;i < field->data.size;i++) {
+    //     field->data.data[i] = i % 8;
+    // }
 
     // Whatever happens, our gamtic always increases by one.
     state->tic += 1;

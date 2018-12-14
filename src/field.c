@@ -24,8 +24,8 @@
  * 
  * @return field_t* A newly allocated playfield.
  */
-field_t* field_new(void) {
-    field_t* field = malloc(sizeof(field_t));
+field_t *field_new(void) {
+    field_t *field = malloc(sizeof(field_t));
     if (field == NULL) {
         return NULL;
     }
@@ -40,6 +40,10 @@ field_t* field_new(void) {
     field->data.size = size;
     field->data.data = calloc(size, sizeof(field_cell_t));
 
+    // Start with no piece allocated.
+    field->piece = NULL;
+    field->piece = piece_new_s();
+
     return field;
 }
 
@@ -48,7 +52,11 @@ field_t* field_new(void) {
  * 
  * @param field The playfield structure to delete.
  */
-void field_delete(field_t* field) {
+void field_delete(field_t *field) {
+    if (field->piece != NULL) {
+        piece_delete(field->piece);
+    }
+
     free(field->data.data);
     free(field);
 }

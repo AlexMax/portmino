@@ -9,6 +9,7 @@ set(GAME_SOURCES
     field.c         field.h
     game.c          game.h
     picture.c       picture.h
+    piece.c         piece.h
     render.c        render.h
     softrender.c    softrender.h
     state.c         state.h)

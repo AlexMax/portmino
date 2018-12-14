@@ -95,7 +95,7 @@ static void* softrender_draw_state(const state_t* state) {
     // precalculating these sizes has a better failure mode than relying
     // on each and every block size to be correct.
     int blockx = g_field->width / field->config.width;
-    int blocky = g_field->height /field->config.visible_height;
+    int blocky = g_field->height / field->config.visible_height;
 
     // What index of the playfield do we start at?
     int start = (field->config.height - field->config.visible_height) * field->config.width;
@@ -116,6 +116,28 @@ static void* softrender_draw_state(const state_t* state) {
         // Draw a block.
         picture_copy(&g_render_ctx.buffer, bpic,
             FIELD_X + (blockx * ix), FIELD_Y + (blocky * iy));
+    }
+
+    // Draw the piece, if any.
+    if (field->piece != NULL) {
+        size_t i = field->piece->rot * field->piece->config->data_size;
+        size_t end = i + field->piece->config->data_size;
+        for (int j = 0;i < end;i++,j++) {
+            // What type of block are we rendering?
+            uint8_t btype = field->piece->config->datas[i];
+            if (!btype) {
+                continue;
+            }
+            picture_t* bpic = g_blocks[btype];
+
+            // What is the actual (x, y) coordinate of the block?
+            int ix = field->piece->x + (j % field->piece->config->width);
+            int iy = field->piece->y + (j / field->piece->config->width);
+
+            // Draw a block.
+            picture_copy(&g_render_ctx.buffer, bpic,
+                FIELD_X + (blockx * ix), FIELD_Y + (blocky * iy));
+        }
     }
 
     return context;
