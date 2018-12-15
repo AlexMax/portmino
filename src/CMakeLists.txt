@@ -5,8 +5,8 @@ else()
 endif()
 
 set(GAME_SOURCES
+    board.c         board.h
     event.c         event.h
-    field.c         field.h
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h

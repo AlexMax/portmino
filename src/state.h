@@ -19,8 +19,8 @@
 
 #include <stdint.h>
 
+#include "board.h"
 #include "event.h"
-#include "field.h"
 #include "state.h"
 
 typedef struct {
@@ -35,14 +35,14 @@ typedef struct {
     char* background;
 
     /**
-     * Playfields
+     * Boards
      */
-    field_t** fields;
+    board_t** boards;
 
     /**
-     * Playfield count
+     * Board count
      */
-    size_t field_count;
+    size_t board_count;
 } state_t;
 
 state_t* state_new(void);

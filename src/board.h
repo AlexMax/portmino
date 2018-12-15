@@ -23,59 +23,53 @@
 #include "piece.h"
 
 /**
- * Configuration variables for the playfield.
+ * Configuration variables for the board.
  */
 typedef struct {
     /**
-     * Width of the playfield.
+     * Width of the board.
      */
     int16_t width;
 
     /**
-     * Complete height of the playfield.
+     * Complete height of the board.
      */
     int16_t height;
 
     /**
-     * Visible height of the playfield, starting from the bottom.
+     * Visible height of the board, starting from the bottom.
      */
     int16_t visible_height;
-} field_config_t;
-
-/**
- * A single cell of the playfield is either 0 (empty) or contains a placed
- * block represented by a non-zero integer.
- */
-typedef uint8_t field_cell_t;
+} board_config_t;
 
 typedef struct {
     /**
-     * Size of the data member.  Usually the width * height of the playfield.
+     * Size of the data member.  Usually the width * height of the board.
      */
     size_t size;
 
     /**
-     * Playfield data of 'size' length.
+     * Board data of 'size' length.
      */
-    field_cell_t* data;
-} field_data_t;
+    uint8_t* data;
+} board_data_t;
 
 typedef struct {
     /**
-     * Configuration of playfield.
+     * Configuration of entire board.
      */
-    field_config_t config;
+    board_config_t config;
 
     /**
-     * Contents of playfield.
+     * Contents of the actual board.
      */
-    field_data_t data;
+    board_data_t data;
 
     /**
-     * Current piece on playfield.
+     * Current piece on the board.
      */
     piece_t* piece;
-} field_t;
+} board_t;
 
-field_t* field_new(void);
-void field_delete(field_t* field);
+board_t* board_new(void);
+void board_delete(board_t* board);

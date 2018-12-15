@@ -31,13 +31,13 @@ state_t* state_new(void) {
     }
 
     state->background = NULL;
-    state->field_count = 1;
+    state->board_count = 1;
     state->tic = 0;
 
-    state->fields = malloc(sizeof(field_t*) * state->field_count);
-    for (size_t i = 0;i < state->field_count;i++) {
-        state->fields[i] = field_new();
-        if (state->fields[i] == NULL) {
+    state->boards = malloc(sizeof(board_t*) * state->board_count);
+    for (size_t i = 0;i < state->board_count;i++) {
+        state->boards[i] = board_new();
+        if (state->boards[i] == NULL) {
             state_delete(state);
             return NULL;
         }
@@ -57,16 +57,16 @@ void state_delete(state_t* state) {
         state->background = NULL;
     }
 
-    if (state->fields != NULL) {
-        for (size_t i = 0;i < state->field_count;i++) {
-            if (state->fields[i] != NULL) {
-                field_delete(state->fields[i]);
-                state->fields = NULL;
+    if (state->boards != NULL) {
+        for (size_t i = 0;i < state->board_count;i++) {
+            if (state->boards[i] != NULL) {
+                board_delete(state->boards[i]);
+                state->boards = NULL;
             }
         }
 
-        free(state->fields);
-        state->fields = NULL;
+        free(state->boards);
+        state->boards = NULL;
     }
 
     free(state);
@@ -79,7 +79,7 @@ void state_delete(state_t* state) {
  * @param event The event to run on the gamestate.
  */
 void state_frame(state_t* state, events_t events) {
-    // field_t* field = state->fields[0];
+    // board_t* field = state->fields[0];
     // for (int i = 0;i < field->data.size;i++) {
     //     field->data.data[i] = i % 8;
     // }
