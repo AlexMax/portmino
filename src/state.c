@@ -34,7 +34,6 @@ state_t* state_new(void) {
     state->board_count = 1;
     state->tic = 0;
 
-    state->boards = malloc(sizeof(board_t*) * state->board_count);
     for (size_t i = 0;i < state->board_count;i++) {
         state->boards[i] = board_new();
         if (state->boards[i] == NULL) {
@@ -57,16 +56,11 @@ void state_delete(state_t* state) {
         state->background = NULL;
     }
 
-    if (state->boards != NULL) {
-        for (size_t i = 0;i < state->board_count;i++) {
-            if (state->boards[i] != NULL) {
-                board_delete(state->boards[i]);
-                state->boards = NULL;
-            }
+    for (size_t i = 0;i < state->board_count;i++) {
+        if (state->boards[i] != NULL) {
+            board_delete(state->boards[i]);
+            state->boards[i] = NULL;
         }
-
-        free(state->boards);
-        state->boards = NULL;
     }
 
     free(state);

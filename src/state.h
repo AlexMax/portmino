@@ -23,24 +23,27 @@
 #include "event.h"
 #include "state.h"
 
+// Right now we only support two players.
+#define MAX_BOARDS 2
+
 typedef struct {
     /**
-     * Current gametic
+     * Current gametic.
      */
     uint32_t tic;
 
     /**
-     * Current background picture
+     * Current background picture.
      */
     char* background;
 
     /**
-     * Boards
+     * Boards.
      */
-    board_t** boards;
+    board_t* boards[MAX_BOARDS];
 
     /**
-     * Board count
+     * In-use board count.
      */
     size_t board_count;
 } state_t;
