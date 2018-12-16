@@ -87,7 +87,7 @@ void state_frame(state_t* state, events_t events) {
     board_t* board = state->boards[0];
 
     if (board->piece == NULL) {
-        board->piece = piece_new(&g_t_piece);
+        board->piece = piece_new(&g_i_piece);
     }
 
     piece_t* piece = board->piece;
@@ -101,7 +101,13 @@ void state_frame(state_t* state, events_t events) {
             // We can't move down, lock the piece.
             board_lock_piece(board, piece->config, piece->x, piece->y, piece->rot);
             piece_delete(piece);
-            board->piece = piece_new(&g_t_piece);
+
+            // Clear the board of any lines.
+            uint8_t lines = board_clear_lines(board);
+
+            // Create a new piece.
+            board->piece = piece_new(&g_i_piece);
+            piece = board->piece;
         }
     }
 

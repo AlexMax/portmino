@@ -16,6 +16,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "board.h"
 
@@ -130,4 +131,41 @@ void board_lock_piece(const board_t* board, const piece_config_t* piece, int x, 
         // Write our piece cell into the destination cell.
         *dcell = *scell;
     }
+}
+
+/**
+ * Clear the board of any lines.
+ * 
+ * TODO: Somehow we need to account for a fancy line-clear animation that
+ *       happens over many frames.
+ * 
+ * Returns the number of lines cleared.
+ */
+uint8_t board_clear_lines(board_t* board) {
+    uint8_t lines = 0;
+
+    for (size_t i = 0;i < board->data.size;i += board->config.width) {
+        // Find an empty cell in the row
+        bool found_empty = false;
+        for (size_t x = 0 ;x < board->config.width;x++) {
+            if (!*(board->data.data + i + x)) {
+                found_empty = true;
+                break;
+            }
+        }
+
+        if (found_empty == false) {
+            // Move the contents of the board forward over the full line.
+            uint8_t* dest = board->data.data + board->config.width;
+            memmove(dest, board->data.data, i); // overlapping regions
+
+            // Fill the first line with empty space.
+            memset(board->data.data, 0, board->config.width);
+
+            // We have cleared one additional line.
+            lines += 1;
+        }
+    }
+
+    return lines;
 }
