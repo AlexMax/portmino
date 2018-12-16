@@ -75,3 +75,4 @@ typedef struct {
 board_t* board_new(void);
 void board_delete(board_t* board);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot);
+void board_lock_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot);

@@ -92,6 +92,19 @@ void state_frame(state_t* state, events_t events) {
 
     piece_t* piece = board->piece;
 
+    // Handle gravity.
+    if (state->tic % 60 == 0) {
+        if (board_test_piece(board, piece->config, piece->x, piece->y + 1, piece->rot)) {
+            // We can move down.
+            piece->y += 1;
+        } else {
+            // We can't move down, lock the piece.
+            board_lock_piece(board, piece->config, piece->x, piece->y, piece->rot);
+            piece_delete(piece);
+            board->piece = piece_new(&g_t_piece);
+        }
+    }
+
     // Handle movement.
     int dx = 0;
     if (events & EVENT_LEFT) {

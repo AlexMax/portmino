@@ -82,8 +82,8 @@ bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, 
 
         // Figure out the destination cell.
         uint8_t* dcell = board->data.data;
-        dcell += (i / board->config.width) + (i % board->config.width);
-        dcell += (sy * board->config.width) + sx;
+        dcell += y * board->config.width + x;
+        dcell += sy * board->config.width + sx;
 
         if (!*dcell) {
             // Destination cell is empty, collision passes.
@@ -96,4 +96,38 @@ bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, 
 
     // All parts of the piece fit on the position on the board.
     return true;
+}
+
+/**
+ * Lock a piece in a particular spot.
+ * 
+ * Note that no collision detection is done.  Any existing blocks will be
+ * overwritten.
+ */
+void board_lock_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot) {
+    for (size_t i = 0;i < piece->data_size;i++) {
+        // Get the source cell.
+        uint8_t* scell = piece_get_rot(piece, rot) + i;
+        if (!*scell) {
+            // Source cell is empty, do nothing.
+            continue;
+        }
+
+        // Source cell location.
+        int sx = i % piece->width;
+        int sy = i / piece->width;
+
+        // Check to see if we're off the board.
+        if (x + sx < 0 || x + sx >= board->config.width || y + sy < 0 || y + sy >= board->config.height) {
+            continue;
+        }
+
+        // Figure out the destination cell.
+        uint8_t* dcell = board->data.data;
+        dcell += y * board->config.width + x;
+        dcell += sy * board->config.width + sx;
+
+        // Write our piece cell into the destination cell.
+        *dcell = *scell;
+    }
 }
