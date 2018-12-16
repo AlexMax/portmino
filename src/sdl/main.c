@@ -66,7 +66,7 @@ static mevent_t sdl_scancode_to_mevent(int code) {
 static void sdl_run(void) {
     // Assemble our game events from polled events.
     SDL_Event event;
-    gameinputs_t inputs = { 0 };
+    static gameinputs_t inputs = { 0 }; // keep the inputs around
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
