@@ -26,6 +26,9 @@
 // Right now we only support two players.
 #define MAX_BOARDS 2
 
+// Right now we only support seven pieces.
+#define MAX_PIECES 7
+
 typedef struct {
     /**
      * Current gametic.
@@ -41,6 +44,13 @@ typedef struct {
      * Boards.
      */
     board_t* boards[MAX_BOARDS];
+
+    /**
+     * Pieces.
+     * 
+     * These pointers are not owned by this structure.  Don't free them.
+     */
+    piece_config_t* pieces[MAX_PIECES];
 
     /**
      * In-use board count.

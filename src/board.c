@@ -40,7 +40,6 @@ board_t *board_new(void) {
 
     // Start with no piece allocated.
     board->piece = NULL;
-    board->piece = piece_new_s();
 
     return board;
 }
@@ -55,4 +54,46 @@ void board_delete(board_t *board) {
 
     free(board->data.data);
     free(board);
+}
+
+/**
+ * Board collision test given a piece and an orientation.
+ * 
+ * Returns true if the piece collides with the contents of the board, otherwise
+ * false.
+ */
+bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot) {
+    for (size_t i = 0;i < piece->data_size;i++) {
+        // Get the source cell.
+        uint8_t* scell = piece_get_rot(piece, rot) + i;
+        if (!*scell) {
+            // Source cell is empty, no collision test necessary.
+            continue;
+        }
+
+        // Source cell location.
+        int sx = i % piece->width;
+        int sy = i / piece->width;
+
+        // Check to see if we're off the board.
+        if (x + sx < 0 || x + sx >= board->config.width || y + sy < 0 || y + sy >= board->config.height) {
+            return false;
+        }
+
+        // Figure out the destination cell.
+        uint8_t* dcell = board->data.data;
+        dcell += (i / board->config.width) + (i % board->config.width);
+        dcell += (sy * board->config.width) + sx;
+
+        if (!*dcell) {
+            // Destination cell is empty, collision passes.
+            continue;
+        }
+
+        // Got a hit!
+        return false;
+    }
+
+    // All parts of the piece fit on the position on the board.
+    return true;
 }

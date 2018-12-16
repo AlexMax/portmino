@@ -132,6 +132,12 @@ static void* softrender_draw_state(const state_t* state) {
             // What is the actual (x, y) coordinate of the block?
             int ix = board->piece->x + (j % board->piece->config->width);
             int iy = board->piece->y + (j / board->piece->config->width);
+            iy -= board->config.height - board->config.visible_height;
+
+            if (iy < 0) {
+                // Don't draw a block above the visible height.
+                continue;
+            }
 
             // Draw a block.
             picture_copy(&g_render_ctx.buffer, bpic,
