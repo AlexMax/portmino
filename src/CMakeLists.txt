@@ -10,6 +10,7 @@ set(GAME_SOURCES
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h
+    random.c        random.h
     render.c        render.h
     softrender.c    softrender.h
     state.c         state.h)

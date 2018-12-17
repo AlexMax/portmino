@@ -21,6 +21,14 @@
 #include "board.h"
 
 /**
+ * Return a random piece configuration.
+ */
+static piece_config_t* board_get_random_piece(board_t* board) {
+    uint32_t index = random_number(&(board->next_rng), MAX_PIECES);
+    return board->pieces[index];
+}
+
+/**
  * Create a new board structure.
  */
 board_t *board_new(void) {
@@ -33,14 +41,35 @@ board_t *board_new(void) {
     board->config.width = 10;
     board->config.height = 22;
     board->config.visible_height = 20;
+    board->config.visible_nexts = 3;
 
     // Based on that configuration, construct the board itself
     size_t size = board->config.width * board->config.height;
     board->data.size = size;
     board->data.data = calloc(size, sizeof(uint8_t));
 
+    // Initialize default piece configuration.
+    pieces_init();
+
+    board->pieces[0] = &g_j_piece;
+    board->pieces[1] = &g_l_piece;
+    board->pieces[2] = &g_s_piece;
+    board->pieces[3] = &g_z_piece;
+    board->pieces[4] = &g_t_piece;
+    board->pieces[5] = &g_i_piece;
+    board->pieces[6] = &g_o_piece;
+
     // Start with no piece allocated.
     board->piece = NULL;
+
+    // Initialize the next piece PRNG.
+    random_init(&board->next_rng, NULL);
+
+    // Initialize the next piece circular buffer.
+    for (size_t i = 0;i < MAX_NEXTS;i++) {
+        board->nexts[i] = board_get_random_piece(board);
+    }
+    board->next_index = 0;
 
     return board;
 }
@@ -55,6 +84,27 @@ void board_delete(board_t *board) {
 
     free(board->data.data);
     free(board);
+}
+
+/**
+ * Get the next piece, make it the active piece, and advance the next piece index.
+ */
+void board_next_piece(board_t* board) {
+    if (board->piece != NULL) {
+        // Free the existing piece if it exists.
+        piece_delete(board->piece);
+        board->piece = NULL;
+    }
+
+    // Create the next piece.
+    piece_config_t* config = board->nexts[board->next_index];
+    board->piece = piece_new(config);
+
+    // Generate a new next piece in place.
+    board->nexts[board->next_index] = board_get_random_piece(board);
+
+    // Advance the next index.
+    board->next_index = (board->next_index + 1) % MAX_NEXTS;
 }
 
 /**

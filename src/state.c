@@ -42,17 +42,6 @@ state_t* state_new(void) {
         }
     }
 
-    // Initialize default pieces.
-    pieces_init();
-
-    state->pieces[0] = &g_j_piece;
-    state->pieces[1] = &g_l_piece;
-    state->pieces[2] = &g_s_piece;
-    state->pieces[3] = &g_z_piece;
-    state->pieces[4] = &g_t_piece;
-    state->pieces[5] = &g_i_piece;
-    state->pieces[6] = &g_o_piece;
-
     return state;
 }
 
@@ -86,8 +75,9 @@ void state_delete(state_t* state) {
 void state_frame(state_t* state, events_t events) {
     board_t* board = state->boards[0];
 
+    // Get the next piece if we don't have one at this point.
     if (board->piece == NULL) {
-        board->piece = piece_new(&g_i_piece);
+        board_next_piece(board);
     }
 
     piece_t* piece = board->piece;
@@ -100,13 +90,14 @@ void state_frame(state_t* state, events_t events) {
         } else {
             // We can't move down, lock the piece.
             board_lock_piece(board, piece->config, piece->x, piece->y, piece->rot);
-            piece_delete(piece);
 
             // Clear the board of any lines.
             uint8_t lines = board_clear_lines(board);
 
-            // Create a new piece.
-            board->piece = piece_new(&g_i_piece);
+            // Advance the new piece.
+            board_next_piece(board);
+
+            // Get the piece pointer again, because we mutated it.
             piece = board->piece;
         }
     }

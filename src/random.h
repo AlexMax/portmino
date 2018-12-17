@@ -19,36 +19,12 @@
 
 #include <stdint.h>
 
-#include "board.h"
-#include "event.h"
-#include "state.h"
-
-// Right now we only support two players.
-#define MAX_BOARDS 2
-
 typedef struct {
     /**
-     * Current gametic.
+     * The current state of the random number generator.
      */
-    uint32_t tic;
+    uint32_t state[2];
+} random_t;
 
-    /**
-     * Current background picture.
-     */
-    char* background;
-
-    /**
-     * Boards.
-     */
-    board_t* boards[MAX_BOARDS];
-
-    /**
-     * In-use board count.
-     */
-    size_t board_count;
-} state_t;
-
-state_t* state_new(void);
-void state_delete(state_t* state);
-void state_frame(state_t* state, events_t events);
-void state_debug(state_t* state);
+void random_init(random_t* random, uint32_t* seed);
+uint32_t random_number(random_t* random, uint32_t range);

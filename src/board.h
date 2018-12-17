@@ -22,6 +22,13 @@
 #include <stdint.h>
 
 #include "piece.h"
+#include "random.h"
+
+// Right now we only support seven piece configurations.
+#define MAX_PIECES 7
+
+// Right now we only support a maximum of 8 next pieces.
+#define MAX_NEXTS 8
 
 /**
  * Configuration variables for the board.
@@ -41,6 +48,11 @@ typedef struct {
      * Visible height of the board, starting from the bottom.
      */
     int16_t visible_height;
+
+    /**
+     * Visible number of next pieces.
+     */
+    uint8_t visible_nexts;
 } board_config_t;
 
 typedef struct {
@@ -67,13 +79,36 @@ typedef struct {
     board_data_t data;
 
     /**
+     * Piece configurations.
+     * 
+     * These pointers are not owned by this structure.  Don't free them.
+     */
+    piece_config_t* pieces[MAX_PIECES];
+
+    /**
      * Current piece on the board.
      */
     piece_t* piece;
+
+    /**
+     * "Next piece" PRNG.
+     */
+    random_t next_rng;
+
+    /**
+     * Next pieces circular buffer.
+     */
+    piece_config_t* nexts[MAX_NEXTS];
+
+    /**
+     * Current next piece.
+     */
+    uint8_t next_index;
 } board_t;
 
 board_t* board_new(void);
 void board_delete(board_t* board);
+void board_next_piece(board_t* board);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot);
 void board_lock_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot);
 uint8_t board_clear_lines(board_t* board);
