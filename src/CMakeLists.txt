@@ -10,6 +10,7 @@ set(GAME_SOURCES
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h
+    platform.c      platform.h
     random.c        random.h
     render.c        render.h
     softrender.c    softrender.h
@@ -17,7 +18,13 @@ set(GAME_SOURCES
 set(LIBRARY_SOURCES
                     stb_image.h)
 
-add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES})
+if(UNIX)
+    set(PLATFORM_SOURCES platform_unix.c)
+else()
+    message(FATAL_ERROR "Platform implementation missing")
+endif()
+
+add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES} ${PLATFORM_SOURCES})
 add_sanitizers(portmino-core)
 set_property(TARGET portmino-core PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -23,6 +23,7 @@
 
 #include "event.h"
 #include "game.h"
+#include "platform.h"
 #include "softrender.h"
 
 static SDL_Window* g_window;
@@ -121,16 +122,25 @@ static void clean_exit(void) {
     }
 
     SDL_Quit();
+
+    platform_deinit();
 }
 
 int main(int argc, char** argv) {
     (void)argc; (void)argv;
+    atexit(clean_exit);
 
+    // Initialize our non-library platform-specific functions first.
+    if (!platform_init()) {
+        fprintf(stderr, "platform_init failure\n");
+        return 1;
+    }
+
+    // Now initialize SDL...
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
         fprintf(stderr, "SDL2_Init failure:  %s\n", SDL_GetError());
         return 1;
     }
-    atexit(clean_exit);
 
     g_window = SDL_CreateWindow("Portmino", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
     if (g_window == NULL) {
@@ -162,6 +172,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // Initialize the game before we run it.
     game_init();
 
     for (;;) {

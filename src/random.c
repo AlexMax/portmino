@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "platform.h"
 #include "random.h"
 
 /**
@@ -49,25 +50,6 @@ static uint32_t random_next(random_t* random) {
 }
 
 /**
- * Get a 32-bit random seed for the random number generator.
- */
-
-#if defined(__linux__)
-#include <sys/random.h>
-
-static bool random_get_seed(uint32_t* seed) {
-    ssize_t ok = getrandom(seed, sizeof(uint32_t), GRND_NONBLOCK);
-    if (ok == -1) {
-        return false;
-    }
-    return true;
-}
-
-#else
-#error "Please implement a source of 32-bit random seed for your platform"
-#endif
-
-/**
  * Initialize a new random number generator state inplace, without allocation.
  * 
  * Pass NULL for the second parameter if you want a completely random seed,
@@ -77,7 +59,7 @@ void random_init(random_t* random, uint32_t* seed) {
     // Only half the seed is variable, so we can actually show it.
     random->state[1] = 0x12EBE5E;
     if (seed == NULL) {
-        if (!random_get_seed(&(random->state[0]))) {
+        if (!platform()->random_get_seed(&(random->state[0]))) {
             // FIXME: Don't freakin' kill the whole process because you can't
             //        get a random number.
             abort();
