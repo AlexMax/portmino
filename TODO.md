@@ -1,5 +1,9 @@
 - [ ] Place initial pieces in the correct spot.
+- [ ] Proper softdropping.
+- [ ] Harddroping.
 - [X] Proper wallkicking.
+- [ ] Lock delay.
+- [ ] Proper gravity.
 - [ ] Hold piece.
 - [ ] Game over.
 - [ ] Render ghost piece.
