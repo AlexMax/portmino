@@ -14,7 +14,8 @@ set(LUA_SOURCES
     ldump.c
     lfunc.c     lfunc.h
     lgc.c       lgc.h
-    linit.c     liolib.c
+    linit.c
+    liolib.c
     llex.c      llex.h
                 llimits.h
     lmathlib.c
