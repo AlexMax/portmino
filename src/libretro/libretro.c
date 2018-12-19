@@ -21,11 +21,13 @@
 
 #include "game.h"
 #include "libretro.h"
+#include "platform.h"
 #include "softrender.h"
 
 static retro_environment_t environ_cb;
 static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
+static retro_audio_sample_batch_t audio_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
@@ -36,6 +38,29 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
     va_start(va, fmt);
     vfprintf(stderr, fmt, va);
     va_end(va);
+}
+
+static events_t retro_input_to_event(void) {
+    event_t ret = 0;
+    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)) {
+        ret |= EVENT_LEFT;
+    }
+    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) {
+        ret |= EVENT_RIGHT;
+    }
+    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN)) {
+        ret |= EVENT_SOFTDROP;
+    }
+    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)) {
+        ret |= EVENT_HARDDROP;
+    }
+    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)) {
+        ret |= EVENT_CCW;
+    }
+    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
+        ret |= EVENT_CW;
+    }
+    return ret;
 }
 
 RETRO_API void retro_set_environment(retro_environment_t cb) {
@@ -61,7 +86,7 @@ RETRO_API void retro_set_audio_sample(retro_audio_sample_t cb) {
 }
 
 RETRO_API void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) {
-    (void)cb;
+    audio_cb = cb;
 }
 
 RETRO_API void retro_set_input_poll(retro_input_poll_t cb) {
@@ -73,11 +98,13 @@ RETRO_API void retro_set_input_state(retro_input_state_t cb) {
 }
 
 RETRO_API void retro_init(void) {
+    platform_init();
     game_init();
 }
 
 RETRO_API void retro_deinit(void) {
     game_deinit();
+    platform_deinit();
 }
 
 RETRO_API unsigned retro_api_version(void) {
@@ -118,6 +145,15 @@ RETRO_API void retro_reset(void) {
 RETRO_API void retro_run(void) {
     input_poll_cb();
 
+    gameinputs_t inputs = { 0 };
+    inputs.game = retro_input_to_event();
+    inputs.interface = 0;
+    inputs.menu = 0;
+
+    // Run the game simulation.
+    game_frame(&inputs);
+
+    // Render the screen.
     softrender_context_t* context = game_draw();
     video_cb(context->buffer.data, context->buffer.width, context->buffer.height, context->buffer.width * 4);
 }
