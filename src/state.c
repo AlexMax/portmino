@@ -19,6 +19,19 @@
 
 #include "state.h"
 
+#define DEFAULT_DAS 12
+#define DEFAULT_DAS_PERIOD 2
+
+/**
+ * Reset a player state struct to nothing.
+ */
+void playstate_reset(playstate_t* ps) {
+    ps->left_tic = 0;
+    ps->right_tic = 0;
+    ps->ccw_already = 0;
+    ps->cw_already = 0;
+}
+
 /**
  * Create our gamestate.
  *
@@ -32,6 +45,7 @@ state_t* state_new(void) {
 
     state->background = NULL;
     state->board_count = 1;
+    state->player_count = 1;
     state->tic = 0;
 
     for (size_t i = 0;i < state->board_count;i++) {
@@ -40,6 +54,10 @@ state_t* state_new(void) {
             state_delete(state);
             return NULL;
         }
+    }
+
+    for (size_t i = 0;i < state->player_count;i++) {
+        playstate_reset(&(state->playstates[i]));
     }
 
     return state;
@@ -73,6 +91,14 @@ void state_delete(state_t* state) {
  * @param event The event to run on the gamestate.
  */
 void state_frame(state_t* state, events_t events) {
+    // Whatever happens, our gametic increases by one.  Tic 0 does not exist.
+    state->tic += 1;
+
+    if (state->tic == 0) {
+        // How have you been playing for this long?
+        return;
+    }
+
     board_t* board = state->boards[0];
 
     // Get the next piece if we don't have one at this point.
@@ -103,13 +129,60 @@ void state_frame(state_t* state, events_t events) {
     }
 
     // Handle movement.
-    int dx = 0;
+    //
+    // Here we track the number of frames we've been holding a particular
+    // direction.  We use this to track DAS and to also ensure that pressing
+    // both directions at once in a staggered way behaves correctly.
     if (events & EVENT_LEFT) {
-        dx -= 1;
+        if (state->playstates[0].left_tic == 0) {
+            state->playstates[0].left_tic = state->tic;
+        }
+    } else {
+        state->playstates[0].left_tic = 0;
     }
     if (events & EVENT_RIGHT) {
-        dx += 1;
+        if (state->playstates[0].right_tic == 0) {
+            state->playstates[0].right_tic = state->tic;
+        }
+    } else {
+        state->playstates[0].right_tic = 0;
     }
+
+    int8_t dx = 0;
+    if (state->playstates[0].left_tic == state->playstates[0].right_tic) {
+        // Either neither event is happening, or both events started at once.
+    } else if (state->playstates[0].left_tic > state->playstates[0].right_tic) {
+        // Ignore right event, figure out our left event DAS.
+        uint32_t tics = state->tic - state->playstates[0].left_tic;
+        if (tics == 0) {
+            // Move immediately
+            dx = -1;
+        } else if (tics >= DEFAULT_DAS) {
+            // Waited out the delay.
+            tics -= DEFAULT_DAS;
+            if (DEFAULT_DAS_PERIOD == 0) {
+                dx = -(state->boards[0]->config.width);
+            } else if  (tics % DEFAULT_DAS_PERIOD == 0) {
+                dx = -1;
+            }
+        }
+    } else if (state->playstates[0].left_tic < state->playstates[0].right_tic) {
+        // Ignore left event, figure out our right event DAS.
+        uint32_t tics = state->tic - state->playstates[0].right_tic;
+        if (tics == 0) {
+            // Move immediately.
+            dx = 1;
+        } else if (tics >= DEFAULT_DAS) {
+            // Waited out the delay.
+            tics -= DEFAULT_DAS;
+            if (DEFAULT_DAS_PERIOD == 0) {
+                dx = state->boards[0]->config.width;
+            } else if  (tics % DEFAULT_DAS_PERIOD == 0) {
+                dx = 1;
+            }
+        }
+    }
+
     if (dx != 0) {
         if (board_test_piece(board, piece->config, piece->x + dx, piece->y, piece->rot)) {
             piece->x += dx;
@@ -133,14 +206,27 @@ void state_frame(state_t* state, events_t events) {
     // Handle rotation.
     int drot = 0;
     if (events & EVENT_CCW) {
-        drot -= 1;
+        if (state->playstates[0].ccw_already == false) {
+            // Only rotate if this is the first tic of the event
+            drot -= 1;
+            state->playstates[0].ccw_already = true;
+        }
+    } else {
+        state->playstates[0].ccw_already = false;
     }
     if (events & EVENT_CW) {
-        drot += 1;
+        if (state->playstates[0].cw_already == false) {
+            // Only rotate if this is the first tic of the event
+            drot += 1;
+            state->playstates[0].cw_already = true;
+        }
+    } else {
+        state->playstates[0].cw_already = false;
     }
     if (events & EVENT_180) {
         drot -= 2;
     }
+
     if (drot != 0) {
         int prot = (piece->rot + drot);
         if (prot < 0) {
@@ -151,7 +237,4 @@ void state_frame(state_t* state, events_t events) {
             piece->rot = prot;
         }
     }
-
-    // Whatever happens, our gamtic always increases by one.
-    state->tic += 1;
 }

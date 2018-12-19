@@ -23,8 +23,36 @@
 #include "event.h"
 #include "state.h"
 
-// Right now we only support two players.
+// Right now we only support two boards.
 #define MAX_BOARDS 2
+
+// Right now we only support two players.
+#define MAX_PLAYERS 2
+
+/**
+ * Contains state for a particular player.
+ */
+typedef struct {
+    /**
+     * Tic that EVENT_LEFT began on.  Set to 0 if released.
+     */
+    uint32_t left_tic;
+
+    /**
+     * Tic that EVENT_RIGHT began on.  Set to 0 if released.
+     */
+    uint32_t right_tic;
+
+    /**
+     * Have we processed an EVENT_CCW last tic?
+     */
+    bool ccw_already;
+
+    /**
+     * Have we processed an EVENT_CW last tic?
+     */
+    bool cw_already;
+} playstate_t;
 
 typedef struct {
     /**
@@ -46,8 +74,19 @@ typedef struct {
      * In-use board count.
      */
     size_t board_count;
+
+    /**
+     * Players.
+     */
+    playstate_t playstates[MAX_PLAYERS];
+
+    /**
+     * In-use player count.
+     */
+    size_t player_count;
 } state_t;
 
+void playstate_reset(playstate_t* ps);
 state_t* state_new(void);
 void state_delete(state_t* state);
 void state_frame(state_t* state, events_t events);
