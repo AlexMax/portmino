@@ -233,8 +233,84 @@ void state_frame(state_t* state, events_t events) {
             prot += piece->config->data_count;
         }
         prot %= piece->config->data_count;
+
         if (board_test_piece(board, piece->config, piece->x, piece->y, prot)) {
+            // Normal rotation.
             piece->rot = prot;
+        } else if (piece->config == &g_o_piece) {
+            // Don't wallkick the "O" piece.
+        } else if (piece->config == &g_i_piece) {
+            // Wallkicks for the "I" piece are unique.
+            int8_t tries_x[4] = { 0 };
+            int8_t tries_y[4] = { 0 };
+
+            if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_R && prot == ROT_2)) {
+                tries_x[0] = -1; tries_y[0] = 0;
+                tries_x[1] = 2; tries_y[1] = 0;
+                tries_x[2] = -1; tries_y[2] = -2;
+                tries_x[3] = 2; tries_y[3] = 1;
+            } else if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
+                tries_x[0] = -2; tries_y[0] = 0;
+                tries_x[1] = 1; tries_y[1] = 0;
+                tries_x[2] = -2; tries_y[2] = 1;
+                tries_x[3] = 1; tries_y[3] = -2;
+            } else if ((piece->rot == ROT_2 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_0)) {
+                tries_x[0] = 1; tries_y[0] = 0;
+                tries_x[1] = -2; tries_y[1] = 0;
+                tries_x[2] = 1; tries_y[2] = 2;
+                tries_x[3] = -2; tries_y[3] = -1;
+            } else /* ROT_2 -> ROT_L, ROT_R -> ROT_0 */ {
+                tries_x[0] = 2; tries_y[0] = 0;
+                tries_x[1] = -1; tries_y[1] = 0;
+                tries_x[2] = 2; tries_y[2] = -1;
+                tries_x[3] = -1; tries_y[3] = 2;
+            }
+
+            for (size_t i = 0;i < piece->config->data_count;i++) {
+                if (board_test_piece(board, piece->config,
+                        piece->x + tries_x[i], piece->y + tries_y[i], prot)) {
+                    piece->x += tries_x[i];
+                    piece->y += tries_y[i];
+                    piece->rot = prot;
+                    break;
+                }
+            }
+        } else {
+            // Wallkicks for the other pieces.
+            int8_t tries_x[4] = { 0 };
+            int8_t tries_y[4] = { 0 };
+
+            if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_2 && prot == ROT_R)) {
+                tries_x[0] = -1; tries_y[0] = 0;
+                tries_x[1] = -1; tries_y[1] = -1;
+                tries_x[2] = 0; tries_y[2] = 2;
+                tries_x[3] = -1; tries_y[3] = 2;
+            } else if ((piece->rot == ROT_L && prot == ROT_2) || (piece->rot == ROT_L && prot == ROT_0)) {
+                tries_x[0] = -1; tries_y[0] = 0;
+                tries_x[1] = -1; tries_y[1] = 1;
+                tries_x[2] = 0; tries_y[2] = -2;
+                tries_x[3] = -1; tries_y[3] = -2;
+            } else if ((piece->rot == ROT_R && prot == ROT_0) || (piece->rot == ROT_R && prot == ROT_2)) {
+                tries_x[0] = 1; tries_y[0] = 0;
+                tries_x[1] = 1; tries_y[1] = 1;
+                tries_x[2] = 0; tries_y[2] = -2;
+                tries_x[3] = 1; tries_y[3] = -2;
+            } else /* ROT_2 -> ROT_L, ROT_0 -> ROT_L */ {
+                tries_x[0] = 1; tries_y[0] = 0;
+                tries_x[1] = 1; tries_y[1] = -1;
+                tries_x[2] = 0; tries_y[2] = 2;
+                tries_x[3] = 1; tries_y[3] = 2;
+            }
+
+            for (size_t i = 0;i < piece->config->data_count;i++) {
+                if (board_test_piece(board, piece->config,
+                        piece->x + tries_x[i], piece->y + tries_y[i], prot)) {
+                    piece->x += tries_x[i];
+                    piece->y += tries_y[i];
+                    piece->rot = prot;
+                    break;
+                }
+            }
         }
     }
 }

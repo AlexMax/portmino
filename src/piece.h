@@ -20,6 +20,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define ROT_0 0
+#define ROT_R 1
+#define ROT_2 2
+#define ROT_L 3
+
 typedef struct {
     /**
      * What a piece looks like from every rotation.

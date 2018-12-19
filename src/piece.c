@@ -265,7 +265,7 @@ piece_t* piece_new(const piece_config_t* config) {
     piece_t* piece = malloc(sizeof(piece_t));
 
     piece->config = config;
-    piece->rot = 3;
+    piece->rot = 0;
     piece->x = 0;
     piece->y = 0;
 
