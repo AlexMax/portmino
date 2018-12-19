@@ -1,0 +1,34 @@
+- [ ] Place initial pieces in the correct spot.
+- [X] Proper wallkicking.
+- [ ] Hold piece.
+- [ ] Game over.
+- [ ] Render ghost piece.
+- [ ] Render hold piece.
+- [ ] Render next pieces.
+- [ ] Render partial first row?
+- [ ] System for gameplay variants (line goals, levels, speed changes, etc.).
+- [ ] Render arbitrary stats.  Needs gameplay variants.
+- [ ] Texture manager.
+  - [ ] How do we address individual textures?  String?  ID number?
+  - [ ] Assemble individual texture entries from a larger sprite sheet.
+  - [ ] Assemble larger textures from pieces of small ones.
+- [ ] Figure out how to properly handle more than one player.
+- [ ] Move gameplay loop into Lua.
+  - [ ] Serialize Lua state into C state and back again.
+- [ ] Performance measuring functions.
+- [ ] Virtual Filesystem (resources can be loaded from inside binary or on-disk).
+  - [ ] Figure out how to build and embed resources into binary.
+  - [ ] Use libzip for resource packages?
+- [ ] Sound playback and mixing.
+- [ ] Rendering words from individual letters.
+  - [ ] Needs texture manager.
+  - [ ] Allow for transparency in software rendering.
+- [ ] Replay recording and playback.
+- [ ] Multiplayer local prediction and rollback.
+- [ ] Adjustable resolutions and high-resolution resources.
+- [ ] Menu system.
+- [ ] High scores.
+- [ ] Implement remote multiplayer?
+  - [ ] Needs local prediction and rollback.
+  - [ ] Protocol design.
+  - [ ] Socket implementation.
