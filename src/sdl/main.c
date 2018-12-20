@@ -109,7 +109,6 @@ static void sdl_run(void) {
     // Play a tic worth of audio.
     audio_context_t* audio_ctx = audio_frame();
     SDL_QueueAudio(g_audio_device, audio_ctx->data, audio_ctx->size);
-    printf("%d\n", SDL_GetQueuedAudioSize(g_audio_device));
 
     SDL_Delay(16);
 }
@@ -200,6 +199,7 @@ int main(int argc, char** argv) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
         return 1;
     }
+    SDL_PauseAudioDevice(g_audio_device, 0);
 
     // Initialize the game before we run it.
     game_init();
