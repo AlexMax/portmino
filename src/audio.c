@@ -22,6 +22,9 @@
 
 static audio_context_t g_audio_ctx;
 
+/**
+ * Initialize the audio context.
+ */
 void audio_init(void) {
     g_audio_ctx.samplecount = SOUND_SAMPLES / 60;
     g_audio_ctx.samplesize = sizeof(int16_t) * 2;
@@ -29,6 +32,9 @@ void audio_init(void) {
     g_audio_ctx.data = malloc(g_audio_ctx.size);
 }
 
+/**
+ * Clean up the audio context.
+ */
 void audio_deinit(void) {
     if (g_audio_ctx.data != NULL) {
         free(g_audio_ctx.data);
@@ -36,6 +42,10 @@ void audio_deinit(void) {
     }
 }
 
+/**
+ * Set up a game-frame's worth of audio data and pass it back to whatever
+ * is playing our audio.
+ */
 audio_context_t* audio_frame(void) {
     memset(g_audio_ctx.data, INT16_MIN, g_audio_ctx.size);
     for (size_t i = 0;i < g_audio_ctx.samplecount;i += 2) {
