@@ -15,6 +15,7 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "audio.h"
 #include "game.h"
 #include "render.h"
 #include "state.h"
@@ -46,20 +47,23 @@ void game_init(void) {
     g_game.screen = SCREEN_INGAME;
     g_game.state = state_new();
     g_game.render = render_init();
+    audio_init();
 }
 
 /**
  * Clean up the game.
  */
 void game_deinit(void) {
-    if (g_game.state != NULL) {
-        state_delete(g_game.state);
-        g_game.state = NULL;
-    }
+    audio_deinit();
 
     if (g_game.render != NULL) {
         render_deinit(g_game.render);
         g_game.render = NULL;
+    }
+
+    if (g_game.state != NULL) {
+        state_delete(g_game.state);
+        g_game.state = NULL;
     }
 }
 

@@ -5,6 +5,7 @@ else()
 endif()
 
 set(GAME_SOURCES
+    audio.c         audio.h
     board.c         board.h
     event.c         event.h
     game.c          game.h

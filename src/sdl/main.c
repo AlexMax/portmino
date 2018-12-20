@@ -21,6 +21,7 @@
 
 #include <SDL.h>
 
+#include "audio.h"
 #include "event.h"
 #include "game.h"
 #include "platform.h"
@@ -29,6 +30,8 @@
 static SDL_Window* g_window;
 static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
+
+static SDL_AudioDeviceID g_audio_device;
 
 static event_t sdl_scancode_to_event(int code) {
     switch (code) {
@@ -103,11 +106,20 @@ static void sdl_run(void) {
     SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
     SDL_RenderPresent(g_renderer);
 
+    // Play a tic worth of audio.
+    audio_context_t* audio_ctx = audio_frame();
+    SDL_QueueAudio(g_audio_device, audio_ctx->data, audio_ctx->size);
+    printf("%d\n", SDL_GetQueuedAudioSize(g_audio_device));
+
     SDL_Delay(16);
 }
 
 static void clean_exit(void) {
     game_deinit();
+
+    if (g_audio_device != 0) {
+        SDL_CloseAudioDevice(g_audio_device);
+    }
 
     if (g_texture != NULL) {
         SDL_DestroyTexture(g_texture);
@@ -137,7 +149,7 @@ int main(int argc, char** argv) {
     }
 
     // Now initialize SDL...
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) != 0) {
         fprintf(stderr, "SDL2_Init failure:  %s\n", SDL_GetError());
         return 1;
     }
@@ -166,6 +178,23 @@ int main(int argc, char** argv) {
     if (g_texture == NULL) {
         char buffer[8192];
         if (snprintf(buffer, sizeof(buffer), "SDL_CreateTexture failure: %s\n", SDL_GetError()) < 0) {
+            abort();
+        }
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
+        return 1;
+    }
+
+    SDL_AudioSpec s_expect, s_actual;
+    SDL_zero(s_expect);
+    s_expect.freq = SOUND_SAMPLES;
+    s_expect.format = AUDIO_S16;
+    s_expect.channels = 2;
+    s_expect.samples = 4096;
+    s_expect.callback = NULL;
+    g_audio_device = SDL_OpenAudioDevice("Built-in Audio Analog Stereo", 0, &s_expect, &s_actual, 0);
+    if (g_audio_device == 0) {
+        char buffer[8192];
+        if (snprintf(buffer, sizeof(buffer), "SDL_OpenAudioDevice failure: %s\n", SDL_GetError()) < 0) {
             abort();
         }
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);

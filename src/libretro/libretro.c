@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "audio.h"
 #include "game.h"
 #include "libretro.h"
 #include "platform.h"
@@ -27,7 +28,7 @@
 static retro_environment_t environ_cb;
 static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
-static retro_audio_sample_batch_t audio_cb;
+static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
@@ -86,7 +87,7 @@ RETRO_API void retro_set_audio_sample(retro_audio_sample_t cb) {
 }
 
 RETRO_API void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) {
-    audio_cb = cb;
+    audio_batch_cb = cb;
 }
 
 RETRO_API void retro_set_input_poll(retro_input_poll_t cb) {
@@ -128,7 +129,7 @@ RETRO_API void retro_get_system_av_info(struct retro_system_av_info *info) {
     info->geometry.max_height = 240;
     info->geometry.aspect_ratio = 0.0;
     info->timing.fps = 60;
-    info->timing.sample_rate = 44100;
+    info->timing.sample_rate = SOUND_SAMPLES;
 
     int fmt = RETRO_PIXEL_FORMAT_XRGB8888;
     environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
@@ -154,8 +155,12 @@ RETRO_API void retro_run(void) {
     game_frame(&inputs);
 
     // Render the screen.
-    softrender_context_t* context = game_draw();
-    video_cb(context->buffer.data, context->buffer.width, context->buffer.height, context->buffer.width * 4);
+    softrender_context_t* render_ctx = game_draw();
+    video_cb(render_ctx->buffer.data, render_ctx->buffer.width, render_ctx->buffer.height, render_ctx->buffer.width * 4);
+
+    // Play a tic worth of audio.
+    audio_context_t* audio_ctx = audio_frame();
+    audio_batch_cb(audio_ctx->data, audio_ctx->samplecount);
 }
 
 RETRO_API size_t retro_serialize_size(void) {
