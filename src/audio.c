@@ -20,14 +20,16 @@
 
 #include "audio.h"
 
+#define MINO_AUDIO_CHANNELS 2
+
 static audio_context_t g_audio_ctx;
 
 /**
  * Initialize the audio context.
  */
 void audio_init(void) {
-    g_audio_ctx.samplecount = SOUND_SAMPLES / 60;
-    g_audio_ctx.samplesize = sizeof(int16_t) * 2;
+    g_audio_ctx.samplecount = MINO_AUDIO_HZ / MINO_FPS;
+    g_audio_ctx.samplesize = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
     g_audio_ctx.size = g_audio_ctx.samplecount * g_audio_ctx.samplesize;
     g_audio_ctx.data = malloc(g_audio_ctx.size);
 }
@@ -48,7 +50,7 @@ void audio_deinit(void) {
  */
 audio_context_t* audio_frame(void) {
     memset(g_audio_ctx.data, INT16_MIN, g_audio_ctx.size);
-    for (size_t i = 0;i < g_audio_ctx.samplecount;i += 2) {
+    for (size_t i = 0;i < g_audio_ctx.samplecount;i += MINO_AUDIO_CHANNELS) {
         int16_t x = INT16_MAX;
         g_audio_ctx.data[i] = x;
         g_audio_ctx.data[i + 1] = x;

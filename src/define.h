@@ -15,4 +15,16 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event.h"
+#pragma once
+
+// There are some types and defines that we use all over the place, and it's
+// just easier to include them all here.
+
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+/**
+ * Target framerate of the gamestate.
+ */
+#define MINO_FPS 60

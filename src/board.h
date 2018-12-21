@@ -17,10 +17,7 @@
 
 #pragma once
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
+#include "define.h"
 #include "piece.h"
 #include "random.h"
 

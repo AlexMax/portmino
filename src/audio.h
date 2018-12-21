@@ -17,10 +17,9 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include "define.h"
 
-#define SOUND_SAMPLES 44100
+#define MINO_AUDIO_HZ 44100
 
 typedef struct {
     /**

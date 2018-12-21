@@ -21,7 +21,10 @@
 
 #include "picture.h"
 
-#define BITS_PER_PIXEL 4
+/**
+ * Size of a pixel of the native picture format, in bits.
+ */
+#define MINO_PICTURE_BPP 4
 
 /**
  * Create a new picture from a file path.
@@ -33,7 +36,7 @@ picture_t* picture_new(const char* path) {
     }
 
     int x, y, bpp;
-    pic->data = stbi_load(path, &x, &y, &bpp, BITS_PER_PIXEL);
+    pic->data = stbi_load(path, &x, &y, &bpp, MINO_PICTURE_BPP);
 
     if (pic->data == NULL) {
         picture_delete(pic);
@@ -47,12 +50,12 @@ picture_t* picture_new(const char* path) {
 
     pic->width = x;
     pic->height = y;
-    pic->size = x * y * BITS_PER_PIXEL;
+    pic->size = x * y * MINO_PICTURE_BPP;
 
     // The library gives us the picture in RGBA format, but our renderers
     // expect ARGB, which is BGRA on little-endian machines.  So, swap the
     // red and blue channel.
-    for (int i = 0;i < pic->size;i += BITS_PER_PIXEL) {
+    for (int i = 0;i < pic->size;i += MINO_PICTURE_BPP) {
         uint8_t tmp = pic->data[i];
         pic->data[i] = pic->data[i+2];
         pic->data[i+2] = tmp;
@@ -78,11 +81,11 @@ void picture_delete(picture_t* pic) {
  * Transparency values are completely ignored.
  */
 void picture_copy(picture_t* dest, const picture_t* source, int x, int y) {
-    int cursor = (y * dest->width * BITS_PER_PIXEL) + (x * BITS_PER_PIXEL);
+    int cursor = (y * dest->width * MINO_PICTURE_BPP) + (x * MINO_PICTURE_BPP);
     int piccursor = 0;
     for (int i = 0;i < source->height;i++) {
-        memcpy(dest->data + cursor, source->data + piccursor, source->width * BITS_PER_PIXEL);
-        cursor += dest->width * BITS_PER_PIXEL;
-        piccursor += source->width * BITS_PER_PIXEL;
+        memcpy(dest->data + cursor, source->data + piccursor, source->width * MINO_PICTURE_BPP);
+        cursor += dest->width * MINO_PICTURE_BPP;
+        piccursor += source->width * MINO_PICTURE_BPP;
     }
 }

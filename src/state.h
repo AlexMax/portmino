@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include <stdint.h>
-
+#include "define.h"
 #include "board.h"
 #include "event.h"
 #include "state.h"

@@ -123,13 +123,13 @@ RETRO_API void retro_get_system_info(struct retro_system_info *info) {
 
 RETRO_API void retro_get_system_av_info(struct retro_system_av_info *info) {
     memset(info, 0, sizeof(*info));
-    info->geometry.base_width = 320;
-    info->geometry.base_height = 240;
-    info->geometry.max_width = 320;
-    info->geometry.max_height = 240;
+    info->geometry.base_width = MINO_SOFTRENDER_WIDTH;
+    info->geometry.base_height = MINO_SOFTRENDER_HEIGHT;
+    info->geometry.max_width = MINO_SOFTRENDER_WIDTH;
+    info->geometry.max_height = MINO_SOFTRENDER_HEIGHT;
     info->geometry.aspect_ratio = 0.0;
-    info->timing.fps = 60;
-    info->timing.sample_rate = SOUND_SAMPLES;
+    info->timing.fps = MINO_FPS;
+    info->timing.sample_rate = MINO_AUDIO_HZ;
 
     int fmt = RETRO_PIXEL_FORMAT_XRGB8888;
     environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);

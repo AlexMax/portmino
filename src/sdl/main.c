@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 320, 240);
+    g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, MINO_SOFTRENDER_WIDTH, MINO_SOFTRENDER_HEIGHT);
     if (g_texture == NULL) {
         char buffer[8192];
         if (snprintf(buffer, sizeof(buffer), "SDL_CreateTexture failure: %s\n", SDL_GetError()) < 0) {
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
 
     SDL_AudioSpec s_expect, s_actual;
     SDL_zero(s_expect);
-    s_expect.freq = SOUND_SAMPLES;
+    s_expect.freq = MINO_AUDIO_HZ;
     s_expect.format = AUDIO_S16;
     s_expect.channels = 2;
     s_expect.samples = 4096;

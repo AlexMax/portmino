@@ -17,10 +17,12 @@
 
 #pragma once
 
-#include <stdint.h>
-
+#include "define.h"
 #include "picture.h"
 #include "render.h"
+
+#define MINO_SOFTRENDER_WIDTH 320
+#define MINO_SOFTRENDER_HEIGHT 240
 
 typedef struct {
     /**

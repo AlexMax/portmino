@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include "define.h"
 
 #define ROT_0 0
 #define ROT_R 1

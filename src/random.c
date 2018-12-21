@@ -20,7 +20,6 @@
  * and Sebastiano Vigna, licensed under CC0.
  */
 
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include "platform.h"

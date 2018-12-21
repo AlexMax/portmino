@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "define.h"
 
 /**
  * An integer type that has enough room to contain all bits of the event

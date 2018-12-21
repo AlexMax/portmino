@@ -25,9 +25,6 @@
  * the rendered screen, aside from serving as a lower bound.
  */
 
-#define RENDER_WIDTH 320
-#define RENDER_HEIGHT 240
-
 enum {
     RENDERER_SOFTWARE
 };

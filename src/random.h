@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "define.h"
 
 typedef struct {
     /**

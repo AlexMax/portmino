@@ -1,13 +1,27 @@
-if(MSVC)
-    add_compile_options()
-else()
+include(CheckCCompilerFlag)
+
+function(checked_add_compile_option FLAG VAR)
+    check_c_compiler_flag(${FLAG} ${VAR})
+    if(${VAR})
+        add_compile_options(${FLAG})
+    endif()
+endfunction()
+
+if(NOT MSVC)
     add_compile_options(-Wall -Wextra)
+
+    # Not sure if these warnings exist or not.
+    checked_add_compile_option(-Werror=implicit-function-declaration E_IMPLICIT_FUNC)
+    checked_add_compile_option(-Wformat=2 W_FORMAT_2)
+    checked_add_compile_option(-Wnull-dereference W_NULL_DEREF)
+    checked_add_compile_option(-Wrestrict W_RESTRICT)
 endif()
 
 set(GAME_SOURCES
     audio.c         audio.h
     board.c         board.h
-    event.c         event.h
+                    define.h
+                    event.h
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h

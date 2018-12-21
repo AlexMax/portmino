@@ -15,14 +15,15 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "render.h"
 #include "softrender.h"
 
-#define BITS_PER_PIXEL 4
+/**
+ * Bits per pixel of the software-rendered surface.
+ */
+#define MINO_SOFTRENDER_BPP 4
 
 #define BOARD_X 18
 #define BOARD_Y 42
@@ -35,13 +36,13 @@ static picture_t* g_board;
 static picture_t* g_blocks[8];
 
 static void softrender_init(void) {
-    size_t size = RENDER_WIDTH * RENDER_HEIGHT * BITS_PER_PIXEL;
+    size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
 
     // Initialize the buffer picture in-place.
     g_render_ctx.buffer.data = calloc(size, sizeof(uint8_t));
     g_render_ctx.buffer.size = size;
-    g_render_ctx.buffer.width = RENDER_WIDTH;
-    g_render_ctx.buffer.height = RENDER_HEIGHT;
+    g_render_ctx.buffer.width = MINO_SOFTRENDER_WIDTH;
+    g_render_ctx.buffer.height = MINO_SOFTRENDER_HEIGHT;
 
     g_back = picture_new("../res/back.png");
     g_board = picture_new("../res/board.png");
