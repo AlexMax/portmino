@@ -51,7 +51,7 @@ void audio_deinit(void) {
 audio_context_t* audio_frame(void) {
     memset(g_audio_ctx.data, INT16_MIN, g_audio_ctx.size);
     for (size_t i = 0;i < g_audio_ctx.samplecount;i += MINO_AUDIO_CHANNELS) {
-        int16_t x = INT16_MAX;
+        int16_t x = INT16_MAX / 8;
         g_audio_ctx.data[i] = x;
         g_audio_ctx.data[i + 1] = x;
     }
