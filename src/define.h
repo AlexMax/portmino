@@ -28,3 +28,8 @@
  * Target framerate of the gamestate.
  */
 #define MINO_FPS 60
+
+/**
+ * Internal sample rate of all audio data.
+ */
+#define MINO_AUDIO_HZ 44100

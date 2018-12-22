@@ -21,7 +21,7 @@
 
 typedef struct {
     /**
-     * Picture data.
+     * Picture data, BGRA format.
      */
     uint8_t* data;
 

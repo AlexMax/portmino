@@ -29,8 +29,10 @@ set(GAME_SOURCES
     random.c        random.h
     render.c        render.h
     softrender.c    softrender.h
+    sound.c         sound.h
     state.c         state.h)
 set(LIBRARY_SOURCES
+                    dr_wav.h
                     stb_image.h)
 
 if(UNIX)

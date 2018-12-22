@@ -15,14 +15,19 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "audio.h"
+#include "sound.h"
 
 #define MINO_AUDIO_CHANNELS 2
 
 static audio_context_t g_audio_ctx;
+
+static sound_t* g_sound_piece0;
 
 /**
  * Initialize the audio context.
@@ -32,6 +37,8 @@ void audio_init(void) {
     g_audio_ctx.samplesize = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
     g_audio_ctx.size = g_audio_ctx.samplecount * g_audio_ctx.samplesize;
     g_audio_ctx.data = malloc(g_audio_ctx.size);
+
+    g_sound_piece0 = sound_new("../res/sfx/piece0.wav");
 }
 
 /**
@@ -44,16 +51,34 @@ void audio_deinit(void) {
     }
 }
 
+static size_t start;
+static size_t end;
+
 /**
  * Set up a game-frame's worth of audio data and pass it back to whatever
  * is playing our audio.
  */
 audio_context_t* audio_frame(void) {
+    if (start == end) {
+        end += g_audio_ctx.size;
+    } else {
+        start += g_audio_ctx.size;
+        end += g_audio_ctx.size;
+    }
+
+
+    if (end >= 14700) {
+        start = 0;
+        end = g_audio_ctx.size;
+    }
+
+    printf("%lu, %lu\n", start, end);
+
     memset(g_audio_ctx.data, INT16_MIN, g_audio_ctx.size);
+
+
     for (size_t i = 0;i < g_audio_ctx.samplecount;i += MINO_AUDIO_CHANNELS) {
-        int16_t x = INT16_MAX / 8;
-        g_audio_ctx.data[i] = x;
-        g_audio_ctx.data[i + 1] = x;
+        memcpy(g_audio_ctx.data, &g_sound_piece0->data[start], g_audio_ctx.size);
     }
     return &g_audio_ctx;
 }

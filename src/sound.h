@@ -21,26 +21,17 @@
 
 typedef struct {
     /**
-     * A pointer to the data to send to the audio subsystem.
+     * Sound data.
+     * 
+     * PCM-encoded, 2-channel, 44,100hz.
      */
     int16_t* data;
 
     /**
-     * The size of the data member in bytes.
+     * Size of sound data.
      */
     size_t size;
+} sound_t;
 
-    /**
-     * The number of samples in the data.  Should be 44100Hz / 60 fps.
-     */
-    size_t samplecount;
-
-    /**
-     * The size of an individual sample.  Should be 16-bit stereo, so 32-bits.
-     */
-    size_t samplesize;
-} audio_context_t;
-
-void audio_init(void);
-void audio_deinit(void);
-audio_context_t* audio_frame(void);
+sound_t* sound_new(const char* path);
+void sound_delete(sound_t* sound);
