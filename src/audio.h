@@ -18,6 +18,7 @@
 #pragma once
 
 #include "define.h"
+#include "sound.h"
 
 typedef struct {
     /**
@@ -41,6 +42,9 @@ typedef struct {
     size_t samplesize;
 } audio_context_t;
 
+extern sound_t* g_sound_piece0;
+
 void audio_init(void);
 void audio_deinit(void);
-audio_context_t* audio_frame(void);
+void audio_playsound(const sound_t* sound);
+audio_context_t* audio_frame(size_t samples);

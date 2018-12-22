@@ -74,7 +74,7 @@ sound_t* sound_new(const char* path) {
     }
 
     if (samplerate != MINO_AUDIO_HZ) {
-        // Turn mono into stereo.
+        // Convert 22050Hz to 44100Hz.
         int16_t* dest = malloc(sizeof(int16_t) * framecount * 2);
         if (dest == NULL) {
             free(data);
@@ -85,6 +85,7 @@ sound_t* sound_new(const char* path) {
         free(data);
         data = dest;
         samplerate = MINO_AUDIO_HZ;
+        framecount *= 2;
     }
 
     sound_t* sound = malloc(sizeof(sound_t));
@@ -93,7 +94,7 @@ sound_t* sound_new(const char* path) {
     }
 
     sound->data = data;
-    sound->size = channels * samplerate * framecount;
+    sound->size = channels * framecount;
 
     return sound;
 }

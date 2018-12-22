@@ -160,7 +160,7 @@ RETRO_API void retro_run(void) {
     video_cb(render_ctx->buffer.data, render_ctx->buffer.width, render_ctx->buffer.height, render_ctx->buffer.width * 4);
 
     // Play a tic worth of audio.
-    audio_context_t* audio_ctx = audio_frame();
+    audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
     audio_batch_cb(audio_ctx->data, audio_ctx->samplecount);
 }
 

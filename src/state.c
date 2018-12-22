@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 
+#include "audio.h"
 #include "state.h"
 
 #define DEFAULT_DAS 12
@@ -84,6 +85,8 @@ void state_delete(state_t* state) {
     free(state);
 }
 
+#include <stdio.h>
+
 /**
  * Given a particular gamestate, mutate it based on a particular event.
  * 
@@ -104,6 +107,7 @@ void state_frame(state_t* state, events_t events) {
     // Get the next piece if we don't have one at this point.
     if (board->piece == NULL) {
         board_next_piece(board);
+        audio_playsound(g_sound_piece0);
     }
 
     piece_t* piece = board->piece;
@@ -122,6 +126,7 @@ void state_frame(state_t* state, events_t events) {
 
             // Advance the new piece.
             board_next_piece(board);
+            audio_playsound(g_sound_piece0);
 
             // Get the piece pointer again, because we mutated it.
             piece = board->piece;

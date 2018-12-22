@@ -42,3 +42,12 @@
 #else
 #define ATTRIB_PRINTF(index, first_arg)
 #endif
+
+/**
+ * Annotate function as unused.
+ */
+#ifdef __GNUC__
+#define ATTRIB_UNUSED __attribute((unused))
+#else
+#define ATTRIB_UNUSED
+#endif
