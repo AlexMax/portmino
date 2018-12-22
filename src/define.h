@@ -33,3 +33,12 @@
  * Internal sample rate of all audio data.
  */
 #define MINO_AUDIO_HZ 44100
+
+/**
+ * Annotate function as printf-style function.
+ */
+#ifdef __GNUC__
+#define ATTRIB_PRINTF(index, first_arg) __attribute__ ((format(printf, index, first_arg)))
+#else
+#define ATTRIB_PRINTF(index, first_arg)
+#endif

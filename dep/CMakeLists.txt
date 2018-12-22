@@ -1,3 +1,25 @@
+add_subdirectory(libsamplerate-master)
+set_target_properties(
+    callback_hang_test
+    callback_test
+    clone_test
+    downsample_test
+    float_short_test
+    misc_test
+    multi_channel_test
+    multichan_throughput_test
+    nullptr_test
+    reset_test
+    simple_test
+    snr_bw_test
+    streaming_test
+    termination_test
+    throughput_test
+    timewarp-file
+    varispeed-play
+    varispeed_test
+    PROPERTIES EXCLUDE_FROM_ALL 1)
+
 # Lua
 set(LUA_DIR "lua-5.3.5/src")
 set(LUA_SOURCES

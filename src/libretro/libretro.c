@@ -32,6 +32,7 @@ static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
+ATTRIB_PRINTF(2, 3)
 static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
     (void)level;
 
