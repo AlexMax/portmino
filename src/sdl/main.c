@@ -193,7 +193,7 @@ int main(int argc, char** argv) {
     s_expect.channels = 2;
     s_expect.samples = 4096;
     s_expect.callback = NULL;
-    g_audio_device = SDL_OpenAudioDevice("Built-in Audio Analog Stereo", 0, &s_expect, &s_actual, 0);
+    g_audio_device = SDL_OpenAudioDevice(NULL, 0, &s_expect, &s_actual, 0);
     if (g_audio_device == 0) {
         char buffer[8192];
         if (snprintf(buffer, sizeof(buffer), "SDL_OpenAudioDevice failure: %s\n", SDL_GetError()) < 0) {

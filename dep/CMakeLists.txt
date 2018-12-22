@@ -18,7 +18,10 @@ set_target_properties(
     timewarp-file
     varispeed-play
     varispeed_test
-    PROPERTIES EXCLUDE_FROM_ALL 1)
+    PROPERTIES
+    EXCLUDE_FROM_ALL 1
+    EXCLUDE_FROM_DEFAULT_BUILD 1
+    FOLDER ExcludedTargets)
 
 # Lua
 set(LUA_DIR "lua-5.3.5/src")

@@ -37,6 +37,8 @@ set(LIBRARY_SOURCES
 
 if(UNIX)
     set(PLATFORM_SOURCES platform_unix.c)
+elseif(WIN32)
+    set(PLATFORM_SOURCES platform_win32.c)
 else()
     message(FATAL_ERROR "Platform implementation missing")
 endif()
