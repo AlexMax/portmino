@@ -23,7 +23,7 @@
 - [ ] Virtual Filesystem (resources can be loaded from inside binary or on-disk).
   - [ ] Figure out how to build and embed resources into binary.
   - [ ] Use libzip for resource packages?
-- [ ] Sound playback and mixing.
+- [X] Sound playback and mixing.
 - [ ] Rendering words from individual letters.
   - [ ] Needs texture manager.
   - [ ] Allow for transparency in software rendering.
