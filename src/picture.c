@@ -19,6 +19,7 @@
 #define STBI_ONLY_PNG
 #include "stb_image.h"
 
+#include "frontend.h"
 #include "picture.h"
 
 /**
@@ -40,6 +41,7 @@ picture_t* picture_new(const char* path) {
 
     if (pic->data == NULL) {
         picture_delete(pic);
+        frontend_fatalerror("Could not find resource %s", path);
         return NULL;
     }
 

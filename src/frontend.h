@@ -15,30 +15,20 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdarg.h>
 
 #include "define.h"
 
 /**
- * Contains functionality that is specific to a platform (Windows, macOS, Linux).
+ * Contains functionality that is specific to a frontend (libretro, SDL).
  */
 typedef struct {
     /**
-     * Platform-specific init.
+     * Call this when an unrecoverable error has occurred.
      */
-    bool (*init)(void);
+    void (*fatalerror)(const char *fmt, va_list va);
+} frontend_module_t;
 
-    /**
-     * Platform-specific cleanup.
-     */
-    void (*deinit)(void);
-
-    /**
-     * Get a 32-bit random seed for the random number generator.
-     */
-    bool (*random_get_seed)(uint32_t* seed);
-} platform_module_t;
-
-bool platform_init(void);
-void platform_deinit(void);
-platform_module_t* platform(void);
+bool frontend_init(const frontend_module_t* module);
+void frontend_deinit(void);
+void frontend_fatalerror(const char *fmt, ...);

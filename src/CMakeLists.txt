@@ -22,6 +22,7 @@ set(GAME_SOURCES
     board.c         board.h
                     define.h
                     event.h
+    frontend.c      frontend.h
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h

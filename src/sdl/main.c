@@ -23,6 +23,7 @@
 
 #include "audio.h"
 #include "event.h"
+#include "frontend.h"
 #include "game.h"
 #include "platform.h"
 #include "softrender.h"
@@ -30,8 +31,14 @@
 static SDL_Window* g_window;
 static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
-
 static SDL_AudioDeviceID g_audio_device;
+
+static void sdl_fatalerror(const char *fmt, va_list va) {
+    char buffer[8192];
+    vsnprintf(buffer, sizeof(buffer), fmt, va);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, NULL);
+    exit(1);
+}
 
 static event_t sdl_scancode_to_event(int code) {
     switch (code) {
@@ -110,6 +117,8 @@ static void sdl_run(void) {
     uint32_t bufsize = SDL_GetQueuedAudioSize(g_audio_device);
     if (bufsize == 0) {
         fprintf(stderr, "Audio Buffer underrun: tic %d\n", SDL_GetTicks());
+    } else {
+        fprintf(stderr, "Audio Buffer %u: tic %d\n", bufsize, SDL_GetTicks());
     }
     audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
     SDL_QueueAudio(g_audio_device, audio_ctx->data, audio_ctx->size);
@@ -137,11 +146,21 @@ static void clean_exit(void) {
     SDL_Quit();
 
     platform_deinit();
+    frontend_deinit();
 }
 
 int main(int argc, char** argv) {
     (void)argc; (void)argv;
     atexit(clean_exit);
+
+    // Initialize the front-end.
+    frontend_module_t frontend = {
+        sdl_fatalerror
+    };
+    if (!frontend_init(&frontend)) {
+        fprintf(stderr, "frontend_init failure\n");
+        return 1;
+    }
 
     // Initialize our non-library platform-specific functions first.
     if (!platform_init()) {
@@ -157,32 +176,20 @@ int main(int argc, char** argv) {
 
     g_window = SDL_CreateWindow("Portmino", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
     if (g_window == NULL) {
-        char buffer[8192];
-        if (snprintf(buffer, sizeof(buffer), "SDL_CreateWindow failure: %s\n", SDL_GetError()) < 0) {
-            abort();
-        }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, NULL);
+        frontend_fatalerror("SDL_CreateWindow failure: %s\n", SDL_GetError());
         return 1;
     }
 
     // SDL_RENDERER_PRESENTVSYNC for VSync
     g_renderer = SDL_CreateRenderer(g_window, -1, 0);
     if (g_renderer == NULL) {
-        char buffer[8192];
-        if (snprintf(buffer, sizeof(buffer), "SDL_Renderer failure: %s\n", SDL_GetError()) < 0) {
-            abort();
-        }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
+        frontend_fatalerror("SDL_Renderer failure: %s\n", SDL_GetError());
         return 1;
     }
 
     g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, MINO_SOFTRENDER_WIDTH, MINO_SOFTRENDER_HEIGHT);
     if (g_texture == NULL) {
-        char buffer[8192];
-        if (snprintf(buffer, sizeof(buffer), "SDL_CreateTexture failure: %s\n", SDL_GetError()) < 0) {
-            abort();
-        }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
+        frontend_fatalerror("SDL_CreateTexture failure: %s\n", SDL_GetError());
         return 1;
     }
 
@@ -195,11 +202,7 @@ int main(int argc, char** argv) {
     s_expect.callback = NULL;
     g_audio_device = SDL_OpenAudioDevice(NULL, 0, &s_expect, &s_actual, 0);
     if (g_audio_device == 0) {
-        char buffer[8192];
-        if (snprintf(buffer, sizeof(buffer), "SDL_OpenAudioDevice failure: %s\n", SDL_GetError()) < 0) {
-            abort();
-        }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, g_window);
+        frontend_fatalerror("SDL_OpenAudioDevice failure: %s\n", SDL_GetError());
         return 1;
     }
     SDL_PauseAudioDevice(g_audio_device, 0);

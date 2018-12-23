@@ -15,30 +15,33 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <string.h>
 
-#include "define.h"
+#include "frontend.h"
+
+frontend_module_t g_frontend_module;
 
 /**
- * Contains functionality that is specific to a platform (Windows, macOS, Linux).
+ * Initialize any front-end functionality.
  */
-typedef struct {
-    /**
-     * Platform-specific init.
-     */
-    bool (*init)(void);
+bool frontend_init(const frontend_module_t* module) {
+    memcpy(&g_frontend_module, module, sizeof(frontend_module_t));
+    return true;
+}
 
-    /**
-     * Platform-specific cleanup.
-     */
-    void (*deinit)(void);
+/**
+ * Deinitialize the front-end.
+ */
+void frontend_deinit(void) {
+    // Does nothing.
+}
 
-    /**
-     * Get a 32-bit random seed for the random number generator.
-     */
-    bool (*random_get_seed)(uint32_t* seed);
-} platform_module_t;
-
-bool platform_init(void);
-void platform_deinit(void);
-platform_module_t* platform(void);
+/**
+ * Show an error message and terminate the game.
+ */
+void frontend_fatalerror(const char *fmt, ...) {
+    va_list va;
+    va_start(va, fmt);
+    g_frontend_module.fatalerror(fmt, va);
+    va_end(va);
+}

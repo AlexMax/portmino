@@ -15,11 +15,13 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "audio.h"
+#include "frontend.h"
 #include "game.h"
 #include "libretro.h"
 #include "platform.h"
@@ -31,6 +33,13 @@ static retro_video_refresh_t video_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
+
+static void retro_fatalerror(const char *fmt, va_list va) {
+    char buffer[8192];
+    vsnprintf(buffer, sizeof(buffer), fmt, va);
+    log_cb(RETRO_LOG_ERROR, "Portmino Fatal Error: %s\n", buffer);
+    exit(1);
+}
 
 ATTRIB_PRINTF(2, 3)
 static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
@@ -100,6 +109,10 @@ RETRO_API void retro_set_input_state(retro_input_state_t cb) {
 }
 
 RETRO_API void retro_init(void) {
+    frontend_module_t module = {
+        retro_fatalerror,
+    };
+    frontend_init(&module);
     platform_init();
     game_init();
 }
@@ -107,6 +120,7 @@ RETRO_API void retro_init(void) {
 RETRO_API void retro_deinit(void) {
     game_deinit();
     platform_deinit();
+    frontend_deinit();
 }
 
 RETRO_API unsigned retro_api_version(void) {

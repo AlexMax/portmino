@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "audio.h"
+#include "frontend.h"
 
 #define MINO_AUDIO_CHANNELS 2
 #define MIXER_CHANNELS 8
@@ -152,8 +153,8 @@ void audio_playsound(const sound_t* sound) {
 audio_context_t* audio_frame(size_t samples) {
     size_t units = samples * MINO_AUDIO_CHANNELS;
     if (units != g_audio_ctx.size / sizeof(int16_t)) {
-        printf("Size isn't correct - dynamic audio frame sizes aren't implemented yet");
-        abort();
+        frontend_fatalerror("Size isn't correct - dynamic audio frame sizes aren't implemented yet");
+        return NULL;
     }
 
     // Start mixing our sounds.
