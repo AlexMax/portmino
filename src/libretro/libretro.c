@@ -155,7 +155,8 @@ RETRO_API void retro_set_controller_port_device(unsigned port, unsigned device) 
 }
 
 RETRO_API void retro_reset(void) {
-
+    game_deinit();
+    game_init();
 }
 
 RETRO_API void retro_run(void) {
