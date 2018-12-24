@@ -51,6 +51,17 @@ typedef struct {
      * How many rotations a piece has.  Usually 4.
      */
     uint8_t data_count;
+
+    /**
+     * X spawn position of piece.
+     */
+    int16_t spawn_x;
+
+    /**
+     * Y spawn position of piece.
+     */
+    int16_t spawn_y;
+    uint8_t spawn_rot;
 } piece_config_t;
 
 typedef struct {

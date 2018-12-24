@@ -51,6 +51,9 @@ static void piece_config_init_j(piece_config_t* piece) {
         6, 6, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
     piece->data_size = piece->width * piece->height;
@@ -78,6 +81,9 @@ static void piece_config_init_l(piece_config_t* piece) {
         0, 2, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
     piece->data_size = piece->width * piece->height;
@@ -105,6 +111,9 @@ static void piece_config_init_s(piece_config_t* piece) {
         0, 4, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
     piece->data_size = piece->width * piece->height;
@@ -132,6 +141,9 @@ static void piece_config_init_z(piece_config_t* piece) {
         1, 0, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
     piece->data_size = piece->width * piece->height;
@@ -159,6 +171,9 @@ static void piece_config_init_t(piece_config_t* piece) {
         0, 7, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
     piece->data_size = piece->width * piece->height;
@@ -190,6 +205,9 @@ static void piece_config_init_i(piece_config_t* piece) {
         0, 5, 0, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 4;
     piece->height = 4;
     piece->data_size = piece->width * piece->height;
@@ -217,6 +235,9 @@ static void piece_config_init_o(piece_config_t* piece) {
         0, 0, 0, 0
     };
 
+    piece->spawn_x = 3;
+    piece->spawn_y = 1;
+    piece->spawn_rot = 0;
     piece->width = 4;
     piece->height = 3;
     piece->data_size = piece->width * piece->height;
@@ -265,9 +286,9 @@ piece_t* piece_new(const piece_config_t* config) {
     piece_t* piece = malloc(sizeof(piece_t));
 
     piece->config = config;
-    piece->rot = 0;
-    piece->x = 0;
-    piece->y = 0;
+    piece->rot = config->spawn_rot;
+    piece->x = config->spawn_x;
+    piece->y = config->spawn_y;
 
     return piece;
 }

@@ -1,4 +1,5 @@
-- [ ] Place initial pieces in the correct spot.
+- [X] Place initial pieces in the correct spot.
+  - [ ] Try to spawn in two places.
 - [ ] Proper softdropping.
 - [ ] Harddroping.
 - [X] Proper wallkicking.
