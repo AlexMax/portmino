@@ -85,28 +85,28 @@ void state_delete(state_t* state) {
     free(state);
 }
 
-#include <stdio.h>
-
 /**
  * Given a particular gamestate, mutate it based on a particular event.
  * 
  * @param state The state to start from.
  * @param event The event to run on the gamestate.
  */
-void state_frame(state_t* state, events_t events) {
+state_result_t state_frame(state_t* state, events_t events) {
     // Whatever happens, our gametic increases by one.  Tic 0 does not exist.
     state->tic += 1;
 
     if (state->tic == 0) {
         // How have you been playing for this long?
-        return;
+        return STATE_RESULT_ERROR;
     }
 
     board_t* board = state->boards[0];
 
     // Get the next piece if we don't have one at this point.
     if (board->piece == NULL) {
-        board_next_piece(board);
+        if (!board_next_piece(board)) {
+            return STATE_RESULT_GAMEOVER;
+        }
         audio_playsound(g_sound_piece0);
     }
 
@@ -125,7 +125,9 @@ void state_frame(state_t* state, events_t events) {
             uint8_t lines = board_clear_lines(board);
 
             // Advance the new piece.
-            board_next_piece(board);
+            if (!board_next_piece(board)) {
+                return STATE_RESULT_GAMEOVER;
+            }
             audio_playsound(g_sound_piece0);
 
             // Get the piece pointer again, because we mutated it.
@@ -318,4 +320,7 @@ void state_frame(state_t* state, events_t events) {
             }
         }
     }
+
+    // We're done with all processing for this tic.
+    return STATE_RESULT_OK;
 }

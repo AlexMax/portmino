@@ -88,30 +88,49 @@ void board_delete(board_t *board) {
 
 /**
  * Get the next piece, make it the active piece, and advance the next piece index.
+ * 
+ * Returns true if the next piece was successfully placed, otherwise false.
+ * 
+ * TODO: This function is probably a good candidate for turning into Lua.
  */
-void board_next_piece(board_t* board) {
+bool board_next_piece(board_t* board) {
     if (board->piece != NULL) {
         // Free the existing piece if it exists.
         piece_delete(board->piece);
         board->piece = NULL;
     }
 
-    // Create the next piece.
+    // Find the next piece.
     piece_config_t* config = board->nexts[board->next_index];
-    board->piece = piece_new(config);
+
+    // See if our newly-spawned piece would collide with an existing piece.
+    if (!board_test_piece(board, config, config->spawn_x, config->spawn_y, config->spawn_rot)) {
+        if (!board_test_piece(board, config, config->spawn_x, config->spawn_y - 1, config->spawn_rot)) {
+            return false;
+        }
+
+        // Create the new piece offset from its usual spot.
+        board->piece = piece_new(config);
+        board->piece->y -= 1;
+    } else {
+        // Create the new piece.
+        board->piece = piece_new(config);
+    }
 
     // Generate a new next piece in place.
     board->nexts[board->next_index] = board_get_random_piece(board);
 
     // Advance the next index.
     board->next_index = (board->next_index + 1) % MAX_NEXTS;
+
+    return true;
 }
 
 /**
  * Board collision test given a piece and an orientation.
  * 
- * Returns true if the piece collides with the contents of the board, otherwise
- * false.
+ * Returns true if the piece can be placed on the board with no collision,
+ * otherwise false.
  */
 bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot) {
     for (size_t i = 0;i < piece->data_size;i++) {

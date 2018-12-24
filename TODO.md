@@ -1,5 +1,5 @@
 - [X] Place initial pieces in the correct spot.
-  - [ ] Try to spawn in two places.
+  - [X] Try to spawn in two places.
 - [ ] Proper softdropping.
 - [ ] Harddroping.
 - [X] Proper wallkicking.
@@ -7,6 +7,8 @@
 - [ ] Proper gravity.
 - [ ] Hold piece.
 - [ ] Game over.
+  - [X] Actually get to the game over state.
+  - [ ] Figure out how to handle the game over animation and fanfare.
 - [ ] Render ghost piece.
 - [ ] Render hold piece.
 - [ ] Render next pieces.
