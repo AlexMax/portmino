@@ -169,6 +169,66 @@ bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, 
 }
 
 /**
+ * Repeatedly test collision between two points, not including the source
+ * location.  Returns the furthest point that the piece could be successfully
+ * placed.
+ * 
+ * This function does not work with any arbitrary destination.  Only
+ * destinations on the four cardinal directions from the source are accepted.
+ * 
+ * This function will return the source location if collision fails on the
+ * first test, or if an invalid destination is supplied.
+ */
+vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,
+                                 vec2i_t src, uint8_t rot, vec2i_t dst) {
+    vec2i_t ret = src;
+
+    vec2i_t delta = { 0 };
+    delta.x = dst.x - src.x;
+    delta.y = dst.y - src.y;
+
+    if (delta.x != 0 && delta.y != 0) {
+        // We don't do diagonals.
+        return src;
+    } else if (delta.x > 0) {
+        // Loop along the positive x coordinate.
+        for (int i = src.x + 1;i <= dst.x;i++) {
+            if (!board_test_piece(board, piece, i, ret.y, rot)) {
+                return ret;
+            }
+            ret.x = i;
+        }
+    } else if (delta.x < 0) {
+        // Loop along the negative x coordinate.
+        for (int i = src.x - 1;i >= dst.x;i--) {
+            if (!board_test_piece(board, piece, i, ret.y, rot)) {
+                return ret;
+            }
+            ret.x = i;
+        }
+    } else if (delta.y > 0) {
+        // Loop along the positive y coordinate.
+        for (int i = src.y + 1;i <= dst.y;i++) {
+            if (!board_test_piece(board, piece, ret.x, i, rot)) {
+                return ret;
+            }
+            ret.y = i;
+        }
+    } else if (delta.y < 0) {
+        // Loop along the negative y coordinate.
+        for (int i = src.y - 1;i >= dst.y;i--) {
+            if (!board_test_piece(board, piece, ret.x, i, rot)) {
+                return ret;
+            }
+            ret.y = i;
+        }
+    }
+
+    // Source and destination are the same.
+    return ret;
+}
+
+/**
  * Lock a piece in a particular spot.
  * 
  * Note that no collision detection is done.  Any existing blocks will be

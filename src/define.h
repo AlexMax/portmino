@@ -51,3 +51,11 @@
 #else
 #define ATTRIB_UNUSED
 #endif
+
+/**
+ * Vector type.
+ */
+typedef struct {
+    int x;
+    int y;
+} vec2i_t;

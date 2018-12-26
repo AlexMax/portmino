@@ -43,6 +43,11 @@ typedef struct {
     uint32_t right_tic;
 
     /**
+     * Have we processed an EVENT_HARDDROP last tic?
+     */
+    bool harddrop_already;
+
+    /**
      * Have we processed an EVENT_CCW last tic?
      */
     bool ccw_already;

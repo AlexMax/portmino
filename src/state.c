@@ -29,8 +29,9 @@
 void playstate_reset(playstate_t* ps) {
     ps->left_tic = 0;
     ps->right_tic = 0;
-    ps->ccw_already = 0;
-    ps->cw_already = 0;
+    ps->harddrop_already = false;
+    ps->ccw_already = false;
+    ps->cw_already = false;
 }
 
 /**
@@ -112,11 +113,38 @@ state_result_t state_frame(state_t* state, events_t events) {
 
     piece_t* piece = board->piece;
 
+    // Determine what our gravity is going to be.
+    int gravity_tics = 64; // number of tics between gravity tics
+    int gravity_cells = 1; // number of cells to move the piece per gravity tics.
+
+    // Soft dropping and hard dropping aren't anything too special, they
+    // just toy with gravity.
+    if (events & EVENT_SOFTDROP) {
+        gravity_tics = 2;
+        gravity_cells = 1;
+    }
+
+    // If you press soft and hard drop at the same time, hard drop wins.
+    // If you hold hard drop and press soft drop afterwards, soft drop wins.
+    if (events & EVENT_HARDDROP) {
+        if (state->playstates[0].harddrop_already == false) {
+            gravity_tics = 1;
+            gravity_cells = 20;
+
+            state->playstates[0].harddrop_already = true;
+        }
+    } else {
+        state->playstates[0].harddrop_already = false;
+    }
+
     // Handle gravity.
-    if (state->tic % 60 == 0) {
-        if (board_test_piece(board, piece->config, piece->x, piece->y + 1, piece->rot)) {
+    if (state->tic % gravity_tics == 0) {
+        vec2i_t src = { piece->x, piece->y };
+        vec2i_t dst = { piece->x, piece->y + gravity_cells };
+        vec2i_t res = board_test_piece_between(board, piece->config, src, piece->rot, dst);
+        if (res.y != src.y) {
             // We can move down.
-            piece->y += 1;
+            piece->y = res.y;
         } else {
             // We can't move down, lock the piece.
             board_lock_piece(board, piece->config, piece->x, piece->y, piece->rot);
@@ -193,20 +221,6 @@ state_result_t state_frame(state_t* state, events_t events) {
     if (dx != 0) {
         if (board_test_piece(board, piece->config, piece->x + dx, piece->y, piece->rot)) {
             piece->x += dx;
-        }
-    }
-
-    // TODO: This is just some testing stuff, drops don't work like this.
-    int dy = 0;
-    if (events & EVENT_HARDDROP) {
-        dy -= 1;
-    }
-    if (events & EVENT_SOFTDROP) {
-        dy += 1;
-    }
-    if (dy != 0) {
-        if (board_test_piece(board, piece->config, piece->x, piece->y + dy, piece->rot)) {
-            piece->y += dy;
         }
     }
 
