@@ -88,6 +88,11 @@ typedef struct {
     piece_t* piece;
 
     /**
+     * Ghost piece on the board.
+     */
+    piece_t* ghost;
+
+    /**
      * "Next piece" PRNG.
      */
     random_t next_rng;

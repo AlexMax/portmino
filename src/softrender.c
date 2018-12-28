@@ -118,7 +118,36 @@ static void* softrender_draw_state(const state_t* state) {
             BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy));
     }
 
-    // Draw the piece, if any.
+    // Draw the ghost piece, if any.
+    if (board->ghost != NULL) {
+        size_t i = board->ghost->rot * board->ghost->config->data_size;
+        size_t end = i + board->ghost->config->data_size;
+        for (int j = 0;i < end;i++,j++) {
+            // What type of block are we rendering?
+            uint8_t btype = board->ghost->config->datas[i];
+            if (!btype) {
+                continue;
+            }
+            picture_t* bpic = g_blocks[btype];
+
+            // What is the actual (x, y) coordinate of the block?
+            int ix = board->ghost->x + (j % board->ghost->config->width);
+            int iy = board->ghost->y + (j / board->ghost->config->width);
+            iy -= board->config.height - board->config.visible_height;
+
+            if (iy < 0) {
+                // Don't draw a block above the visible height.
+                continue;
+            }
+
+            // Draw a block.
+            picture_copy(&g_render_ctx.buffer, bpic,
+                BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy));
+        }
+    }
+
+    // Draw the piece, if any.  The normal piece is drawn after the ghost piece
+    // so it gets drawn over top of the ghost in case of overlap.
     if (board->piece != NULL) {
         size_t i = board->piece->rot * board->piece->config->data_size;
         size_t end = i + board->piece->config->data_size;

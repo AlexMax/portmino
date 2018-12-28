@@ -1,15 +1,21 @@
 - [X] Place initial pieces in the correct spot.
   - [X] Try to spawn in two places.
-- [ ] Proper softdropping.
-- [ ] Harddroping.
+- [X] Softdropping.
+- [X] Harddroping.
 - [X] Proper wallkicking.
 - [ ] Lock delay.
 - [ ] Proper gravity.
+  - [ ] Translate from floating point gravity values to gravity that properly
+        converges to correctness over multiple tics.
+  - [ ] Properly adjust soft drop speed based on gravity.
 - [ ] Hold piece.
 - [ ] Game over.
   - [X] Actually get to the game over state.
   - [ ] Figure out how to handle the game over animation and fanfare.
 - [ ] Render ghost piece.
+  - [X] Initial pass at rendering ghost piece.
+  - [ ] Render ghost piece out of a separate set of piece config data that uses
+        different sprites.
 - [ ] Render hold piece.
 - [ ] Render next pieces.
 - [ ] Render partial first row?

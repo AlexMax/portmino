@@ -59,8 +59,9 @@ board_t *board_new(void) {
     board->pieces[5] = &g_i_piece;
     board->pieces[6] = &g_o_piece;
 
-    // Start with no piece allocated.
+    // Start with no active piece or ghost allocated.
     board->piece = NULL;
+    board->ghost = NULL;
 
     // Initialize the next piece PRNG.
     random_init(&board->next_rng, NULL);
@@ -78,8 +79,14 @@ board_t *board_new(void) {
  * Delete a board structure.
  */
 void board_delete(board_t *board) {
+    if (board->ghost != NULL) {
+        piece_delete(board->ghost);
+        board->ghost = NULL;
+    }
+
     if (board->piece != NULL) {
         piece_delete(board->piece);
+        board->piece = NULL;
     }
 
     free(board->data.data);

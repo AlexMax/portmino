@@ -335,6 +335,24 @@ state_result_t state_frame(state_t* state, events_t events) {
         }
     }
 
+    // Ghost piece logic.
+    if (board->ghost == NULL) {
+        // Create a ghost piece.
+        board->ghost = piece_new(piece->config);
+    } else if (board->ghost->config != board->piece->config) {
+        // Update the ghost piece configuration.
+        board->ghost->config = board->piece->config;
+    }
+
+    vec2i_t ghost_src = { board->piece->x, board->piece->y };
+    vec2i_t ghost_dst = { board->piece->x, board->config.height };
+    vec2i_t ghost_loc = board_test_piece_between(board, board->ghost->config,
+        ghost_src, piece->rot, ghost_dst);
+
+    board->ghost->x = ghost_loc.x;
+    board->ghost->y = ghost_loc.y;
+    board->ghost->rot = piece->rot;
+
     // We're done with all processing for this tic.
     return STATE_RESULT_OK;
 }
