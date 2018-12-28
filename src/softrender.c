@@ -131,8 +131,8 @@ static void* softrender_draw_state(const state_t* state) {
             picture_t* bpic = g_blocks[btype];
 
             // What is the actual (x, y) coordinate of the block?
-            int ix = board->ghost->x + (j % board->ghost->config->width);
-            int iy = board->ghost->y + (j / board->ghost->config->width);
+            int ix = board->ghost->pos.x + (j % board->ghost->config->width);
+            int iy = board->ghost->pos.y + (j / board->ghost->config->width);
             iy -= board->config.height - board->config.visible_height;
 
             if (iy < 0) {
@@ -160,8 +160,8 @@ static void* softrender_draw_state(const state_t* state) {
             picture_t* bpic = g_blocks[btype];
 
             // What is the actual (x, y) coordinate of the block?
-            int ix = board->piece->x + (j % board->piece->config->width);
-            int iy = board->piece->y + (j / board->piece->config->width);
+            int ix = board->piece->pos.x + (j % board->piece->config->width);
+            int iy = board->piece->pos.y + (j / board->piece->config->width);
             iy -= board->config.height - board->config.visible_height;
 
             if (iy < 0) {

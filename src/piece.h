@@ -53,27 +53,22 @@ typedef struct {
     uint8_t data_count;
 
     /**
-     * X spawn position of piece.
+     * Spawn position of piece.
      */
-    int16_t spawn_x;
+    vec2i_t spawn_pos;
 
     /**
-     * Y spawn position of piece.
+     * Initial rotation of piece.
      */
-    int16_t spawn_y;
     uint8_t spawn_rot;
 } piece_config_t;
 
 typedef struct {
     /**
-     * X coordinate of the current piece (left side).  Can be off the board.
+     * Current position of the piece, origin is at the top-left.  Can be off
+     * the side of the board.
      */
-    int16_t x;
-
-    /**
-     * Y coordinate of the current piece (top side).  Can be off the board.
-     */
-    int16_t y;
+    vec2i_t pos;
 
     /**
      * Current orientation of the piece.

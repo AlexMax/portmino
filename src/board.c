@@ -111,14 +111,16 @@ bool board_next_piece(board_t* board) {
     piece_config_t* config = board->nexts[board->next_index];
 
     // See if our newly-spawned piece would collide with an existing piece.
-    if (!board_test_piece(board, config, config->spawn_x, config->spawn_y, config->spawn_rot)) {
-        if (!board_test_piece(board, config, config->spawn_x, config->spawn_y - 1, config->spawn_rot)) {
+    vec2i_t spawn_pos = config->spawn_pos;
+    if (!board_test_piece(board, config, spawn_pos, config->spawn_rot)) {
+        spawn_pos.y -= 1;
+        if (!board_test_piece(board, config, spawn_pos, config->spawn_rot)) {
             return false;
         }
 
         // Create the new piece offset from its usual spot.
         board->piece = piece_new(config);
-        board->piece->y -= 1;
+        board->piece->pos.y -= 1;
     } else {
         // Create the new piece.
         board->piece = piece_new(config);
@@ -139,7 +141,7 @@ bool board_next_piece(board_t* board) {
  * Returns true if the piece can be placed on the board with no collision,
  * otherwise false.
  */
-bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot) {
+bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot) {
     for (size_t i = 0;i < piece->data_size;i++) {
         // Get the source cell.
         uint8_t* scell = piece_get_rot(piece, rot) + i;
@@ -153,13 +155,14 @@ bool board_test_piece(const board_t* board, const piece_config_t* piece, int x, 
         int sy = i / piece->width;
 
         // Check to see if we're off the board.
-        if (x + sx < 0 || x + sx >= board->config.width || y + sy < 0 || y + sy >= board->config.height) {
+        if (pos.x + sx < 0 || pos.x + sx >= board->config.width ||
+            pos.y + sy < 0 || pos.y + sy >= board->config.height) {
             return false;
         }
 
         // Figure out the destination cell.
         uint8_t* dcell = board->data.data;
-        dcell += y * board->config.width + x;
+        dcell += pos.y * board->config.width + pos.x;
         dcell += sy * board->config.width + sx;
 
         if (!*dcell) {
@@ -194,13 +197,16 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
     delta.x = dst.x - src.x;
     delta.y = dst.y - src.y;
 
+    vec2i_t pos = { 0 };
     if (delta.x != 0 && delta.y != 0) {
         // We don't do diagonals.
         return src;
     } else if (delta.x > 0) {
         // Loop along the positive x coordinate.
         for (int i = src.x + 1;i <= dst.x;i++) {
-            if (!board_test_piece(board, piece, i, ret.y, rot)) {
+            pos.x = i;
+            pos.y = ret.y;
+            if (!board_test_piece(board, piece, pos, rot)) {
                 return ret;
             }
             ret.x = i;
@@ -208,7 +214,9 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
     } else if (delta.x < 0) {
         // Loop along the negative x coordinate.
         for (int i = src.x - 1;i >= dst.x;i--) {
-            if (!board_test_piece(board, piece, i, ret.y, rot)) {
+            pos.x = i;
+            pos.y = ret.y;
+            if (!board_test_piece(board, piece, pos, rot)) {
                 return ret;
             }
             ret.x = i;
@@ -216,7 +224,9 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
     } else if (delta.y > 0) {
         // Loop along the positive y coordinate.
         for (int i = src.y + 1;i <= dst.y;i++) {
-            if (!board_test_piece(board, piece, ret.x, i, rot)) {
+            pos.x = ret.x;
+            pos.y = i;
+            if (!board_test_piece(board, piece, pos, rot)) {
                 return ret;
             }
             ret.y = i;
@@ -224,7 +234,9 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
     } else if (delta.y < 0) {
         // Loop along the negative y coordinate.
         for (int i = src.y - 1;i >= dst.y;i--) {
-            if (!board_test_piece(board, piece, ret.x, i, rot)) {
+            pos.x = ret.x;
+            pos.y = i;
+            if (!board_test_piece(board, piece, pos, rot)) {
                 return ret;
             }
             ret.y = i;
@@ -241,7 +253,7 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
  * Note that no collision detection is done.  Any existing blocks will be
  * overwritten.
  */
-void board_lock_piece(const board_t* board, const piece_config_t* piece, int x, int y, uint8_t rot) {
+void board_lock_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot) {
     for (size_t i = 0;i < piece->data_size;i++) {
         // Get the source cell.
         uint8_t* scell = piece_get_rot(piece, rot) + i;
@@ -255,13 +267,14 @@ void board_lock_piece(const board_t* board, const piece_config_t* piece, int x, 
         int sy = i / piece->width;
 
         // Check to see if we're off the board.
-        if (x + sx < 0 || x + sx >= board->config.width || y + sy < 0 || y + sy >= board->config.height) {
+        if (pos.x + sx < 0 || pos.x + sx >= board->config.width ||
+            pos.y + sy < 0 || pos.y + sy >= board->config.height) {
             continue;
         }
 
         // Figure out the destination cell.
         uint8_t* dcell = board->data.data;
-        dcell += y * board->config.width + x;
+        dcell += pos.y * board->config.width + pos.x;
         dcell += sy * board->config.width + sx;
 
         // Write our piece cell into the destination cell.

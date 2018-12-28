@@ -139,15 +139,15 @@ state_result_t state_frame(state_t* state, events_t events) {
 
     // Handle gravity.
     if (state->tic % gravity_tics == 0) {
-        vec2i_t src = { piece->x, piece->y };
-        vec2i_t dst = { piece->x, piece->y + gravity_cells };
+        vec2i_t src = { piece->pos.x, piece->pos.y };
+        vec2i_t dst = { piece->pos.x, piece->pos.y + gravity_cells };
         vec2i_t res = board_test_piece_between(board, piece->config, src, piece->rot, dst);
         if (res.y != src.y) {
             // We can move down.
-            piece->y = res.y;
+            piece->pos.y = res.y;
         } else {
             // We can't move down, lock the piece.
-            board_lock_piece(board, piece->config, piece->x, piece->y, piece->rot);
+            board_lock_piece(board, piece->config, piece->pos, piece->rot);
 
             // Clear the board of any lines.
             uint8_t lines = board_clear_lines(board);
@@ -218,9 +218,12 @@ state_result_t state_frame(state_t* state, events_t events) {
         }
     }
 
+    // dx will be != depending on where the piece must be moved.
     if (dx != 0) {
-        if (board_test_piece(board, piece->config, piece->x + dx, piece->y, piece->rot)) {
-            piece->x += dx;
+        vec2i_t dpos = piece->pos;
+        dpos.x += dx;
+        if (board_test_piece(board, piece->config, dpos, piece->rot)) {
+            piece->pos.x += dx;
         }
     }
 
@@ -255,79 +258,83 @@ state_result_t state_frame(state_t* state, events_t events) {
         }
         prot %= piece->config->data_count;
 
-        if (board_test_piece(board, piece->config, piece->x, piece->y, prot)) {
+        if (board_test_piece(board, piece->config, piece->pos, prot)) {
             // Normal rotation.
             piece->rot = prot;
         } else if (piece->config == &g_o_piece) {
             // Don't wallkick the "O" piece.
         } else if (piece->config == &g_i_piece) {
             // Wallkicks for the "I" piece are unique.
-            int8_t tries_x[4] = { 0 };
-            int8_t tries_y[4] = { 0 };
+            vec2i_t tries[4] = { 0 };
 
             if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_R && prot == ROT_2)) {
-                tries_x[0] = -1; tries_y[0] = 0;
-                tries_x[1] = 2; tries_y[1] = 0;
-                tries_x[2] = -1; tries_y[2] = -2;
-                tries_x[3] = 2; tries_y[3] = 1;
+                tries[0].x = -1; tries[0].y = 0;
+                tries[1].x = 2; tries[1].y = 0;
+                tries[2].x = -1; tries[2].y = -2;
+                tries[3].x = 2; tries[3].y = 1;
             } else if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
-                tries_x[0] = -2; tries_y[0] = 0;
-                tries_x[1] = 1; tries_y[1] = 0;
-                tries_x[2] = -2; tries_y[2] = 1;
-                tries_x[3] = 1; tries_y[3] = -2;
+                tries[0].x = -2; tries[0].y = 0;
+                tries[1].x = 1; tries[1].y = 0;
+                tries[2].x = -2; tries[2].y = 1;
+                tries[3].x = 1; tries[3].y = -2;
             } else if ((piece->rot == ROT_2 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_0)) {
-                tries_x[0] = 1; tries_y[0] = 0;
-                tries_x[1] = -2; tries_y[1] = 0;
-                tries_x[2] = 1; tries_y[2] = 2;
-                tries_x[3] = -2; tries_y[3] = -1;
+                tries[0].x = 1; tries[0].y = 0;
+                tries[1].x = -2; tries[1].y = 0;
+                tries[2].x = 1; tries[2].y = 2;
+                tries[3].x = -2; tries[3].y = -1;
             } else /* ROT_2 -> ROT_L, ROT_R -> ROT_0 */ {
-                tries_x[0] = 2; tries_y[0] = 0;
-                tries_x[1] = -1; tries_y[1] = 0;
-                tries_x[2] = 2; tries_y[2] = -1;
-                tries_x[3] = -1; tries_y[3] = 2;
+                tries[0].x = 2; tries[0].y = 0;
+                tries[1].x = -1; tries[1].y = 0;
+                tries[2].x = 2; tries[2].y = -1;
+                tries[3].x = -1; tries[3].y = 2;
             }
 
             for (size_t i = 0;i < piece->config->data_count;i++) {
-                if (board_test_piece(board, piece->config,
-                        piece->x + tries_x[i], piece->y + tries_y[i], prot)) {
-                    piece->x += tries_x[i];
-                    piece->y += tries_y[i];
+                vec2i_t test_pos = { 
+                    piece->pos.x + tries[i].x,
+                    piece->pos.y + tries[i].y
+                };
+                if (board_test_piece(board, piece->config, test_pos, prot)) {
+                    piece->pos.x += tries[i].x;
+                    piece->pos.y += tries[i].y;
                     piece->rot = prot;
                     break;
                 }
             }
         } else {
             // Wallkicks for the other pieces.
-            int8_t tries_x[4] = { 0 };
-            int8_t tries_y[4] = { 0 };
+            vec2i_t tries[4] = { 0 };
 
             if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_2 && prot == ROT_R)) {
-                tries_x[0] = -1; tries_y[0] = 0;
-                tries_x[1] = -1; tries_y[1] = -1;
-                tries_x[2] = 0; tries_y[2] = 2;
-                tries_x[3] = -1; tries_y[3] = 2;
+                tries[0].x = -1; tries[0].y = 0;
+                tries[1].x = -1; tries[1].y = -1;
+                tries[2].x = 0; tries[2].y = 2;
+                tries[3].x = -1; tries[3].y = 2;
             } else if ((piece->rot == ROT_L && prot == ROT_2) || (piece->rot == ROT_L && prot == ROT_0)) {
-                tries_x[0] = -1; tries_y[0] = 0;
-                tries_x[1] = -1; tries_y[1] = 1;
-                tries_x[2] = 0; tries_y[2] = -2;
-                tries_x[3] = -1; tries_y[3] = -2;
+                tries[0].x = -1; tries[0].y = 0;
+                tries[1].x = -1; tries[1].y = 1;
+                tries[2].x = 0; tries[2].y = -2;
+                tries[3].x = -1; tries[3].y = -2;
             } else if ((piece->rot == ROT_R && prot == ROT_0) || (piece->rot == ROT_R && prot == ROT_2)) {
-                tries_x[0] = 1; tries_y[0] = 0;
-                tries_x[1] = 1; tries_y[1] = 1;
-                tries_x[2] = 0; tries_y[2] = -2;
-                tries_x[3] = 1; tries_y[3] = -2;
+                tries[0].x = 1; tries[0].y = 0;
+                tries[1].x = 1; tries[1].y = 1;
+                tries[2].x = 0; tries[2].y = -2;
+                tries[3].x = 1; tries[3].y = -2;
             } else /* ROT_2 -> ROT_L, ROT_0 -> ROT_L */ {
-                tries_x[0] = 1; tries_y[0] = 0;
-                tries_x[1] = 1; tries_y[1] = -1;
-                tries_x[2] = 0; tries_y[2] = 2;
-                tries_x[3] = 1; tries_y[3] = 2;
+                tries[0].x = 1; tries[0].y = 0;
+                tries[1].x = 1; tries[1].y = -1;
+                tries[2].x = 0; tries[2].y = 2;
+                tries[3].x = 1; tries[3].y = 2;
             }
 
             for (size_t i = 0;i < piece->config->data_count;i++) {
-                if (board_test_piece(board, piece->config,
-                        piece->x + tries_x[i], piece->y + tries_y[i], prot)) {
-                    piece->x += tries_x[i];
-                    piece->y += tries_y[i];
+                vec2i_t test_pos = { 
+                    piece->pos.x + tries[i].x,
+                    piece->pos.y + tries[i].y
+                };
+                if (board_test_piece(board, piece->config, test_pos, prot)) {
+                    piece->pos.x += tries[i].x;
+                    piece->pos.y += tries[i].y;
                     piece->rot = prot;
                     break;
                 }
@@ -344,13 +351,12 @@ state_result_t state_frame(state_t* state, events_t events) {
         board->ghost->config = board->piece->config;
     }
 
-    vec2i_t ghost_src = { board->piece->x, board->piece->y };
-    vec2i_t ghost_dst = { board->piece->x, board->config.height };
+    vec2i_t ghost_src = board->piece->pos;
+    vec2i_t ghost_dst = { board->piece->pos.x, board->config.height };
     vec2i_t ghost_loc = board_test_piece_between(board, board->ghost->config,
         ghost_src, piece->rot, ghost_dst);
 
-    board->ghost->x = ghost_loc.x;
-    board->ghost->y = ghost_loc.y;
+    board->ghost->pos = ghost_loc;
     board->ghost->rot = piece->rot;
 
     // We're done with all processing for this tic.

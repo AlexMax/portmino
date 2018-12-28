@@ -51,8 +51,8 @@ static void piece_config_init_j(piece_config_t* piece) {
         6, 6, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
@@ -81,8 +81,8 @@ static void piece_config_init_l(piece_config_t* piece) {
         0, 2, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
@@ -111,8 +111,8 @@ static void piece_config_init_s(piece_config_t* piece) {
         0, 4, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
@@ -141,8 +141,8 @@ static void piece_config_init_z(piece_config_t* piece) {
         1, 0, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
@@ -171,8 +171,8 @@ static void piece_config_init_t(piece_config_t* piece) {
         0, 7, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 3;
     piece->height = 3;
@@ -205,8 +205,8 @@ static void piece_config_init_i(piece_config_t* piece) {
         0, 5, 0, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 4;
     piece->height = 4;
@@ -235,8 +235,8 @@ static void piece_config_init_o(piece_config_t* piece) {
         0, 0, 0, 0
     };
 
-    piece->spawn_x = 3;
-    piece->spawn_y = 1;
+    piece->spawn_pos.x = 3;
+    piece->spawn_pos.y = 1;
     piece->spawn_rot = 0;
     piece->width = 4;
     piece->height = 3;
@@ -287,8 +287,7 @@ piece_t* piece_new(const piece_config_t* config) {
 
     piece->config = config;
     piece->rot = config->spawn_rot;
-    piece->x = config->spawn_x;
-    piece->y = config->spawn_y;
+    piece->pos = config->spawn_pos;
 
     return piece;
 }
