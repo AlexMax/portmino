@@ -31,10 +31,8 @@ set(GAME_SOURCES
     render.c        render.h
     softrender.c    softrender.h
     sound.c         sound.h
-    state.c         state.h)
-set(LIBRARY_SOURCES
-                    dr_wav.h
-                    stb_image.h)
+    state.c         state.h
+    vfs.c           vfs.h)
 
 if(UNIX)
     set(PLATFORM_SOURCES platform_unix.c)
@@ -48,10 +46,11 @@ add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES} ${PLATFORM_S
 add_sanitizers(portmino-core)
 set_property(TARGET portmino-core PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(portmino-core lua)
+target_link_libraries(portmino-core portmino-lib lua)
 if(UNIX)
     target_link_libraries(portmino-core m)
 endif()
 
+add_subdirectory(lib)
 add_subdirectory(libretro)
 add_subdirectory(sdl)
