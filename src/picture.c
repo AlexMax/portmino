@@ -28,20 +28,28 @@
 #define MINO_PICTURE_BPP 4
 
 /**
- * Create a new picture from a file path.
+ * Create a new picture from a virtual file path.
  */
-picture_t* picture_new(const char* path) {
+picture_t* picture_from_vfs(const vfs_t* vfs, const char* path) {
     picture_t* pic = malloc(sizeof(picture_t));
     if (pic == NULL) {
         return NULL;
     }
+    memset(pic, 0, sizeof(picture_t));
 
-    int x, y, bpp;
-    pic->data = stbi_load(path, &x, &y, &bpp, MINO_PICTURE_BPP);
-
-    if (pic->data == NULL) {
+    buffer_t* file = vfs_file(vfs, path);
+    if (file == NULL) {
         picture_delete(pic);
         frontend_fatalerror("Could not find resource %s", path);
+        return NULL;
+    }
+
+    int x, y, bpp;
+    pic->data = stbi_load_from_memory(file->data, file->size,
+        &x, &y, &bpp, MINO_PICTURE_BPP);
+    if (pic->data == NULL) {
+        picture_delete(pic);
+        frontend_fatalerror("Could not load resource %s", path);
         return NULL;
     }
 

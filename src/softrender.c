@@ -19,11 +19,14 @@
 
 #include "render.h"
 #include "softrender.h"
+#include "vfs.h"
 
 /**
  * Bits per pixel of the software-rendered surface.
  */
 #define MINO_SOFTRENDER_BPP 4
+
+#define MAX_BLOCKS 7
 
 #define BOARD_X 18
 #define BOARD_Y 42
@@ -33,9 +36,9 @@ static softrender_context_t g_render_ctx;
 // FIXME: Don't use a global picture
 static picture_t* g_back;
 static picture_t* g_board;
-static picture_t* g_blocks[8];
+static picture_t* g_blocks[MAX_BLOCKS];
 
-static void softrender_init(void) {
+static void softrender_init(const vfs_t* vfs) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
 
     // Initialize the buffer picture in-place.
@@ -44,16 +47,15 @@ static void softrender_init(void) {
     g_render_ctx.buffer.width = MINO_SOFTRENDER_WIDTH;
     g_render_ctx.buffer.height = MINO_SOFTRENDER_HEIGHT;
 
-    g_back = picture_new("../res/back.png");
-    g_board = picture_new("../res/board.png");
-    g_blocks[0] = NULL;
-    g_blocks[1] = picture_new("../res/blocks/red.png");
-    g_blocks[2] = picture_new("../res/blocks/orange.png");
-    g_blocks[3] = picture_new("../res/blocks/yellow.png");
-    g_blocks[4] = picture_new("../res/blocks/green.png");
-    g_blocks[5] = picture_new("../res/blocks/cyan.png");
-    g_blocks[6] = picture_new("../res/blocks/blue.png");
-    g_blocks[7] = picture_new("../res/blocks/purple.png");
+    g_back = picture_from_vfs(vfs, "graphics/back.png");
+    g_board = picture_from_vfs(vfs, "graphics/board.png");
+    g_blocks[0] = picture_from_vfs(vfs, "graphics/red.png");
+    g_blocks[1] = picture_from_vfs(vfs, "graphics/orange.png");
+    g_blocks[2] = picture_from_vfs(vfs, "graphics/yellow.png");
+    g_blocks[3] = picture_from_vfs(vfs, "graphics/green.png");
+    g_blocks[4] = picture_from_vfs(vfs, "graphics/cyan.png");
+    g_blocks[5] = picture_from_vfs(vfs, "graphics/blue.png");
+    g_blocks[6] = picture_from_vfs(vfs, "graphics/purple.png");
 }
 
 static void softrender_deinit(void) {
@@ -67,10 +69,12 @@ static void softrender_deinit(void) {
         g_board = NULL;
     }
 
-    // if (g_block != NULL) {
-    //     picture_delete(g_block);
-    //     g_block = NULL;
-    // }
+    for (size_t i = 0;i < MAX_BLOCKS;i++) {
+        if (g_blocks[i] != NULL) {
+            picture_delete(g_blocks[i]);
+            g_blocks[i] = NULL;
+        }
+    }
 
     if (g_render_ctx.buffer.data != NULL) {
         free(g_render_ctx.buffer.data);

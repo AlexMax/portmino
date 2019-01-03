@@ -18,6 +18,7 @@
 #pragma once
 
 #include "state.h"
+#include "vfs.h"
 
 /*
  * Here we define the width and height of the smallest unit of addressable
@@ -37,8 +38,11 @@ typedef struct {
 
     /**
      * This function is run when the renderer is initialized.
+     * 
+     * Requires a working virtual filesystem so the renderer knows where
+     * to get textures from.
      */
-    void (*init)(void);
+    void (*init)(const vfs_t* vfs);
 
     /**
      * This function is run when the renderer is destroyed.
@@ -51,5 +55,5 @@ typedef struct {
     void* (*draw_state)(const state_t* state);
 } render_module_t;
 
-render_module_t* render_init(void);
+render_module_t* render_init(const vfs_t* vfs);
 void render_deinit(render_module_t* module);

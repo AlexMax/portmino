@@ -59,3 +59,11 @@ typedef struct {
     int x;
     int y;
 } vec2i_t;
+
+/**
+ * Generic buffer of bytes.
+ */
+typedef struct {
+    uint8_t* data;
+    size_t size;
+} buffer_t;

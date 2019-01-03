@@ -12,6 +12,7 @@ if(NOT MSVC)
 
     # Not sure if these warnings exist or not.
     checked_add_compile_option(-Werror=implicit-function-declaration E_IMPLICIT_FUNC)
+    checked_add_compile_option(-Werror=incompatible-pointer-types E_INCOMPAT_PTR)
     checked_add_compile_option(-Wformat=2 W_FORMAT_2)
     checked_add_compile_option(-Wnull-dereference W_NULL_DEREF)
     checked_add_compile_option(-Wrestrict W_RESTRICT)
@@ -23,6 +24,7 @@ set(GAME_SOURCES
                     define.h
                     event.h
     frontend.c      frontend.h
+    hmap.c          hmap.h
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h
@@ -45,6 +47,9 @@ endif()
 add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES} ${PLATFORM_SOURCES})
 add_sanitizers(portmino-core)
 set_property(TARGET portmino-core PROPERTY POSITION_INDEPENDENT_CODE ON)
+if(UNIX)
+    target_compile_definitions(portmino-core PRIVATE _GNU_SOURCE)
+endif()
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(portmino-core portmino-lib lua)
 if(UNIX)

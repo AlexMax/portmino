@@ -18,12 +18,15 @@
 #pragma once
 
 #include "define.h"
+#include "hmap.h"
 
 typedef struct {
-    void* data;
-    size_t len;
-} filedata_t;
+    /**
+     * A cache of recently-loaded files and their data.
+     */
+    hmap_t* files;
+} vfs_t;
 
-void vfs_init(void);
-void vfs_deinit(void);
-filedata_t* vfs_file(const char* filename);
+vfs_t* vfs_new(void);
+void vfs_delete(vfs_t* vfs);
+buffer_t* vfs_file(const vfs_t* vfs, const char* filename);

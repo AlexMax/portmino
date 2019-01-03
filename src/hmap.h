@@ -15,25 +15,28 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <string.h>
+#pragma once
 
-#include "render.h"
-#include "softrender.h"
+#include "define.h"
 
 /**
- * Initialize a renderer and return the function pointers for that renderer.
+ * Structure of a single hashmap entry.
  */
-render_module_t* render_init(const vfs_t* vfs) {
-    // TODO: Figure out what kind of renderer that we want to use here.
-    soft_render_module.init(vfs);
-    return &soft_render_module;
-}
+typedef struct {
+    char* key;
+    void* data;
+} hmap_entry_t;
 
 /**
- * Destroy anything attached to the currently initialized renderer.
+ * Hashmap structure.
  */
-void render_deinit(render_module_t* module) {
-    (void)module;
-    soft_render_module.deinit();
-}
+typedef struct {
+    hmap_entry_t* map;
+    size_t count;
+    size_t size;
+} hmap_t;
+
+hmap_t* hmap_new(void);
+void hmap_delete(hmap_t* hmap);
+void* hmap_find(hmap_t* hmap, const char* key);
+void hmap_insert(hmap_t* hmap, const char* key, void* data);
