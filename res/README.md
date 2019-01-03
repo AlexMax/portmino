@@ -1,4 +1,4 @@
-`back.png` is licensed under Creative Commons CC0.
+`back.png` is licensed under Creative Commons CC0.  [Source](https://pixabay.com/en/space-deep-space-galaxy-nebula-2638126/)
 
 The rest of the images in this directory are from Nullpomino.
 
