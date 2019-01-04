@@ -33,6 +33,7 @@ static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
 static SDL_AudioDeviceID g_audio_device;
 
+ATTRIB_PRINTF(1, 0)
 static void sdl_fatalerror(const char *fmt, va_list va) {
     char buffer[8192];
     vsnprintf(buffer, sizeof(buffer), fmt, va);

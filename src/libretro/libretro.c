@@ -34,6 +34,7 @@ static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
+ATTRIB_PRINTF(1, 0)
 static void retro_fatalerror(const char *fmt, va_list va) {
     char buffer[8192];
     vsnprintf(buffer, sizeof(buffer), fmt, va);
