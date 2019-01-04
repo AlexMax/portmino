@@ -1,4 +1,5 @@
-add_subdirectory(libsamplerate-master)
+## libsamplerate
+add_subdirectory(libsamplerate-master EXCLUDE_FROM_ALL)
 set_target_properties(
     callback_hang_test
     callback_test
@@ -19,11 +20,12 @@ set_target_properties(
     varispeed-play
     varispeed_test
     PROPERTIES
-    EXCLUDE_FROM_ALL 1
     EXCLUDE_FROM_DEFAULT_BUILD 1
     FOLDER ExcludedTargets)
 
-# Lua
+## Lua
+
+# Lua does not have CMake build files.  Thus, we must compile it ourselves.
 set(LUA_DIR "lua-5.3.5/src")
 set(LUA_SOURCES
     lapi.c      lapi.h
@@ -72,3 +74,23 @@ endforeach()
 
 add_library(lua STATIC ${LUA_DIR_SOURCES})
 target_include_directories(lua PUBLIC ${LUA_DIR})
+
+## PhysicsFS
+
+# Disable everything except .zip support.
+set(PHYSFS_ARCHIVE_7Z FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_GRP FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_WAD FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_HOG FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_MVL FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_QPAK FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_SLB FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_ISO9660 FALSE CACHE BOOL "")
+set(PHYSFS_ARCHIVE_VDF FALSE CACHE BOOL "")
+add_subdirectory(physfs-3.0.1 EXCLUDE_FROM_ALL)
+set_target_properties(
+    physfs
+    test_physfs
+    PROPERTIES
+    EXCLUDE_FROM_DEFAULT_BUILD 1
+    FOLDER ExcludedTargets)
