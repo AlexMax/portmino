@@ -62,4 +62,8 @@ endif()
 add_subdirectory(compat)
 add_subdirectory(lib)
 add_subdirectory(libretro)
-add_subdirectory(sdl)
+
+# Only build SDL front-end if we've found SDL2
+if(SDL2_FOUND)
+    add_subdirectory(sdl)
+endif()
