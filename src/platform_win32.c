@@ -27,7 +27,7 @@ static HCRYPTPROV g_crypt_provider;
 /**
  * Array of data directories.  Ends with a NULL.
  */
-static const char* g_data_dirs[2];
+static const char** g_data_dirs;
 
 static bool win32_init(void) {
     if (!CryptAcquireContext(&g_crypt_provider, NULL, NULL, PROV_RSA_FULL, 0)) {
@@ -38,6 +38,11 @@ static bool win32_init(void) {
 
 static void win32_deinit(void) {
     CryptReleaseContext(g_crypt_provider, 0);
+
+    if (g_data_dirs != NULL) {
+        free(g_data_dirs);
+        g_data_dirs = NULL;
+    }
 }
 
 static const char* win32_config_dir(void) {
@@ -51,6 +56,11 @@ static const char* win32_config_dir(void) {
 static const char** win32_data_dirs(void) {
     if (g_data_dirs != NULL) {
         return g_data_dirs;
+    }
+
+    g_data_dirs = malloc(sizeof(const char*) * 2);
+    if (g_data_dirs == NULL) {
+        return NULL;
     }
 
     // Why use Win32 when PHYSFS already gives us what we want?
