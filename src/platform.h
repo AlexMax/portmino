@@ -44,18 +44,6 @@ typedef struct {
     const char** (*data_dirs)(void);
 
     /**
-     * Return the complete contents of a file loaded from disk.
-     */
-    bool (*file_get_contents)(const char* filename, buffer_t* buffer);
-
-    /**
-     * Add something to an existing path.
-     * 
-     * The caller is expected to free the result.
-     */
-    char* (*path_join)(const char* base, const char* append);
-
-    /**
      * Get a 32-bit random seed for the random number generator.
      */
     bool (*random_get_seed)(uint32_t* seed);

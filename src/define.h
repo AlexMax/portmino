@@ -24,6 +24,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// We always have access to any compatibility defines.
+#include "compat.h"
+
 /**
  * Target framerate of the gamestate.
  */

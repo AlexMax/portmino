@@ -7,7 +7,9 @@ function(checked_add_compile_option FLAG VAR)
     endif()
 endfunction()
 
-if(NOT MSVC)
+if(MSVC)
+    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS)
+else()
     add_compile_options(-Wall -Wextra)
 
     # Not sure if these warnings exist or not.
@@ -51,11 +53,13 @@ if(UNIX)
     target_compile_definitions(portmino-core PRIVATE _GNU_SOURCE)
 endif()
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(portmino-core portmino-lib lua physfs-static)
+target_link_libraries(portmino-core portmino-lib portmino-compat
+                      lua physfs-static)
 if(UNIX)
     target_link_libraries(portmino-core m)
 endif()
 
+add_subdirectory(compat)
 add_subdirectory(lib)
 add_subdirectory(libretro)
 add_subdirectory(sdl)

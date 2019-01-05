@@ -18,9 +18,16 @@
 #include <Windows.h>
 #include <Wincrypt.h>
 
+#include "physfs.h"
+
 #include "platform.h"
 
 static HCRYPTPROV g_crypt_provider;
+
+/**
+ * Array of data directories.  Ends with a NULL.
+ */
+static const char* g_data_dirs[2];
 
 static bool win32_init(void) {
     if (!CryptAcquireContext(&g_crypt_provider, NULL, NULL, PROV_RSA_FULL, 0)) {
@@ -33,8 +40,28 @@ static void win32_deinit(void) {
     CryptReleaseContext(g_crypt_provider, 0);
 }
 
+static const char* win32_config_dir(void) {
+    return NULL;
+}
+
+/**
+ * Windows only has one correct place to grab data from - the directory of
+ * the executable.
+ */
+static const char** win32_data_dirs(void) {
+    if (g_data_dirs != NULL) {
+        return g_data_dirs;
+    }
+
+    // Why use Win32 when PHYSFS already gives us what we want?
+    g_data_dirs[0] = PHYSFS_getBaseDir();
+    g_data_dirs[1] = NULL;
+
+    return g_data_dirs;
+}
+
 static bool win32_random_get_seed(uint32_t* seed) {
-    if (!CryptGenRandom(g_crypt_provider, sizeof(uint32_t), seed)) {
+    if (!CryptGenRandom(g_crypt_provider, sizeof(uint32_t), (BYTE*)seed)) {
         return false;
     }
     return true;
@@ -43,5 +70,7 @@ static bool win32_random_get_seed(uint32_t* seed) {
 platform_module_t g_platform_module = {
     win32_init,
     win32_deinit,
+    win32_config_dir,
+    win32_data_dirs,
     win32_random_get_seed
 };

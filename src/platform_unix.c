@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "platform.h"
+#include "vfs.h"
 
 /**
  * The subdirectory to use with all of our directories.
@@ -45,9 +46,6 @@ static char** g_data_dirs;
  * Home directory.
  */
 static char* g_home_dir;
-
-// Platform functions we can call from other functions - saves on an indirection.
-static char* unix_path_join(const char* base, const char* append);
 
 static bool unix_init(void) {
     g_random = fopen("/dev/urandom", "rb");
@@ -111,7 +109,7 @@ static const char* unix_config_dir(void) {
     if (xdg_config_home != NULL) {
         g_config_dir = strdup(xdg_config_home);
     } else {
-        g_config_dir = unix_path_join(g_home_dir, ".config/" MINO_SUBDIR);
+        g_config_dir = vfs_path_join(g_home_dir, ".config/" MINO_SUBDIR, '/');
     }
 
     return g_config_dir;
@@ -129,7 +127,7 @@ static const char** unix_data_dirs(void) {
     // Home data directory
     char* xdg_data_home = getenv("XDG_DATA_HOME");
     if (xdg_data_home == NULL) {
-        xdg_data_home = unix_path_join(g_home_dir, ".local/share");
+        xdg_data_home = vfs_path_join(g_home_dir, ".local/share", '/');
         if (xdg_data_home == NULL) {
             return NULL;
         }
@@ -178,7 +176,7 @@ static const char** unix_data_dirs(void) {
     char* next = xdg_all_dirs;
     while ((token = strtok_r(next, ":", &next)) != NULL) {
         // Join the current directory with the portmino subdirectory.
-        char* dir = unix_path_join(token, MINO_SUBDIR);
+        char* dir = vfs_path_join(token, MINO_SUBDIR, '/');
         if (dir == NULL) {
             break;
         }
@@ -210,76 +208,6 @@ static const char** unix_data_dirs(void) {
     return (const char**)g_data_dirs;
 }
 
-static bool unix_file_get_contents(const char* filename, buffer_t* buffer) {
-    // Open the file.
-    FILE* fh = fopen(filename, "r");
-    if (fh == NULL) {
-        return false;
-    }
-
-    // Get the length of the file.
-    fseek(fh, 0, SEEK_END);
-    buffer->size = ftell(fh);
-    fseek(fh, 0, SEEK_SET);
-
-    buffer->data = malloc(buffer->size);
-    if (buffer->data == NULL) {
-        fclose(fh);
-        return false;
-    }
-
-    fread(buffer->data, buffer->size, 1, fh);
-    fclose(fh);
-
-    return true;
-}
-
-static char* unix_path_join(const char* base, const char* append) {
-    if (strlen(base) == 0) {
-        // There is no base to append to.
-        return NULL;
-    }
-
-    if (strlen(append) == 0) {
-        // Return a duplicated version of the base path.
-        return strdup(base);
-    }
-
-    int bytes = 0;
-    char* result = NULL;
-    if (base[strlen(base) - 1] == '/') {
-        if (append[0] == '/') {
-            // Base and append have slashes.  Truncate one of the slashes.
-            char* a_base = strdup(base);
-            if (a_base == NULL) {
-                return NULL;
-            }
-            a_base[strlen(a_base) - 1] = '\0';
-            bytes = asprintf(&result, "%s/%s", a_base, append);
-            free(a_base);
-        } else {
-            // Base has a slash, append is missing one.
-            bytes = asprintf(&result, "%s%s", base, append);
-        }
-    } else {
-        if (append[0] == '/') {
-            // Base does not have a slash, append has one.
-            bytes = asprintf(&result, "%s%s", base, append);
-        } else {
-            // Base and append do not have slashes, insert one.
-            bytes = asprintf(&result, "%s/%s", base, append);
-        }
-    }
-
-    if (bytes < 0) {
-        // Did not allocate
-        return NULL;
-    }
-
-    // Path should be joined now...
-    return result;
-}
-
 static bool unix_random_get_seed(uint32_t* seed) {
     size_t items = fread(seed, sizeof(uint32_t), 1, g_random);
     if (items < 1) {
@@ -294,7 +222,5 @@ platform_module_t g_platform_module = {
     unix_deinit,
     unix_config_dir,
     unix_data_dirs,
-    unix_file_get_contents,
-    unix_path_join,
     unix_random_get_seed
 };

@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "physfs.h"
 
@@ -28,6 +29,9 @@
  */
 #define MINO_DEFAULT_RESOURCE "basemino"
 
+/**
+ * Designate loading paths for a resource pack with a given name.
+ */
 static bool vfs_load(const char* name) {
     char* pk3name = NULL;
     int ok = asprintf(&pk3name, "%s.pk3", name);
@@ -35,16 +39,17 @@ static bool vfs_load(const char* name) {
         return false;
     }
 
+    const char sep = PHYSFS_getDirSeparator()[0];
     const char** data_dirs = platform()->data_dirs();
     for (size_t i = 0;data_dirs[i] != NULL;i++) {
-        char* pk3dir = platform()->path_join(data_dirs[i], pk3name);
+        char* pk3dir = vfs_path_join(data_dirs[i], pk3name, sep);
         if (pk3dir != NULL) {
             // Prioritize the pk3 first.
             PHYSFS_mount(pk3dir, NULL, 1);
             free(pk3dir);
         }
 
-        char* dir = platform()->path_join(data_dirs[i], name);
+        char* dir = vfs_path_join(data_dirs[i], name, sep);
         if (dir != NULL) {
             // Prioritize the dir of the same name second.
             PHYSFS_mount(dir, NULL, 1);
@@ -79,7 +84,7 @@ void vfs_deinit(void) {
 /**
  * Obtain file data by virtual filename.
  * 
- * The returned buffer is heap-allocated.  It is up to the caller to free it.
+ * The returned buffer must be freed by the caller.
  */
 buffer_t* vfs_file(const char* filename) {
     // Check in the VFS for the given file.
@@ -109,4 +114,61 @@ buffer_t* vfs_file(const char* filename) {
     PHYSFS_close(fh);
 
     return filedata;
+}
+
+/**
+ * Join two filesystem paths together, ensuring there is a single directory
+ * separator between them.
+ * 
+ * The returned string must be freed by the caller.
+ * 
+ * @param base Base path to append to.
+ * @param append Path to append.
+ * @param sep Directory separator.  PHYSFS paths always use '/'.
+ * @return char* Joined path.
+ */
+char* vfs_path_join(const char* base, const char* append, const char sep) {
+    if (strlen(base) == 0) {
+        // There is no base to append to.
+        return NULL;
+    }
+
+    if (strlen(append) == 0) {
+        // Return a duplicated version of the base path.
+        return strdup(base);
+    }
+
+    int bytes = 0;
+    char* result = NULL;
+    if (base[strlen(base) - 1] == sep) {
+        if (append[0] == sep) {
+            // Base and append have slashes.  Truncate one of the slashes.
+            char* a_base = strdup(base);
+            if (a_base == NULL) {
+                return NULL;
+            }
+            a_base[strlen(a_base) - 1] = '\0';
+            bytes = asprintf(&result, "%s%c%s", a_base, sep, append);
+            free(a_base);
+        } else {
+            // Base has a slash, append is missing one.
+            bytes = asprintf(&result, "%s%s", base, append);
+        }
+    } else {
+        if (append[0] == sep) {
+            // Base does not have a slash, append has one.
+            bytes = asprintf(&result, "%s%s", base, append);
+        } else {
+            // Base and append do not have slashes, insert one.
+            bytes = asprintf(&result, "%s%c%s", base, sep, append);
+        }
+    }
+
+    if (bytes < 0) {
+        // Did not allocate
+        return NULL;
+    }
+
+    // Path should be joined now...
+    return result;
 }

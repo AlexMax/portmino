@@ -17,9 +17,6 @@
 
 #pragma once
 
-#include "define.h"
-
-bool vfs_init(void);
-void vfs_deinit(void);
-buffer_t* vfs_file(const char* filename);
-char* vfs_path_join(const char* base, const char* append, const char sep);
+#if !defined(HAVE_ASPRINTF)
+int asprintf(char** ret, const char* format, ...);
+#endif
