@@ -20,7 +20,9 @@
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
+#include "frontend.h"
 #include "sound.h"
+#include "vfs.h"
 
 /**
  * Convert sound data to our samplerate
@@ -52,8 +54,19 @@ sound_t* sound_new(const char* path) {
     unsigned int samplerate;
     uint64_t framecount;
 
-    int16_t* data = drwav_open_file_and_read_pcm_frames_s16(path,
+    buffer_t* file = vfs_file(path);
+    if (file == NULL) {
+        frontend_fatalerror("Could not find sound %s", path);
+        return NULL;
+    }
+
+    int16_t* data = drwav_open_memory_and_read_s16(file->data, file->size,
         &channels, &samplerate, &framecount);
+    buffer_delete(file);
+    if (data == NULL) {
+        frontend_fatalerror("Could not load sound %s", path);
+        return NULL;
+    }
 
     if (channels == 1) {
         // Turn mono into stereo.

@@ -15,10 +15,14 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <stdlib.h>
 
 #include "define.h"
 
-bool vfs_init(void);
-void vfs_deinit(void);
-buffer_t* vfs_file(const char* filename);
+void buffer_delete(buffer_t* buf) {
+    if (buf->data != NULL) {
+        free(buf->data);
+    }
+
+    free(buf);
+}

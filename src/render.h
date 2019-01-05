@@ -38,11 +38,8 @@ typedef struct {
 
     /**
      * This function is run when the renderer is initialized.
-     * 
-     * Requires a working virtual filesystem so the renderer knows where
-     * to get textures from.
      */
-    void (*init)(const vfs_t* vfs);
+    void (*init)(void);
 
     /**
      * This function is run when the renderer is destroyed.
@@ -55,5 +52,5 @@ typedef struct {
     void* (*draw_state)(const state_t* state);
 } render_module_t;
 
-render_module_t* render_init(const vfs_t* vfs);
+render_module_t* render_init(void);
 void render_deinit(render_module_t* module);

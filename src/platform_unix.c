@@ -206,6 +206,7 @@ static const char** unix_data_dirs(void) {
         g_data_dirs[index] = NULL;
     }
 
+    free(xdg_all_dirs);
     return (const char**)g_data_dirs;
 }
 

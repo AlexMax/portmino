@@ -84,11 +84,11 @@ static void audio_mixer_debug(void) {
     for (int i = 0;i < MIXER_CHANNELS;i++) {
         audio_mixer_channel_t* channel = &g_audio_mixer[i];
 
-        printf(" [%d] ", i);
+        fprintf(stderr, " [%d] ", i);
         if (channel->active) {
-            printf("Playing %p (%lu/%lu)\n", channel->sound, channel->position, channel->sound->size / sizeof(int16_t));
+            fprintf(stderr, "Playing %p (%lu/%lu)\n", channel->sound, channel->position, channel->sound->size / sizeof(int16_t));
         } else {
-            printf("Inactive.\n");
+            fprintf(stderr, "Inactive.\n");
         }
     }
 }
@@ -108,7 +108,7 @@ void audio_init(void) {
     g_audio_ctx.size = g_audio_ctx.samplecount * g_audio_ctx.samplesize;
     g_audio_ctx.data = malloc(g_audio_ctx.size);
 
-    g_sound_piece0 = sound_new("../res/sfx/piece0.wav");
+    g_sound_piece0 = sound_new("sfx/default/piece0.wav");
 }
 
 /**
@@ -118,6 +118,12 @@ void audio_deinit(void) {
     // Clean up the mixer.
     for (int i = 0;i < MIXER_CHANNELS;i++) {
         audio_mixer_channel_reset(&g_audio_mixer[i]);
+    }
+
+    // Delete all sounds
+    if (g_sound_piece0 != NULL) {
+        sound_delete(g_sound_piece0);
+        g_sound_piece0 = NULL;
     }
 
     // Free the context.

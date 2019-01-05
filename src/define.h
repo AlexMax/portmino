@@ -67,3 +67,5 @@ typedef struct {
     uint8_t* data;
     size_t size;
 } buffer_t;
+
+void buffer_delete(buffer_t* buf);

@@ -21,7 +21,7 @@ endif()
 set(GAME_SOURCES
     audio.c         audio.h
     board.c         board.h
-                    define.h
+    define.c        define.h
                     event.h
     frontend.c      frontend.h
     hmap.c          hmap.h

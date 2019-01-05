@@ -24,9 +24,9 @@
 /**
  * Initialize a renderer and return the function pointers for that renderer.
  */
-render_module_t* render_init(const vfs_t* vfs) {
+render_module_t* render_init(void) {
     // TODO: Figure out what kind of renderer that we want to use here.
-    soft_render_module.init(vfs);
+    soft_render_module.init();
     return &soft_render_module;
 }
 

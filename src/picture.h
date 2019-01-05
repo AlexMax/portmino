@@ -42,6 +42,6 @@ typedef struct {
     uint16_t height;
 } picture_t;
 
-picture_t* picture_from_vfs(const vfs_t* vfs, const char* path);
+picture_t* picture_new_vfs(const char* path);
 void picture_delete(picture_t* pic);
 void picture_copy(picture_t* dest, const picture_t* source, int x, int y);

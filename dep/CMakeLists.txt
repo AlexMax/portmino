@@ -88,6 +88,8 @@ set(PHYSFS_ARCHIVE_SLB FALSE CACHE BOOL "")
 set(PHYSFS_ARCHIVE_ISO9660 FALSE CACHE BOOL "")
 set(PHYSFS_ARCHIVE_VDF FALSE CACHE BOOL "")
 add_subdirectory(physfs-3.0.1 EXCLUDE_FROM_ALL)
+set_property(TARGET physfs-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(physfs-static PUBLIC "physfs-3.0.1/src")
 set_target_properties(
     physfs
     test_physfs

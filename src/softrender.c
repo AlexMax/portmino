@@ -38,7 +38,7 @@ static picture_t* g_back;
 static picture_t* g_board;
 static picture_t* g_blocks[MAX_BLOCKS];
 
-static void softrender_init(const vfs_t* vfs) {
+static void softrender_init(void) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
 
     // Initialize the buffer picture in-place.
@@ -47,15 +47,15 @@ static void softrender_init(const vfs_t* vfs) {
     g_render_ctx.buffer.width = MINO_SOFTRENDER_WIDTH;
     g_render_ctx.buffer.height = MINO_SOFTRENDER_HEIGHT;
 
-    g_back = picture_from_vfs(vfs, "graphics/back.png");
-    g_board = picture_from_vfs(vfs, "graphics/board.png");
-    g_blocks[0] = picture_from_vfs(vfs, "graphics/red.png");
-    g_blocks[1] = picture_from_vfs(vfs, "graphics/orange.png");
-    g_blocks[2] = picture_from_vfs(vfs, "graphics/yellow.png");
-    g_blocks[3] = picture_from_vfs(vfs, "graphics/green.png");
-    g_blocks[4] = picture_from_vfs(vfs, "graphics/cyan.png");
-    g_blocks[5] = picture_from_vfs(vfs, "graphics/blue.png");
-    g_blocks[6] = picture_from_vfs(vfs, "graphics/purple.png");
+    g_back = picture_new_vfs("background/default/1.png");
+    g_board = picture_new_vfs("interface/default/board.png");
+    g_blocks[0] = picture_new_vfs("block/default/red.png");
+    g_blocks[1] = picture_new_vfs("block/default/orange.png");
+    g_blocks[2] = picture_new_vfs("block/default/yellow.png");
+    g_blocks[3] = picture_new_vfs("block/default/green.png");
+    g_blocks[4] = picture_new_vfs("block/default/cyan.png");
+    g_blocks[5] = picture_new_vfs("block/default/blue.png");
+    g_blocks[6] = picture_new_vfs("block/default/purple.png");
 }
 
 static void softrender_deinit(void) {
@@ -111,7 +111,7 @@ static void* softrender_draw_state(const state_t* state) {
         if (!btype) {
             continue;
         }
-        picture_t* bpic = g_blocks[btype];
+        picture_t* bpic = g_blocks[--btype];
 
         // What is the actual (x, y) coordinate of the block?
         int ix = i % board->config.width;
@@ -132,7 +132,7 @@ static void* softrender_draw_state(const state_t* state) {
             if (!btype) {
                 continue;
             }
-            picture_t* bpic = g_blocks[btype];
+            picture_t* bpic = g_blocks[--btype];
 
             // What is the actual (x, y) coordinate of the block?
             int ix = board->ghost->pos.x + (j % board->ghost->config->width);
@@ -161,7 +161,7 @@ static void* softrender_draw_state(const state_t* state) {
             if (!btype) {
                 continue;
             }
-            picture_t* bpic = g_blocks[btype];
+            picture_t* bpic = g_blocks[--btype];
 
             // What is the actual (x, y) coordinate of the block?
             int ix = board->piece->pos.x + (j % board->piece->config->width);

@@ -37,7 +37,6 @@ typedef struct {
     gamescreen_t screen;
     state_t* state;
     render_module_t* render;
-    vfs_t* vfs;
 } game_t;
 
 static game_t g_game;
@@ -46,10 +45,10 @@ static game_t g_game;
  * Initialize the game.
  */
 void game_init(void) {
+    vfs_init();
     g_game.screen = SCREEN_INGAME;
-    g_game.vfs = vfs_new();
     g_game.state = state_new();
-    g_game.render = render_init(g_game.vfs);
+    g_game.render = render_init();
     audio_init();
 }
 
@@ -69,10 +68,7 @@ void game_deinit(void) {
         g_game.state = NULL;
     }
 
-    if (g_game.vfs != NULL) {
-        vfs_delete(g_game.vfs);
-        g_game.vfs = NULL;
-    }
+    vfs_deinit();
 }
 
 /**
