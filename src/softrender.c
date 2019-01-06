@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include "render.h"
+#include "softfont.h"
 #include "softrender.h"
 #include "vfs.h"
 
@@ -37,6 +38,7 @@ static softrender_context_t g_render_ctx;
 static picture_t* g_back;
 static picture_t* g_board;
 static picture_t* g_blocks[MAX_BLOCKS];
+static softfont_t* g_font;
 
 static void softrender_init(void) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
@@ -56,6 +58,8 @@ static void softrender_init(void) {
     g_blocks[4] = picture_new_vfs("block/default/cyan.png");
     g_blocks[5] = picture_new_vfs("block/default/blue.png");
     g_blocks[6] = picture_new_vfs("block/default/purple.png");
+
+    g_font = softfont_new("interface/default/font.png");
 }
 
 static void softrender_deinit(void) {
@@ -89,8 +93,10 @@ static void* softrender_draw_state(const state_t* state) {
     void* context = &g_render_ctx;
 
     // Draw the background.
-    picture_copy(&g_render_ctx.buffer, g_back, 0, 0);
-    picture_copy(&g_render_ctx.buffer, g_board, BOARD_X, BOARD_Y);
+    picture_copy(&g_render_ctx.buffer, vec2i_zero(), g_back, vec2i_zero());
+    picture_copy(&g_render_ctx.buffer, vec2i(BOARD_X, BOARD_Y), g_board, vec2i_zero());
+
+    softfont_render(g_font, &g_render_ctx.buffer, vec2i(0, 0), "Hello, world!");
 
     // Get our board to draw.
     board_t* board = state->boards[0];
@@ -118,8 +124,9 @@ static void* softrender_draw_state(const state_t* state) {
         int iy = (i / board->config.width) - (board->config.height - board->config.visible_height);
 
         // Draw a block.
-        picture_copy(&g_render_ctx.buffer, bpic,
-            BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy));
+        picture_copy(&g_render_ctx.buffer,
+            vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
+            bpic, vec2i_zero());
     }
 
     // Draw the ghost piece, if any.
@@ -145,8 +152,9 @@ static void* softrender_draw_state(const state_t* state) {
             }
 
             // Draw a block.
-            picture_copy(&g_render_ctx.buffer, bpic,
-                BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy));
+            picture_copy(&g_render_ctx.buffer,
+                vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
+                bpic, vec2i_zero());
         }
     }
 
@@ -174,8 +182,9 @@ static void* softrender_draw_state(const state_t* state) {
             }
 
             // Draw a block.
-            picture_copy(&g_render_ctx.buffer, bpic,
-                BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy));
+            picture_copy(&g_render_ctx.buffer,
+                vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
+                bpic, vec2i_zero());
         }
     }
 

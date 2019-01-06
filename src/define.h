@@ -64,6 +64,22 @@ typedef struct {
 } vec2i_t;
 
 /**
+ * Return a vector with two values.
+ */ 
+static inline vec2i_t vec2i(int x, int y) {
+    vec2i_t vec = { x, y };
+    return vec;
+}
+
+/**
+ * Return a vector of two integers initialized to (0, 0).
+ */
+static inline vec2i_t vec2i_zero(void) {
+    vec2i_t zero = { 0, 0 };
+    return zero;
+}
+
+/**
  * Generic buffer of bytes.
  */
 typedef struct {

@@ -11,6 +11,7 @@ set(RESOURCE_SOURCES
     block/default/white.png
     block/default/yellow.png
     interface/default/board.png
+    interface/default/font.png
     sfx/default/piece0.wav)
 set(RESOURCE_FILE "${CMAKE_CURRENT_BINARY_DIR}/basemino.pk3")
 
