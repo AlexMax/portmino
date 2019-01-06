@@ -29,7 +29,7 @@
 - [ ] Move gameplay loop into Lua.
   - [ ] Serialize Lua state into C state and back again.
 - [ ] Performance measuring functions.
-- [ ] Virtual Filesystem (resources can be loaded from inside binary or on-disk).
+- [X] Virtual Filesystem (resources can be loaded from inside binary or on-disk).
   - [ ] Figure out how to build and embed resources into binary.
   - [ ] Use libzip for resource packages?
 - [X] Sound playback and mixing.
