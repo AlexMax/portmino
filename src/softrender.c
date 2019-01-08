@@ -110,7 +110,7 @@ static void* softrender_draw_state(const state_t* state) {
     // What index of the board do we start at?
     int start = (board->config.height - board->config.visible_height) * board->config.width;
 
-    // Draw the board.
+    // Draw the blocks on the board.
     for (size_t i = start;i < board->data.size;i++) {
         // What type of block are we rendering?
         uint8_t btype = board->data.data[i];
@@ -124,7 +124,7 @@ static void* softrender_draw_state(const state_t* state) {
         int iy = (i / board->config.width) - (board->config.height - board->config.visible_height);
 
         // Draw a block.
-        picture_copy(&g_render_ctx.buffer,
+        picture_blit(&g_render_ctx.buffer,
             vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
             bpic, vec2i_zero());
     }
@@ -152,7 +152,7 @@ static void* softrender_draw_state(const state_t* state) {
             }
 
             // Draw a block.
-            picture_copy(&g_render_ctx.buffer,
+            picture_blit(&g_render_ctx.buffer,
                 vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
                 bpic, vec2i_zero());
         }
@@ -182,7 +182,7 @@ static void* softrender_draw_state(const state_t* state) {
             }
 
             // Draw a block.
-            picture_copy(&g_render_ctx.buffer,
+            picture_blit(&g_render_ctx.buffer,
                 vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
                 bpic, vec2i_zero());
         }

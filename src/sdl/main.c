@@ -33,6 +33,8 @@ static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
 static SDL_AudioDeviceID g_audio_device;
 
+static double g_pfreq;
+
 ATTRIB_PRINTF(1, 0)
 static void sdl_fatalerror(const char *fmt, va_list va) {
     char buffer[8192];
@@ -76,6 +78,9 @@ static mevent_t sdl_scancode_to_mevent(int code) {
 }
 
 static void sdl_run(void) {
+    // Performance counter
+    uint64_t pcount;
+
     // Assemble our game events from polled events.
     SDL_Event event;
     static gameinputs_t inputs = { 0 }; // keep the inputs around
@@ -105,16 +110,23 @@ static void sdl_run(void) {
     }
 
     // Run the game simulation.
+    pcount = SDL_GetPerformanceCounter();
     game_frame(&inputs);
+    double game_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
     // Render the screen.
+    pcount = SDL_GetPerformanceCounter();
     softrender_context_t* context = game_draw();
+    double draw_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
+    pcount = SDL_GetPerformanceCounter();
     SDL_UpdateTexture(g_texture, NULL, context->buffer.data, context->buffer.width * 4);
     SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
     SDL_RenderPresent(g_renderer);
+    double render_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
     // Play a tic worth of audio.
+    pcount = SDL_GetPerformanceCounter();
     uint32_t bufsize = SDL_GetQueuedAudioSize(g_audio_device);
     if (bufsize == 0) {
         //fprintf(stderr, "Audio Buffer underrun: tic %d\n", SDL_GetTicks());
@@ -123,6 +135,14 @@ static void sdl_run(void) {
     }
     audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
     SDL_QueueAudio(g_audio_device, audio_ctx->data, audio_ctx->size);
+    double audio_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
+
+    if (true) {
+        SDL_Log("game %f, draw %f, render %f, audio %f\n", game_time, draw_time,
+                render_time, audio_time);
+    }
+
+    return;
 }
 
 static void clean_exit(void) {
@@ -174,6 +194,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "SDL2_Init failure:  %s\n", SDL_GetError());
         return 1;
     }
+
+    // Calculate the performance frequency here.
+    g_pfreq = SDL_GetPerformanceFrequency() / 1000;
 
     g_window = SDL_CreateWindow("Portmino", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
     if (g_window == NULL) {
