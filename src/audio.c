@@ -45,7 +45,10 @@ typedef struct {
     size_t position;
 } audio_mixer_channel_t;
 
+sound_t* g_sound_lock;
+sound_t* g_sound_move;
 sound_t* g_sound_piece0;
+sound_t* g_sound_rotate;
 
 static audio_mixer_channel_t g_audio_mixer[MIXER_CHANNELS];
 static audio_context_t g_audio_ctx;
@@ -108,7 +111,10 @@ void audio_init(void) {
     g_audio_ctx.size = g_audio_ctx.samplecount * g_audio_ctx.samplesize;
     g_audio_ctx.data = malloc(g_audio_ctx.size);
 
+    g_sound_lock = sound_new("sfx/default/lock.wav");
+    g_sound_move = sound_new("sfx/default/move.wav");
     g_sound_piece0 = sound_new("sfx/default/piece0.wav");
+    g_sound_rotate = sound_new("sfx/default/rotate.wav");
 }
 
 /**
@@ -121,9 +127,21 @@ void audio_deinit(void) {
     }
 
     // Delete all sounds
+    if (g_sound_lock != NULL) {
+        sound_delete(g_sound_lock);
+        g_sound_lock = NULL;
+    }
+    if (g_sound_move != NULL) {
+        sound_delete(g_sound_move);
+        g_sound_move = NULL;
+    }
     if (g_sound_piece0 != NULL) {
         sound_delete(g_sound_piece0);
         g_sound_piece0 = NULL;
+    }
+    if (g_sound_rotate != NULL) {
+        sound_delete(g_sound_rotate);
+        g_sound_rotate = NULL;
     }
 
     // Free the context.

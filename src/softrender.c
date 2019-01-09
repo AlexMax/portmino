@@ -37,8 +37,6 @@ static picture_t* g_board;
 static softblock_t* g_block;
 static softfont_t* g_font;
 
-#include <string.h>
-
 static void softrender_init(void) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
 
@@ -56,7 +54,7 @@ static void softrender_init(void) {
         g_board->data[i + 3] = 192;
     }
 
-    g_block = softblock_new("block/default.png");
+    g_block = softblock_new("block/default/8px.png");
 
     g_font = softfont_new("interface/default/font.png");
 }

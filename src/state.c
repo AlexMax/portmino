@@ -148,6 +148,7 @@ state_result_t state_frame(state_t* state, events_t events) {
         } else {
             // We can't move down, lock the piece.
             board_lock_piece(board, piece->config, piece->pos, piece->rot);
+            audio_playsound(g_sound_lock);
 
             // Clear the board of any lines.
             uint8_t lines = board_clear_lines(board);
@@ -224,6 +225,7 @@ state_result_t state_frame(state_t* state, events_t events) {
         dpos.x += dx;
         if (board_test_piece(board, piece->config, dpos, piece->rot)) {
             piece->pos.x += dx;
+            audio_playsound(g_sound_move);
         }
     }
 
@@ -261,6 +263,7 @@ state_result_t state_frame(state_t* state, events_t events) {
         if (board_test_piece(board, piece->config, piece->pos, prot)) {
             // Normal rotation.
             piece->rot = prot;
+            audio_playsound(g_sound_rotate);
         } else if (piece->config == &g_o_piece) {
             // Don't wallkick the "O" piece.
         } else if (piece->config == &g_i_piece) {
@@ -298,6 +301,7 @@ state_result_t state_frame(state_t* state, events_t events) {
                     piece->pos.x += tries[i].x;
                     piece->pos.y += tries[i].y;
                     piece->rot = prot;
+                    audio_playsound(g_sound_rotate);
                     break;
                 }
             }
@@ -336,6 +340,7 @@ state_result_t state_frame(state_t* state, events_t events) {
                     piece->pos.x += tries[i].x;
                     piece->pos.y += tries[i].y;
                     piece->rot = prot;
+                    audio_playsound(g_sound_rotate);
                     break;
                 }
             }

@@ -129,15 +129,15 @@ static void sdl_run(void) {
     pcount = SDL_GetPerformanceCounter();
     uint32_t bufsize = SDL_GetQueuedAudioSize(g_audio_device);
     if (bufsize == 0) {
-        //fprintf(stderr, "Audio Buffer underrun: tic %d\n", SDL_GetTicks());
+        printf("Audio Buffer underrun: tic %d\n", SDL_GetTicks());
     } else {
-        //fprintf(stderr, "Audio Buffer %u: tic %d\n", bufsize, SDL_GetTicks());
+        printf("Audio Buffer %u: tic %d\n", bufsize, SDL_GetTicks());
     }
     audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
     SDL_QueueAudio(g_audio_device, audio_ctx->data, audio_ctx->size);
     double audio_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
-    if (true) {
+    if (false) {
         SDL_Log("game %f, draw %f, render %f, audio %f\n", game_time, draw_time,
                 render_time, audio_time);
     }
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
     s_expect.freq = MINO_AUDIO_HZ;
     s_expect.format = AUDIO_S16;
     s_expect.channels = 2;
-    s_expect.samples = 4096;
+    s_expect.samples = 512;
     s_expect.callback = NULL;
     g_audio_device = SDL_OpenAudioDevice(NULL, 0, &s_expect, &s_actual, 0);
     if (g_audio_device == 0) {

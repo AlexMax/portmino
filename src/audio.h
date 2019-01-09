@@ -42,7 +42,10 @@ typedef struct {
     size_t samplesize;
 } audio_context_t;
 
+extern sound_t* g_sound_lock;
+extern sound_t* g_sound_move;
 extern sound_t* g_sound_piece0;
+extern sound_t* g_sound_rotate;
 
 void audio_init(void);
 void audio_deinit(void);
