@@ -110,6 +110,7 @@ typedef struct {
 
 board_t* board_new(void);
 void board_delete(board_t* board);
+piece_config_t* board_get_next_piece(const board_t* board, size_t index);
 bool board_next_piece(board_t* board);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,

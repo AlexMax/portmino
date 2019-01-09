@@ -23,6 +23,7 @@
 
 #define MINO_SOFTRENDER_WIDTH 320
 #define MINO_SOFTRENDER_HEIGHT 240
+#define MINO_SOFTRENDER_BPP 4
 
 typedef struct {
     /**

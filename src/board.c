@@ -94,6 +94,14 @@ void board_delete(board_t *board) {
 }
 
 /**
+ * Return the configuration of the next piece.
+ */
+piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
+    index = board->next_index + index % MAX_NEXTS;
+    return board->nexts[board->next_index];
+}
+
+/**
  * Get the next piece, make it the active piece, and advance the next piece index.
  * 
  * Returns true if the next piece was successfully placed, otherwise false.

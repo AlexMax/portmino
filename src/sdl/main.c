@@ -120,7 +120,7 @@ static void sdl_run(void) {
     double draw_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
     pcount = SDL_GetPerformanceCounter();
-    SDL_UpdateTexture(g_texture, NULL, context->buffer.data, context->buffer.width * 4);
+    SDL_UpdateTexture(g_texture, NULL, context->buffer.data, context->buffer.width * MINO_SOFTRENDER_BPP);
     SDL_RenderCopy(g_renderer, g_texture, NULL, NULL);
     SDL_RenderPresent(g_renderer);
     double render_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;

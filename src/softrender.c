@@ -22,15 +22,13 @@
 #include "softrender.h"
 #include "vfs.h"
 
-/**
- * Bits per pixel of the software-rendered surface.
- */
-#define MINO_SOFTRENDER_BPP 4
-
 #define MAX_BLOCKS 7
 
 #define BOARD_X 18
 #define BOARD_Y 42
+
+#define NEXT_X_START 18
+#define NEXT_Y (BOARD_Y - 20)
 
 static softrender_context_t g_render_ctx;
 
@@ -39,6 +37,8 @@ static picture_t* g_back;
 static picture_t* g_board;
 static picture_t* g_blocks[MAX_BLOCKS];
 static softfont_t* g_font;
+
+#include <string.h>
 
 static void softrender_init(void) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
@@ -50,7 +50,14 @@ static void softrender_init(void) {
     g_render_ctx.buffer.height = MINO_SOFTRENDER_HEIGHT;
 
     g_back = picture_new_vfs("background/default/1.png");
+
     g_board = picture_new_vfs("interface/default/board.png");
+
+    // Board picture has adjustable transparency.
+    for (size_t i = 0;i < g_board->size;i += MINO_SOFTRENDER_BPP) {
+        g_board->data[i + 3] = 192;
+    }
+
     g_blocks[0] = picture_new_vfs("block/default/red.png");
     g_blocks[1] = picture_new_vfs("block/default/orange.png");
     g_blocks[2] = picture_new_vfs("block/default/yellow.png");
@@ -94,9 +101,7 @@ static void* softrender_draw_state(const state_t* state) {
 
     // Draw the background.
     picture_copy(&g_render_ctx.buffer, vec2i_zero(), g_back, vec2i_zero());
-    picture_copy(&g_render_ctx.buffer, vec2i(BOARD_X, BOARD_Y), g_board, vec2i_zero());
-
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(0, 0), "Hello, world!");
+    picture_blit(&g_render_ctx.buffer, vec2i(BOARD_X, BOARD_Y), g_board, vec2i_zero());
 
     // Get our board to draw.
     board_t* board = state->boards[0];
@@ -184,6 +189,30 @@ static void* softrender_draw_state(const state_t* state) {
             // Draw a block.
             picture_blit(&g_render_ctx.buffer,
                 vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
+                bpic, vec2i_zero());
+        }
+    }
+
+    // Draw the next piece.
+    piece_config_t* next = board_get_next_piece(board, 0);
+    if (next != NULL) {
+        size_t i = next->spawn_rot * next->data_size;
+        size_t end = i + next->data_size;
+        for (int j = 0;i < end;i++,j++) {
+            // What type of block are we rendering?
+            uint8_t btype = next->datas[i];
+            if (!btype) {
+                continue;
+            }
+            picture_t* bpic = g_blocks[--btype];
+
+            // What is the actual (x, y) coordinate of the block?
+            int ix = next->spawn_pos.x + (j % next->width);
+            int iy = 0 + (j / next->width);
+
+            // Draw a block of the next piece.
+            picture_blit(&g_render_ctx.buffer,
+                vec2i(NEXT_X_START + (blockx * ix), NEXT_Y + (blocky * iy)),
                 bpic, vec2i_zero());
         }
     }
