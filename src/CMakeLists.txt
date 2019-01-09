@@ -33,6 +33,7 @@ set(GAME_SOURCES
     platform.c      platform.h
     random.c        random.h
     render.c        render.h
+    softblock.c    softblock.h
     softfont.c      softfont.h
     softrender.c    softrender.h
     sound.c         sound.h

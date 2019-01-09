@@ -1,15 +1,7 @@
 # Build the resource pack
 set(RESOURCE_SOURCES
     background/default/1.png
-    block/default/blue.png
-    block/default/cyan.png
-    block/default/gray.png
-    block/default/green.png
-    block/default/orange.png
-    block/default/purple.png
-    block/default/red.png
-    block/default/white.png
-    block/default/yellow.png
+    block/default.png
     interface/default/board.png
     interface/default/font.png
     sfx/default/piece0.wav)

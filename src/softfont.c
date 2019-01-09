@@ -17,8 +17,6 @@
 
 #include <stdlib.h>
 
-#include <stdio.h>
-
 #include "softfont.h"
 
 /**
@@ -47,9 +45,15 @@ softfont_t* softfont_new(const char* path) {
         };
 
         font->glyphs[i] = picture_new(glyph_width, glyph_height);
+        if (font->glyphs[i] == NULL) {
+            picture_delete(fontpic);
+            softfont_delete(font);
+            return NULL;
+        }
         picture_copy(font->glyphs[i], vec2i_zero(), fontpic, srcpos);
     }
 
+    picture_delete(fontpic);
     return font;
 }
 
@@ -57,6 +61,13 @@ softfont_t* softfont_new(const char* path) {
  * Free a software font struct.
  */
 void softfont_delete(softfont_t* font) {
+    for (size_t i = 0;i < MAX_GLYPHS;i++) {
+        if (font->glyphs[i] != NULL) {
+            picture_delete(font->glyphs[i]);
+            font->glyphs[i] = NULL;
+        }
+    }
+
     free(font);
 }
 

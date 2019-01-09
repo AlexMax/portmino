@@ -37,18 +37,18 @@ piece_config_t g_o_piece;
  */
 static void piece_config_init_j(piece_config_t* piece) {
     uint8_t data[] = {
-        6, 0, 0,
-        6, 6, 6,
+        8, 0, 0,
+        8, 8, 8,
         0, 0, 0,
-        0, 6, 6,
-        0, 6, 0,
-        0, 6, 0,
+        0, 8, 8,
+        0, 8, 0,
+        0, 8, 0,
         0, 0, 0,
-        6, 6, 6,
-        0, 0, 6,
-        0, 6, 0,
-        0, 6, 0,
-        6, 6, 0
+        8, 8, 8,
+        0, 0, 8,
+        0, 8, 0,
+        0, 8, 0,
+        8, 8, 0
     };
 
     piece->spawn_pos.x = 3;
@@ -67,18 +67,18 @@ static void piece_config_init_j(piece_config_t* piece) {
  */
 static void piece_config_init_l(piece_config_t* piece) {
     uint8_t data[] = {
-        0, 0, 2,
-        2, 2, 2,
+        0, 0, 4,
+        4, 4, 4,
         0, 0, 0,
-        0, 2, 0,
-        0, 2, 0,
-        0, 2, 2,
+        0, 4, 0,
+        0, 4, 0,
+        0, 4, 4,
         0, 0, 0,
-        2, 2, 2,
-        2, 0, 0,
-        2, 2, 0,
-        0, 2, 0,
-        0, 2, 0
+        4, 4, 4,
+        4, 0, 0,
+        4, 4, 0,
+        0, 4, 0,
+        0, 4, 0
     };
 
     piece->spawn_pos.x = 3;
@@ -97,18 +97,18 @@ static void piece_config_init_l(piece_config_t* piece) {
  */
 static void piece_config_init_s(piece_config_t* piece) {
     uint8_t data[] = {
-        0, 4, 4,
-        4, 4, 0,
+        0, 6, 6,
+        6, 6, 0,
         0, 0, 0,
-        0, 4, 0,
-        0, 4, 4,
-        0, 0, 4,
+        0, 6, 0,
+        0, 6, 6,
+        0, 0, 6,
         0, 0, 0,
-        0, 4, 4,
-        4, 4, 0,
-        4, 0, 0,
-        4, 4, 0,
-        0, 4, 0
+        0, 6, 6,
+        6, 6, 0,
+        6, 0, 0,
+        6, 6, 0,
+        0, 6, 0
     };
 
     piece->spawn_pos.x = 3;
@@ -127,18 +127,18 @@ static void piece_config_init_s(piece_config_t* piece) {
  */
 static void piece_config_init_z(piece_config_t* piece) {
     uint8_t data[] = {
-        1, 1, 0,
-        0, 1, 1,
+        3, 3, 0,
+        0, 3, 3,
         0, 0, 0,
-        0, 0, 1,
-        0, 1, 1,
-        0, 1, 0,
+        0, 0, 3,
+        0, 3, 3,
+        0, 3, 0,
         0, 0, 0,
-        1, 1, 0,
-        0, 1, 1,
-        0, 1, 0,
-        1, 1, 0,
-        1, 0, 0
+        3, 3, 0,
+        0, 3, 3,
+        0, 3, 0,
+        3, 3, 0,
+        3, 0, 0
     };
 
     piece->spawn_pos.x = 3;
@@ -157,18 +157,18 @@ static void piece_config_init_z(piece_config_t* piece) {
  */
 static void piece_config_init_t(piece_config_t* piece) {
     uint8_t data[] = {
-        0, 7, 0,
-        7, 7, 7,
+        0, 9, 0,
+        9, 9, 9,
         0, 0, 0,
-        0, 7, 0,
-        0, 7, 7,
-        0, 7, 0,
+        0, 9, 0,
+        0, 9, 9,
+        0, 9, 0,
         0, 0, 0,
-        7, 7, 7,
-        0, 7, 0,
-        0, 7, 0,
-        7, 7, 0,
-        0, 7, 0
+        9, 9, 9,
+        0, 9, 0,
+        0, 9, 0,
+        9, 9, 0,
+        0, 9, 0
     };
 
     piece->spawn_pos.x = 3;
@@ -188,21 +188,21 @@ static void piece_config_init_t(piece_config_t* piece) {
 static void piece_config_init_i(piece_config_t* piece) {
     uint8_t data[] = {
         0, 0, 0, 0,
-        5, 5, 5, 5,
+        7, 7, 7, 7,
         0, 0, 0, 0,
         0, 0, 0, 0,
-        0, 0, 5, 0,
-        0, 0, 5, 0,
-        0, 0, 5, 0,
-        0, 0, 5, 0,
+        0, 0, 7, 0,
+        0, 0, 7, 0,
+        0, 0, 7, 0,
+        0, 0, 7, 0,
         0, 0, 0, 0,
         0, 0, 0, 0,
-        5, 5, 5, 5,
+        7, 7, 7, 7,
         0, 0, 0, 0,
-        0, 5, 0, 0,
-        0, 5, 0, 0,
-        0, 5, 0, 0,
-        0, 5, 0, 0
+        0, 7, 0, 0,
+        0, 7, 0, 0,
+        0, 7, 0, 0,
+        0, 7, 0, 0
     };
 
     piece->spawn_pos.x = 3;
@@ -221,17 +221,17 @@ static void piece_config_init_i(piece_config_t* piece) {
  */
 static void piece_config_init_o(piece_config_t* piece) {
     uint8_t data[] = {
-        0, 3, 3, 0,
-        0, 3, 3, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
         0, 0, 0, 0,
-        0, 3, 3, 0,
-        0, 3, 3, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
         0, 0, 0, 0,
-        0, 3, 3, 0,
-        0, 3, 3, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
         0, 0, 0, 0,
-        0, 3, 3, 0,
-        0, 3, 3, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
         0, 0, 0, 0
     };
 

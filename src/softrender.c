@@ -18,11 +18,10 @@
 #include <stdlib.h>
 
 #include "render.h"
+#include "softblock.h"
 #include "softfont.h"
 #include "softrender.h"
 #include "vfs.h"
-
-#define MAX_BLOCKS 7
 
 #define BOARD_X 18
 #define BOARD_Y 42
@@ -35,7 +34,7 @@ static softrender_context_t g_render_ctx;
 // FIXME: Don't use a global picture
 static picture_t* g_back;
 static picture_t* g_board;
-static picture_t* g_blocks[MAX_BLOCKS];
+static softblock_t* g_block;
 static softfont_t* g_font;
 
 #include <string.h>
@@ -52,19 +51,12 @@ static void softrender_init(void) {
     g_back = picture_new_vfs("background/default/1.png");
 
     g_board = picture_new_vfs("interface/default/board.png");
-
     // Board picture has adjustable transparency.
     for (size_t i = 0;i < g_board->size;i += MINO_SOFTRENDER_BPP) {
         g_board->data[i + 3] = 192;
     }
 
-    g_blocks[0] = picture_new_vfs("block/default/red.png");
-    g_blocks[1] = picture_new_vfs("block/default/orange.png");
-    g_blocks[2] = picture_new_vfs("block/default/yellow.png");
-    g_blocks[3] = picture_new_vfs("block/default/green.png");
-    g_blocks[4] = picture_new_vfs("block/default/cyan.png");
-    g_blocks[5] = picture_new_vfs("block/default/blue.png");
-    g_blocks[6] = picture_new_vfs("block/default/purple.png");
+    g_block = softblock_new("block/default.png");
 
     g_font = softfont_new("interface/default/font.png");
 }
@@ -80,11 +72,14 @@ static void softrender_deinit(void) {
         g_board = NULL;
     }
 
-    for (size_t i = 0;i < MAX_BLOCKS;i++) {
-        if (g_blocks[i] != NULL) {
-            picture_delete(g_blocks[i]);
-            g_blocks[i] = NULL;
-        }
+    if (g_block != NULL) {
+        softblock_delete(g_block);
+        g_block = NULL;
+    }
+
+    if (g_font != NULL) {
+        softfont_delete(g_font);
+        g_font = NULL;
     }
 
     if (g_render_ctx.buffer.data != NULL) {
@@ -122,7 +117,7 @@ static void* softrender_draw_state(const state_t* state) {
         if (!btype) {
             continue;
         }
-        picture_t* bpic = g_blocks[--btype];
+        picture_t* bpic = softblock_get(g_block, --btype);
 
         // What is the actual (x, y) coordinate of the block?
         int ix = i % board->config.width;
@@ -144,7 +139,7 @@ static void* softrender_draw_state(const state_t* state) {
             if (!btype) {
                 continue;
             }
-            picture_t* bpic = g_blocks[--btype];
+            picture_t* bpic = softblock_get(g_block, --btype);
 
             // What is the actual (x, y) coordinate of the block?
             int ix = board->ghost->pos.x + (j % board->ghost->config->width);
@@ -174,7 +169,7 @@ static void* softrender_draw_state(const state_t* state) {
             if (!btype) {
                 continue;
             }
-            picture_t* bpic = g_blocks[--btype];
+            picture_t* bpic = softblock_get(g_block, --btype);
 
             // What is the actual (x, y) coordinate of the block?
             int ix = board->piece->pos.x + (j % board->piece->config->width);
@@ -204,7 +199,7 @@ static void* softrender_draw_state(const state_t* state) {
             if (!btype) {
                 continue;
             }
-            picture_t* bpic = g_blocks[--btype];
+            picture_t* bpic = softblock_get(g_block, --btype);
 
             // What is the actual (x, y) coordinate of the block?
             int ix = next->spawn_pos.x + (j % next->width);
