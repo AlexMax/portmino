@@ -7,7 +7,8 @@ set(RESOURCE_SOURCES
     sfx/default/lock.wav
     sfx/default/move.wav
     sfx/default/piece0.wav
-    sfx/default/rotate.wav)
+    sfx/default/rotate.wav
+    sfx/default/step.wav)
 set(RESOURCE_FILE "${CMAKE_CURRENT_BINARY_DIR}/basemino.pk3")
 
 add_custom_command(

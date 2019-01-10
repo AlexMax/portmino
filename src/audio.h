@@ -46,6 +46,7 @@ extern sound_t* g_sound_lock;
 extern sound_t* g_sound_move;
 extern sound_t* g_sound_piece0;
 extern sound_t* g_sound_rotate;
+extern sound_t* g_sound_step;
 
 void audio_init(void);
 void audio_deinit(void);

@@ -22,6 +22,7 @@
 
 #define DEFAULT_DAS 12
 #define DEFAULT_DAS_PERIOD 2
+#define DEFAULT_LOCK_DELAY 30
 
 /**
  * Reset a player state struct to nothing.
@@ -29,6 +30,7 @@
 void playstate_reset(playstate_t* ps) {
     ps->left_tic = 0;
     ps->right_tic = 0;
+    ps->lock_tic = 0;
     ps->harddrop_already = false;
     ps->ccw_already = false;
     ps->cw_already = false;
@@ -113,6 +115,40 @@ state_result_t state_frame(state_t* state, events_t events) {
 
     piece_t* piece = board->piece;
 
+    // Is our piece blocked from the bottom?  If so, lock logic takes priority.
+    if (!board_test_piece(board, piece->config, vec2i(piece->pos.x, piece->pos.y + 1), piece->rot)) {
+        if (state->playstates[0].lock_tic == 0) {
+            // This is our first tic that we've locked.
+            state->playstates[0].lock_tic = state->tic;
+            audio_playsound(g_sound_step);
+        }
+
+        if (state->tic - state->playstates[0].lock_tic >= DEFAULT_LOCK_DELAY) {
+            // Our lock timer has run out, lock the piece.
+            board_lock_piece(board, piece->config, piece->pos, piece->rot);
+            audio_playsound(g_sound_lock);
+
+            // Clear the board of any lines.
+            uint8_t lines = board_clear_lines(board);
+            (void)lines;
+
+            // Advance the new piece.
+            if (!board_next_piece(board)) {
+                return STATE_RESULT_GAMEOVER;
+            }
+            audio_playsound(g_sound_piece0);
+
+            // We're done with locking, so cancel the tic out.
+            state->playstates[0].lock_tic = 0;
+
+            // Get the piece pointer again, because we mutated it.
+            piece = board->piece;
+        }
+    } else {
+        // We are not in lock logic anymore.
+        state->playstates[0].lock_tic = 0;
+    }
+
     // Determine what our gravity is going to be.
     int gravity_tics = 64; // number of tics between gravity tics
     int gravity_cells = 1; // number of cells to move the piece per gravity tics.
@@ -142,26 +178,11 @@ state_result_t state_frame(state_t* state, events_t events) {
         vec2i_t src = { piece->pos.x, piece->pos.y };
         vec2i_t dst = { piece->pos.x, piece->pos.y + gravity_cells };
         vec2i_t res = board_test_piece_between(board, piece->config, src, piece->rot, dst);
-        if (res.y != src.y) {
-            // We can move down.
-            piece->pos.y = res.y;
-        } else {
-            // We can't move down, lock the piece.
-            board_lock_piece(board, piece->config, piece->pos, piece->rot);
-            audio_playsound(g_sound_lock);
 
-            // Clear the board of any lines.
-            uint8_t lines = board_clear_lines(board);
-
-            // Advance the new piece.
-            if (!board_next_piece(board)) {
-                return STATE_RESULT_GAMEOVER;
-            }
-            audio_playsound(g_sound_piece0);
-
-            // Get the piece pointer again, because we mutated it.
-            piece = board->piece;
-        }
+        // Our new location is always wherever the test tells us.  If we
+        // can't move down, we're relying on our lock delay logic to handle
+        // things next tic.
+        piece->pos.y = res.y;
     }
 
     // Handle movement.
@@ -226,6 +247,12 @@ state_result_t state_frame(state_t* state, events_t events) {
         if (board_test_piece(board, piece->config, dpos, piece->rot)) {
             piece->pos.x += dx;
             audio_playsound(g_sound_move);
+
+            // Moving the piece successfully resets our lock timer.
+            if (state->playstates[0].lock_tic != 0) {
+                state->playstates[0].lock_tic = state->tic;
+                audio_playsound(g_sound_step);
+            }
         }
     }
 
@@ -264,6 +291,12 @@ state_result_t state_frame(state_t* state, events_t events) {
             // Normal rotation.
             piece->rot = prot;
             audio_playsound(g_sound_rotate);
+
+            // Rotating the piece successfully resets our lock timer.
+            if (state->playstates[0].lock_tic != 0) {
+                state->playstates[0].lock_tic = state->tic;
+                audio_playsound(g_sound_step);
+            }
         } else if (piece->config == &g_o_piece) {
             // Don't wallkick the "O" piece.
         } else if (piece->config == &g_i_piece) {
@@ -302,6 +335,13 @@ state_result_t state_frame(state_t* state, events_t events) {
                     piece->pos.y += tries[i].y;
                     piece->rot = prot;
                     audio_playsound(g_sound_rotate);
+
+                    // Rotating the piece successfully resets our lock timer.
+                    if (state->playstates[0].lock_tic != 0) {
+                        state->playstates[0].lock_tic = state->tic;
+                        audio_playsound(g_sound_step);
+                    }
+
                     break;
                 }
             }
@@ -341,6 +381,13 @@ state_result_t state_frame(state_t* state, events_t events) {
                     piece->pos.y += tries[i].y;
                     piece->rot = prot;
                     audio_playsound(g_sound_rotate);
+
+                    // Rotating the piece successfully resets our lock timer.
+                    if (state->playstates[0].lock_tic != 0) {
+                        state->playstates[0].lock_tic = state->tic;
+                        audio_playsound(g_sound_step);
+                    }
+
                     break;
                 }
             }

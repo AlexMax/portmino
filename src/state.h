@@ -43,6 +43,11 @@ typedef struct {
     uint32_t right_tic;
 
     /**
+     * Tic that lock delay started on.  Set to 0 if lock delay isn't in effect.
+     */
+    uint32_t lock_tic;
+
+    /**
      * Have we processed an EVENT_HARDDROP last tic?
      */
     bool harddrop_already;

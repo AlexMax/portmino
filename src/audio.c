@@ -49,6 +49,7 @@ sound_t* g_sound_lock;
 sound_t* g_sound_move;
 sound_t* g_sound_piece0;
 sound_t* g_sound_rotate;
+sound_t* g_sound_step;
 
 static audio_mixer_channel_t g_audio_mixer[MIXER_CHANNELS];
 static audio_context_t g_audio_ctx;
@@ -115,6 +116,7 @@ void audio_init(void) {
     g_sound_move = sound_new("sfx/default/move.wav");
     g_sound_piece0 = sound_new("sfx/default/piece0.wav");
     g_sound_rotate = sound_new("sfx/default/rotate.wav");
+    g_sound_step = sound_new("sfx/default/step.wav");
 }
 
 /**
@@ -142,6 +144,10 @@ void audio_deinit(void) {
     if (g_sound_rotate != NULL) {
         sound_delete(g_sound_rotate);
         g_sound_rotate = NULL;
+    }
+    if (g_sound_step != NULL) {
+        sound_delete(g_sound_step);
+        g_sound_step = NULL;
     }
 
     // Free the context.

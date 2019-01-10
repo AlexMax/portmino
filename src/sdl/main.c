@@ -129,9 +129,9 @@ static void sdl_run(void) {
     pcount = SDL_GetPerformanceCounter();
     uint32_t bufsize = SDL_GetQueuedAudioSize(g_audio_device);
     if (bufsize == 0) {
-        printf("Audio Buffer underrun: tic %d\n", SDL_GetTicks());
+        // printf("Audio Buffer underrun: tic %d\n", SDL_GetTicks());
     } else {
-        printf("Audio Buffer %u: tic %d\n", bufsize, SDL_GetTicks());
+        // printf("Audio Buffer %u: tic %d\n", bufsize, SDL_GetTicks());
     }
     audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
     SDL_QueueAudio(g_audio_device, audio_ctx->data, audio_ctx->size);
