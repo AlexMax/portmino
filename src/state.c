@@ -31,7 +31,7 @@ void playstate_reset(playstate_t* ps) {
     ps->left_tic = 0;
     ps->right_tic = 0;
     ps->lock_tic = 0;
-    ps->harddrop_already = false;
+    ps->harddrop_tic = 0;
     ps->ccw_already = false;
     ps->cw_already = false;
 }
@@ -87,6 +87,8 @@ void state_delete(state_t* state) {
 
     free(state);
 }
+
+#include <stdio.h>
 
 /**
  * Given a particular gamestate, mutate it based on a particular event.
@@ -163,14 +165,17 @@ state_result_t state_frame(state_t* state, events_t events) {
     // If you press soft and hard drop at the same time, hard drop wins.
     // If you hold hard drop and press soft drop afterwards, soft drop wins.
     if (events & EVENT_HARDDROP) {
-        if (state->playstates[0].harddrop_already == false) {
+        if (state->playstates[0].harddrop_tic == 0) {
+            // We only pay attention to hard drops on the tic they were invoked.
+            // Othewise, you have rapid-fire dropping or even pieces running
+            // into each other at the top of the well.
             gravity_tics = 1;
             gravity_cells = 20;
 
-            state->playstates[0].harddrop_already = true;
+            state->playstates[0].harddrop_tic = state->tic;
         }
     } else {
-        state->playstates[0].harddrop_already = false;
+        state->playstates[0].harddrop_tic = 0;
     }
 
     // Handle gravity.
@@ -183,6 +188,27 @@ state_result_t state_frame(state_t* state, events_t events) {
         // can't move down, we're relying on our lock delay logic to handle
         // things next tic.
         piece->pos.y = res.y;
+
+        if (state->playstates[0].harddrop_tic == state->tic) {
+            // ...unless our gravity was actually a hard drop.  In that case,
+            // lock the piece immediately
+            board_lock_piece(board, piece->config, piece->pos, piece->rot);
+            audio_playsound(g_sound_lock);
+
+            // Clear the board of any lines.
+            uint8_t lines = board_clear_lines(board);
+            (void)lines;
+
+            // Advance the new piece.
+            if (!board_next_piece(board)) {
+                return STATE_RESULT_GAMEOVER;
+            }
+            audio_playsound(g_sound_piece0);
+
+            // Doing a hard drop is mutually exclusive with any other piece
+            // movement.
+            return STATE_RESULT_OK;
+        }
     }
 
     // Handle movement.
@@ -287,68 +313,35 @@ state_result_t state_frame(state_t* state, events_t events) {
         }
         prot %= piece->config->data_count;
 
-        if (board_test_piece(board, piece->config, piece->pos, prot)) {
-            // Normal rotation.
-            piece->rot = prot;
-            audio_playsound(g_sound_rotate);
-
-            // Rotating the piece successfully resets our lock timer.
-            if (state->playstates[0].lock_tic != 0) {
-                state->playstates[0].lock_tic = state->tic;
-                audio_playsound(g_sound_step);
-            }
-        } else if (piece->config == &g_o_piece) {
+        // Figure out which wallkicks we need to calculate.
+        vec2i_t tries[5] = { 0 };
+        if (piece->config == &g_o_piece) {
             // Don't wallkick the "O" piece.
         } else if (piece->config == &g_i_piece) {
             // Wallkicks for the "I" piece are unique.
-            vec2i_t tries[4] = { 0 };
-
             if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_R && prot == ROT_2)) {
-                tries[0].x = -1; tries[0].y = 0;
-                tries[1].x = 2; tries[1].y = 0;
-                tries[2].x = -1; tries[2].y = -2;
-                tries[3].x = 2; tries[3].y = 1;
-            } else if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
-                tries[0].x = -2; tries[0].y = 0;
-                tries[1].x = 1; tries[1].y = 0;
-                tries[2].x = -2; tries[2].y = 1;
-                tries[3].x = 1; tries[3].y = -2;
-            } else if ((piece->rot == ROT_2 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_0)) {
-                tries[0].x = 1; tries[0].y = 0;
-                tries[1].x = -2; tries[1].y = 0;
-                tries[2].x = 1; tries[2].y = 2;
-                tries[3].x = -2; tries[3].y = -1;
-            } else /* ROT_2 -> ROT_L, ROT_R -> ROT_0 */ {
-                tries[0].x = 2; tries[0].y = 0;
                 tries[1].x = -1; tries[1].y = 0;
-                tries[2].x = 2; tries[2].y = -1;
-                tries[3].x = -1; tries[3].y = 2;
-            }
-
-            for (size_t i = 0;i < piece->config->data_count;i++) {
-                vec2i_t test_pos = { 
-                    piece->pos.x + tries[i].x,
-                    piece->pos.y + tries[i].y
-                };
-                if (board_test_piece(board, piece->config, test_pos, prot)) {
-                    piece->pos.x += tries[i].x;
-                    piece->pos.y += tries[i].y;
-                    piece->rot = prot;
-                    audio_playsound(g_sound_rotate);
-
-                    // Rotating the piece successfully resets our lock timer.
-                    if (state->playstates[0].lock_tic != 0) {
-                        state->playstates[0].lock_tic = state->tic;
-                        audio_playsound(g_sound_step);
-                    }
-
-                    break;
-                }
+                tries[2].x = 2; tries[2].y = 0;
+                tries[3].x = -1; tries[3].y = -2;
+                tries[4].x = 2; tries[4].y = 1;
+            } else if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
+                tries[1].x = -2; tries[1].y = 0;
+                tries[2].x = 1; tries[2].y = 0;
+                tries[3].x = -2; tries[3].y = 1;
+                tries[4].x = 1; tries[4].y = -2;
+            } else if ((piece->rot == ROT_2 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_0)) {
+                tries[1].x = 1; tries[1].y = 0;
+                tries[2].x = -2; tries[2].y = 0;
+                tries[3].x = 1; tries[3].y = 2;
+                tries[4].x = -2; tries[4].y = -1;
+            } else /* ROT_2 -> ROT_L, ROT_R -> ROT_0 */ {
+                tries[1].x = 2; tries[1].y = 0;
+                tries[2].x = -1; tries[2].y = 0;
+                tries[3].x = 2; tries[3].y = -1;
+                tries[4].x = -1; tries[4].y = 2;
             }
         } else {
             // Wallkicks for the other pieces.
-            vec2i_t tries[4] = { 0 };
-
             if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_2 && prot == ROT_R)) {
                 tries[0].x = -1; tries[0].y = 0;
                 tries[1].x = -1; tries[1].y = -1;
@@ -370,26 +363,27 @@ state_result_t state_frame(state_t* state, events_t events) {
                 tries[2].x = 0; tries[2].y = 2;
                 tries[3].x = 1; tries[3].y = 2;
             }
+        }
 
-            for (size_t i = 0;i < piece->config->data_count;i++) {
-                vec2i_t test_pos = { 
-                    piece->pos.x + tries[i].x,
-                    piece->pos.y + tries[i].y
-                };
-                if (board_test_piece(board, piece->config, test_pos, prot)) {
-                    piece->pos.x += tries[i].x;
-                    piece->pos.y += tries[i].y;
-                    piece->rot = prot;
-                    audio_playsound(g_sound_rotate);
+        // Finally, run our tests.
+        for (size_t i = 0;i < piece->config->data_count;i++) {
+            vec2i_t test_pos = { 
+                piece->pos.x + tries[i].x,
+                piece->pos.y + tries[i].y
+            };
+            if (board_test_piece(board, piece->config, test_pos, prot)) {
+                piece->pos.x += tries[i].x;
+                piece->pos.y += tries[i].y;
+                piece->rot = prot;
+                audio_playsound(g_sound_rotate);
 
-                    // Rotating the piece successfully resets our lock timer.
-                    if (state->playstates[0].lock_tic != 0) {
-                        state->playstates[0].lock_tic = state->tic;
-                        audio_playsound(g_sound_step);
-                    }
-
-                    break;
+                // Rotating the piece successfully resets our lock timer.
+                if (state->playstates[0].lock_tic != 0) {
+                    state->playstates[0].lock_tic = state->tic;
+                    audio_playsound(g_sound_step);
                 }
+
+                break;
             }
         }
     }

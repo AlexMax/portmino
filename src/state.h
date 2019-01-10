@@ -48,9 +48,9 @@ typedef struct {
     uint32_t lock_tic;
 
     /**
-     * Have we processed an EVENT_HARDDROP last tic?
+     * Tic that EVENT_HARDDROP began on.  Set to 0 if released.
      */
-    bool harddrop_already;
+    uint32_t harddrop_tic;
 
     /**
      * Have we processed an EVENT_CCW last tic?
