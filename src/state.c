@@ -109,7 +109,7 @@ state_result_t state_frame(state_t* state, events_t events) {
 
     // Get the next piece if we don't have one at this point.
     if (board->piece == NULL) {
-        if (!board_next_piece(board)) {
+        if (!board_next_piece(board, state->tic)) {
             return STATE_RESULT_GAMEOVER;
         }
         audio_playsound(g_sound_piece0);
@@ -135,7 +135,7 @@ state_result_t state_frame(state_t* state, events_t events) {
             (void)lines;
 
             // Advance the new piece.
-            if (!board_next_piece(board)) {
+            if (!board_next_piece(board, state->tic)) {
                 return STATE_RESULT_GAMEOVER;
             }
             audio_playsound(g_sound_piece0);
@@ -152,8 +152,8 @@ state_result_t state_frame(state_t* state, events_t events) {
     }
 
     // Determine what our gravity is going to be.
-    int gravity_tics = 64; // number of tics between gravity tics
-    int gravity_cells = 1; // number of cells to move the piece per gravity tics.
+    int32_t gravity_tics = 64; // number of tics between gravity tics
+    int32_t gravity_cells = 1; // number of cells to move the piece per gravity tics.
 
     // Soft dropping and hard dropping aren't anything too special, they
     // just toy with gravity.
@@ -179,7 +179,7 @@ state_result_t state_frame(state_t* state, events_t events) {
     }
 
     // Handle gravity.
-    if (state->tic % gravity_tics == 0) {
+    if ((int32_t)(state->tic - board->spawn_tic) % gravity_tics >= gravity_tics - 1) {
         vec2i_t src = { piece->pos.x, piece->pos.y };
         vec2i_t dst = { piece->pos.x, piece->pos.y + gravity_cells };
         vec2i_t res = board_test_piece_between(board, piece->config, src, piece->rot, dst);
@@ -199,14 +199,14 @@ state_result_t state_frame(state_t* state, events_t events) {
             uint8_t lines = board_clear_lines(board);
             (void)lines;
 
-            // Advance the new piece.
-            if (!board_next_piece(board)) {
-                return STATE_RESULT_GAMEOVER;
-            }
-            audio_playsound(g_sound_piece0);
+            // There is no possible other move we can make this tic.  We
+            // delete the piece here, but we don't advance to the next piece
+            // until the next tic, to ensure gravity isn't screwed up.
+            piece_delete(board->piece);
+            board->piece = NULL;
 
-            // Doing a hard drop is mutually exclusive with any other piece
-            // movement.
+            // Again, doing a hard drop is mutually exclusive with any other
+            // piece movement this tic.
             return STATE_RESULT_OK;
         }
     }

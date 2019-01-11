@@ -108,7 +108,7 @@ piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
  * 
  * TODO: This function is probably a good candidate for turning into Lua.
  */
-bool board_next_piece(board_t* board) {
+bool board_next_piece(board_t* board, uint32_t state_tic) {
     if (board->piece != NULL) {
         // Free the existing piece if it exists.
         piece_delete(board->piece);
@@ -133,6 +133,9 @@ bool board_next_piece(board_t* board) {
         // Create the new piece.
         board->piece = piece_new(config);
     }
+
+    // Set the spawn tic.
+    board->spawn_tic = state_tic;
 
     // Generate a new next piece in place.
     board->nexts[board->next_index] = board_get_random_piece(board);
