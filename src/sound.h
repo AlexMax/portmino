@@ -21,16 +21,21 @@
 
 typedef struct {
     /**
+     * Filename of the sound.
+     */
+    char* name;
+
+    /**
      * Sound data.
      * 
      * PCM-encoded, 2-channel, 44,100hz.
      */
-    int16_t* data;
+    int16_t* sampledata;
 
     /**
-     * Size of sound data.
+     * Number of frames in the sound data.
      */
-    size_t size;
+    size_t framecount;
 } sound_t;
 
 sound_t* sound_new(const char* path);

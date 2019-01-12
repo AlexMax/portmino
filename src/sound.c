@@ -62,6 +62,11 @@ sound_t* sound_new(const char* path) {
 
     int16_t* data = drwav_open_memory_and_read_s16(file->data, file->size,
         &channels, &samplerate, &framecount);
+
+    if (false) {
+        printf("Loading %s: size %zu, channels %u, samplerate %u, framecount %lu\n", path, file->size, channels, samplerate, framecount);
+    }
+
     buffer_delete(file);
     if (data == NULL) {
         frontend_fatalerror("Could not load sound %s", path);
@@ -70,7 +75,7 @@ sound_t* sound_new(const char* path) {
 
     if (channels == 1) {
         // Turn mono into stereo.
-        int16_t* dest = malloc(sizeof(int16_t) * framecount * 2);
+        int16_t* dest = malloc(sizeof(int16_t) * framecount * MINO_AUDIO_CHANNELS);
         if (dest == NULL) {
             free(data);
             return NULL;
@@ -88,26 +93,32 @@ sound_t* sound_new(const char* path) {
 
     if (samplerate != MINO_AUDIO_HZ) {
         // Convert 22050Hz to 44100Hz.
-        int16_t* dest = malloc(sizeof(int16_t) * framecount * 2);
+        int16_t* dest = malloc(sizeof(int16_t) * framecount * MINO_AUDIO_CHANNELS * 2);
         if (dest == NULL) {
             free(data);
             return NULL;
         }
 
-        sound_to_samplerate(dest, data, framecount);
+        sound_to_samplerate(dest, data, framecount * MINO_AUDIO_CHANNELS);
         free(data);
         data = dest;
         samplerate = MINO_AUDIO_HZ;
         framecount *= 2;
     }
 
-    sound_t* sound = malloc(sizeof(sound_t));
+    sound_t* sound = calloc(1, sizeof(sound_t));
     if (sound == NULL) {
         return NULL;
     }
 
-    sound->data = data;
-    sound->size = channels * framecount;
+    sound->name = strdup(path);
+    if (sound->name == NULL) {
+        sound_delete(sound);
+        return NULL;
+    }
+
+    sound->sampledata = data;
+    sound->framecount = framecount;
 
     return sound;
 }
@@ -116,8 +127,11 @@ sound_t* sound_new(const char* path) {
  * Free a sound
  */
 void sound_delete(sound_t* sound) {
-    if (sound->data != NULL) {
-        free(sound->data); /* drwav_free is just "free" */
+    if (sound->name != NULL) {
+        free(sound->name);
+    }
+    if (sound->sampledata != NULL) {
+        free(sound->sampledata); /* drwav_free is just "free" */
     }
 
     free(sound);

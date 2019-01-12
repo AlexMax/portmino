@@ -24,24 +24,25 @@ typedef struct {
     /**
      * A pointer to the data to send to the audio subsystem.
      */
-    int16_t* data;
+    int16_t* sampledata;
 
     /**
      * The size of the data member in bytes.
      */
-    size_t size;
+    size_t bytesize;
 
     /**
-     * The number of samples in the data.  Should be 44100Hz / 60 fps.
+     * The number of frames in the data.  Should be 44100Hz / 60 fps.
      */
-    size_t samplecount;
+    size_t framecount;
 
     /**
-     * The size of an individual sample.  Should be 16-bit stereo, so 32-bits.
+     * The size of an individual frame.  Should be 16-bit stereo, so 32-bits.
      */
-    size_t samplesize;
+    size_t sizeofframe;
 } audio_context_t;
 
+extern sound_t* g_sound_gameover;
 extern sound_t* g_sound_lock;
 extern sound_t* g_sound_move;
 extern sound_t* g_sound_piece0;

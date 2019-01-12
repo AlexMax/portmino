@@ -4,6 +4,7 @@ set(RESOURCE_SOURCES
     block/default/8px.png
     interface/default/board.png
     interface/default/font.png
+    sfx/default/gameover.wav
     sfx/default/lock.wav
     sfx/default/move.wav
     sfx/default/piece0.wav

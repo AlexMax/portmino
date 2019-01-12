@@ -23,7 +23,6 @@
 #include "audio.h"
 #include "frontend.h"
 
-#define MINO_AUDIO_CHANNELS 2
 #define MIXER_CHANNELS 8
 
 typedef struct {
@@ -40,11 +39,12 @@ typedef struct {
     const sound_t* sound;
 
     /**
-     * Current index of the playing sound.
+     * Current frame of the playing sound.
      */
-    size_t position;
+    size_t frame;
 } audio_mixer_channel_t;
 
+sound_t* g_sound_gameover;
 sound_t* g_sound_lock;
 sound_t* g_sound_move;
 sound_t* g_sound_piece0;
@@ -60,7 +60,7 @@ static audio_context_t g_audio_ctx;
 static void audio_mixer_channel_reset(audio_mixer_channel_t* channel) {
     channel->active = false;
     channel->sound = NULL;
-    channel->position = 0;
+    channel->frame = 0;
 }
 
 /**
@@ -88,11 +88,10 @@ static void audio_mixer_debug(void) {
     for (int i = 0;i < MIXER_CHANNELS;i++) {
         audio_mixer_channel_t* channel = &g_audio_mixer[i];
 
-        fprintf(stderr, " [%d] ", i);
         if (channel->active) {
-            fprintf(stderr, "Playing %p (%lu/%lu)\n", channel->sound, channel->position, channel->sound->size / sizeof(int16_t));
+            fprintf(stderr, " [%d] Playing %s (%lu/%lu)\n", i, channel->sound->name, channel->frame, channel->sound->framecount);
         } else {
-            fprintf(stderr, "Inactive.\n");
+            // fprintf(stderr, "Inactive.\n");
         }
     }
 }
@@ -107,11 +106,12 @@ void audio_init(void) {
     }
 
     // Initialize the context
-    g_audio_ctx.samplecount = MINO_AUDIO_HZ / MINO_FPS;
-    g_audio_ctx.samplesize = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
-    g_audio_ctx.size = g_audio_ctx.samplecount * g_audio_ctx.samplesize;
-    g_audio_ctx.data = malloc(g_audio_ctx.size);
+    g_audio_ctx.framecount = MINO_AUDIO_HZ / MINO_FPS;
+    g_audio_ctx.sizeofframe = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
+    g_audio_ctx.bytesize = g_audio_ctx.framecount * g_audio_ctx.sizeofframe;
+    g_audio_ctx.sampledata = malloc(g_audio_ctx.bytesize);
 
+    g_sound_gameover = sound_new("sfx/default/gameover.wav");
     g_sound_lock = sound_new("sfx/default/lock.wav");
     g_sound_move = sound_new("sfx/default/move.wav");
     g_sound_piece0 = sound_new("sfx/default/piece0.wav");
@@ -129,6 +129,10 @@ void audio_deinit(void) {
     }
 
     // Delete all sounds
+    if (g_sound_gameover != NULL) {
+        sound_delete(g_sound_gameover);
+        g_sound_gameover = NULL;
+    }
     if (g_sound_lock != NULL) {
         sound_delete(g_sound_lock);
         g_sound_lock = NULL;
@@ -151,9 +155,9 @@ void audio_deinit(void) {
     }
 
     // Free the context.
-    if (g_audio_ctx.data != NULL) {
-        free(g_audio_ctx.data);
-        g_audio_ctx.data = NULL;
+    if (g_audio_ctx.sampledata != NULL) {
+        free(g_audio_ctx.sampledata);
+        g_audio_ctx.sampledata = NULL;
     }
 }
 
@@ -169,26 +173,25 @@ void audio_playsound(const sound_t* sound) {
 
     channel->active = true;
     channel->sound = sound;
-    channel->position = 0;
+    channel->frame = 0;
 }
 
 /**
  * Mix a game-frame's worth of audio data and pass it back to whatever is
  * playing our audio.
  * 
- * Samples is the number of actual audio samples we would like to request.
+ * Frames is the number of actual audio samples we would like to request.
  * This is usually 735 (44100Hz / 60fps), but the frontend is free to ask
  * for more to avoid audio buffer underruns.
  */
-audio_context_t* audio_frame(size_t samples) {
-    size_t units = samples * MINO_AUDIO_CHANNELS;
-    if (units != g_audio_ctx.size / sizeof(int16_t)) {
+audio_context_t* audio_frame(size_t frames) {
+    if (frames != MINO_AUDIO_HZ / MINO_FPS) {
         frontend_fatalerror("Size isn't correct - dynamic audio frame sizes aren't implemented yet");
         return NULL;
     }
 
     // Start mixing our sounds.
-    memset(g_audio_ctx.data, 0, g_audio_ctx.size);
+    memset(g_audio_ctx.sampledata, 0, g_audio_ctx.bytesize);
     for(size_t i = 0;i < MIXER_CHANNELS;i++) {
         audio_mixer_channel_t* channel = &g_audio_mixer[i];
         if (channel->active == false) {
@@ -198,19 +201,22 @@ audio_context_t* audio_frame(size_t samples) {
 
         // Determine how much of the sound we want to mix.
         bool done = false;
-        size_t totalunits = channel->sound->size / sizeof(int16_t);
-        size_t soundunits = units;
-        if (channel->position + units >= totalunits) {
+        size_t totalframes = channel->sound->framecount;
+        size_t mixframes = frames;
+        if (channel->frame + frames >= totalframes) {
             // We've reached the end of the sound.  Clamp the number of bytes
             // we're going to mix and reset the channel when we're done.
             done = true;
-            soundunits = totalunits - channel->position;
+            mixframes = totalframes - channel->frame;
         }
 
-        // Actually do the mixing.
-        for (size_t j = 0;j < soundunits;j++) {
-            int16_t* mix = channel->sound->data + channel->position + j;
-            int16_t* buf = g_audio_ctx.data + j;
+        // Actually do the mixing.  Note that here, and only here, we address
+        // individual samples instead of whole frames.
+        size_t mixsamples = mixframes * MINO_AUDIO_CHANNELS;
+        for (size_t s = 0;s < mixsamples;s++) {
+            size_t soff = channel->frame * MINO_AUDIO_CHANNELS;
+            int16_t* mix = channel->sound->sampledata + soff + s;
+            int16_t* buf = g_audio_ctx.sampledata + s;
 
             // We do our actual mixing in 32-bit integers - it's much faster
             // to cast and clip than try not to overflow 16-bit operations.
@@ -228,7 +234,7 @@ audio_context_t* audio_frame(size_t samples) {
         }
 
         // Advance the position of the sound.
-        channel->position += soundunits;
+        channel->frame += mixframes;
 
         if (done) {
             // We've played all of the sound.  Clear this channel.

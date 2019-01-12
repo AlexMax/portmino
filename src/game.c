@@ -26,7 +26,8 @@
  */
 typedef enum {
     SCREEN_MENU,
-    SCREEN_INGAME,
+    SCREEN_INGAME_PLAY,
+    SCREEN_INGAME_GAMEOVER,
     MAX_SCREENS
 } gamescreen_t;
 
@@ -46,7 +47,7 @@ static game_t g_game;
  */
 void game_init(void) {
     vfs_init();
-    g_game.screen = SCREEN_INGAME;
+    g_game.screen = SCREEN_INGAME_PLAY;
     g_game.state = state_new();
     g_game.render = render_init();
     audio_init();
@@ -78,8 +79,11 @@ void game_frame(gameinputs_t* inputs) {
     switch (g_game.screen) {
     case SCREEN_MENU:
         break;
-    case SCREEN_INGAME:
-        state_frame(g_game.state, inputs->game);
+    case SCREEN_INGAME_PLAY:
+        if (state_frame(g_game.state, inputs->game) == STATE_RESULT_GAMEOVER) {
+            audio_playsound(g_sound_gameover);
+            g_game.screen = SCREEN_INGAME_GAMEOVER;
+        }
         break;
     default:
         break;
@@ -93,7 +97,8 @@ void* game_draw(void) {
     switch (g_game.screen) {
     case SCREEN_MENU:
         break;
-    case SCREEN_INGAME:
+    case SCREEN_INGAME_GAMEOVER:
+    case SCREEN_INGAME_PLAY:
         return g_game.render->draw_state(g_game.state);
         break;
     default:

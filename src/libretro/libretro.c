@@ -177,7 +177,7 @@ RETRO_API void retro_run(void) {
 
     // Play a tic worth of audio.
     audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
-    audio_batch_cb(audio_ctx->data, audio_ctx->samplecount);
+    audio_batch_cb(audio_ctx->sampledata, audio_ctx->framecount);
 }
 
 RETRO_API size_t retro_serialize_size(void) {

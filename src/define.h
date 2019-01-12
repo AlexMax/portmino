@@ -38,6 +38,11 @@
 #define MINO_AUDIO_HZ 44100
 
 /**
+ * Internal number of channels of all audio data.
+ */
+#define MINO_AUDIO_CHANNELS 2
+
+/**
  * Annotate function as printf-style function.
  */
 #ifdef __GNUC__
