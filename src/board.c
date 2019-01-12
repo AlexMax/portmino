@@ -23,7 +23,7 @@
 /**
  * Return a random piece configuration.
  */
-static piece_config_t* board_get_random_piece(board_t* board) {
+static const piece_config_t* board_get_random_piece(board_t* board) {
     uint32_t index = random_number(&(board->next_rng), MAX_PIECES);
     return board->pieces[index];
 }
@@ -96,7 +96,7 @@ void board_delete(board_t *board) {
 /**
  * Return the configuration of the next piece.
  */
-piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
+const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
     index = board->next_index + index % MAX_NEXTS;
     return board->nexts[board->next_index];
 }
@@ -116,7 +116,7 @@ bool board_next_piece(board_t* board, uint32_t state_tic) {
     }
 
     // Find the next piece.
-    piece_config_t* config = board->nexts[board->next_index];
+    const piece_config_t* config = board->nexts[board->next_index];
 
     // See if our newly-spawned piece would collide with an existing piece.
     vec2i_t spawn_pos = config->spawn_pos;

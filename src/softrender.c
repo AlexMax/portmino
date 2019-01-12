@@ -187,7 +187,7 @@ static void* softrender_draw_state(const state_t* state) {
     }
 
     // Draw the next piece.
-    piece_config_t* next = board_get_next_piece(board, 0);
+    const piece_config_t* next = board_get_next_piece(board, 0);
     if (next != NULL) {
         size_t i = next->spawn_rot * next->data_size;
         size_t end = i + next->data_size;
