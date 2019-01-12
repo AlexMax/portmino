@@ -75,12 +75,12 @@ void game_deinit(void) {
 /**
  * Run a single fame of the game.
  */
-void game_frame(gameinputs_t* inputs) {
+void game_frame(const gameevents_t* events) {
     switch (g_game.screen) {
     case SCREEN_MENU:
         break;
     case SCREEN_INGAME_PLAY:
-        if (state_frame(g_game.state, inputs->game) == STATE_RESULT_GAMEOVER) {
+        if (state_frame(g_game.state, &(events->game)) == STATE_RESULT_GAMEOVER) {
             audio_playsound(g_sound_gameover);
             g_game.screen = SCREEN_INGAME_GAMEOVER;
         }

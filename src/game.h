@@ -19,13 +19,7 @@
 
 #include "event.h"
 
-typedef struct {
-    events_t game;
-    events_t interface;
-    events_t menu;
-} gameinputs_t;
-
 void game_init(void);
 void game_deinit(void);
-void game_frame(gameinputs_t* inputs);
+void game_frame(const gameevents_t* events);
 void* game_draw(void);

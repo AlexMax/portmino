@@ -25,9 +25,6 @@
 // Right now we only support two boards.
 #define MAX_BOARDS 2
 
-// Right now we only support two players.
-#define MAX_PLAYERS 2
-
 /**
  * Contains state for a particular player.
  */
@@ -87,7 +84,7 @@ typedef struct {
     /**
      * Players.
      */
-    playstate_t playstates[MAX_PLAYERS];
+    playstate_t playstates[MINO_MAX_PLAYERS];
 
     /**
      * In-use player count.
@@ -123,5 +120,5 @@ typedef enum {
 void playstate_reset(playstate_t* ps);
 state_t* state_new(void);
 void state_delete(state_t* state);
-state_result_t state_frame(state_t* state, events_t events);
+state_result_t state_frame(state_t* state, const playerevents_t* playerevents);
 void state_debug(state_t* state);

@@ -83,7 +83,7 @@ static void sdl_run(void) {
 
     // Assemble our game events from polled events.
     SDL_Event event;
-    static gameinputs_t inputs = { 0 }; // keep the inputs around
+    static gameevents_t events = { 0 }; // keep the inputs around
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
@@ -91,17 +91,17 @@ static void sdl_run(void) {
             if (event.key.repeat != 0) {
                 break;
             }
-            inputs.game |= sdl_scancode_to_event(event.key.keysym.scancode);
-            inputs.interface |= sdl_scancode_to_ievent(event.key.keysym.scancode);
-            inputs.menu |= sdl_scancode_to_mevent(event.key.keysym.scancode);
+            events.game.events[0] |= sdl_scancode_to_event(event.key.keysym.scancode);
+            events.interface.events[0] |= sdl_scancode_to_ievent(event.key.keysym.scancode);
+            events.menu.events[0] |= sdl_scancode_to_mevent(event.key.keysym.scancode);
             break;
         case SDL_KEYUP:
             if (event.key.repeat != 0) {
                 break;
             }
-            inputs.game &= ~(sdl_scancode_to_event(event.key.keysym.scancode));
-            inputs.interface &= ~(sdl_scancode_to_ievent(event.key.keysym.scancode));
-            inputs.menu &= ~(sdl_scancode_to_mevent(event.key.keysym.scancode));
+            events.game.events[0] &= ~(sdl_scancode_to_event(event.key.keysym.scancode));
+            events.interface.events[0] &= ~(sdl_scancode_to_ievent(event.key.keysym.scancode));
+            events.menu.events[0] &= ~(sdl_scancode_to_mevent(event.key.keysym.scancode));
             break;
         case SDL_QUIT:
             exit(0);
@@ -111,7 +111,7 @@ static void sdl_run(void) {
 
     // Run the game simulation.
     pcount = SDL_GetPerformanceCounter();
-    game_frame(&inputs);
+    game_frame(&events);
     double game_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
     // Render the screen.

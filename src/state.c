@@ -94,9 +94,9 @@ void state_delete(state_t* state) {
  * Given a particular gamestate, mutate it based on a particular event.
  * 
  * @param state The state to start from.
- * @param event The event to run on the gamestate.
+ * @param playerevents The events to run on the gamestate.
  */
-state_result_t state_frame(state_t* state, events_t events) {
+state_result_t state_frame(state_t* state, const playerevents_t* playerevents) {
     // Whatever happens, our gametic increases by one.  Tic 0 does not exist.
     state->tic += 1;
 
@@ -105,6 +105,7 @@ state_result_t state_frame(state_t* state, events_t events) {
         return STATE_RESULT_ERROR;
     }
 
+    events_t events = playerevents->events[0];
     board_t* board = state->boards[0];
 
     // Get the next piece if we don't have one at this point.

@@ -20,6 +20,11 @@
 #include "define.h"
 
 /**
+ * Maximum number of players that we can accept events from simultaneously.
+ */
+#define MINO_MAX_PLAYERS 2
+
+/**
  * An integer type that has enough room to contain all bits of the event
  * bitfield.  If even a single bit is added, we need to expand to 16-bits.
  */
@@ -45,8 +50,8 @@ typedef enum {
 /**
  * Interface Event bits
  *
- * These events occur when you're ingame, but don't have a direct effect on
- * the state of the game.
+ * These events occur when you're ingame, but are not actions you perform
+ * on gamestate per se.
  */
 typedef enum {
     IEVENT_NONE = 0,
@@ -68,3 +73,23 @@ typedef enum {
     MEVENT_OK = 1 << 4,
     MEVENT_CANCEL = 1 << 5,
 } mevent_t;
+
+/**
+ * A set of events for all players.
+ */
+typedef struct {
+    events_t events[MINO_MAX_PLAYERS];
+} playerevents_t;
+
+/**
+ * Complete set of all subsystem events.
+ *
+ * To simplify front-end implementation, all inputs are translated to events
+ * for all subsystems at once, and the core of portmino decides which sets
+ * of events are relevent where.
+ */
+typedef struct {
+    playerevents_t game;
+    playerevents_t interface;
+    playerevents_t menu;
+} gameevents_t;

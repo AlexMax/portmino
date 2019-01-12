@@ -52,24 +52,24 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
     va_end(va);
 }
 
-static events_t retro_input_to_event(void) {
+static events_t retro_input_to_event(unsigned port) {
     event_t ret = 0;
-    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)) {
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)) {
         ret |= EVENT_LEFT;
     }
-    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) {
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) {
         ret |= EVENT_RIGHT;
     }
-    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN)) {
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN)) {
         ret |= EVENT_SOFTDROP;
     }
-    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)) {
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)) {
         ret |= EVENT_HARDDROP;
     }
-    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)) {
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)) {
         ret |= EVENT_CCW;
     }
-    if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
         ret |= EVENT_CW;
     }
     return ret;
@@ -163,13 +163,13 @@ RETRO_API void retro_reset(void) {
 RETRO_API void retro_run(void) {
     input_poll_cb();
 
-    gameinputs_t inputs = { 0 };
-    inputs.game = retro_input_to_event();
-    inputs.interface = 0;
-    inputs.menu = 0;
+    gameevents_t events = { 0 };
+    events.game.events[0] = retro_input_to_event(0);
+    events.interface.events[0] = 0;
+    events.menu.events[0] = 0;
 
     // Run the game simulation.
-    game_frame(&inputs);
+    game_frame(&events);
 
     // Render the screen.
     softrender_context_t* render_ctx = game_draw();
