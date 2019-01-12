@@ -88,8 +88,6 @@ void state_delete(state_t* state) {
     free(state);
 }
 
-#include <stdio.h>
-
 /**
  * Given a particular gamestate, mutate it based on a particular event.
  * 

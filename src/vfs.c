@@ -79,8 +79,6 @@ void vfs_deinit(void) {
     PHYSFS_deinit();
 }
 
-#include <stdio.h>
-
 /**
  * Obtain file data by virtual filename.
  * 
