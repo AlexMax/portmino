@@ -322,26 +322,26 @@ state_result_t state_frame(state_t* state, const playerevents_t* playerevents) {
             // Don't wallkick the "O" piece.
         } else if (piece->config == &g_i_piece) {
             // Wallkicks for the "I" piece are unique.
-            if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_R && prot == ROT_2)) {
-                tries[1].x = -1; tries[1].y =  0;
-                tries[2].x =  2; tries[2].y =  0;
-                tries[3].x = -1; tries[3].y = -2;
-                tries[4].x =  2; tries[4].y =  1;
-            } else if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
+            if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
                 tries[1].x = -2; tries[1].y =  0;
                 tries[2].x =  1; tries[2].y =  0;
                 tries[3].x = -2; tries[3].y =  1;
                 tries[4].x =  1; tries[4].y = -2;
-            } else if ((piece->rot == ROT_2 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_0)) {
-                tries[1].x =  1; tries[1].y =  0;
-                tries[2].x = -2; tries[2].y =  0;
-                tries[3].x =  1; tries[3].y =  2;
-                tries[4].x = -2; tries[4].y = -1;
-            } else /* ROT_2 -> ROT_L, ROT_R -> ROT_0 */ {
+            } else if ((piece->rot == ROT_R && prot == ROT_0) || (piece->rot == ROT_2 && prot == ROT_L)) {
                 tries[1].x =  2; tries[1].y =  0;
                 tries[2].x = -1; tries[2].y =  0;
                 tries[3].x =  2; tries[3].y = -1;
                 tries[4].x = -1; tries[4].y =  2;
+            } else if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_R && prot == ROT_2)) {
+                tries[1].x = -1; tries[1].y =  0;
+                tries[2].x =  2; tries[2].y =  0;
+                tries[3].x = -1; tries[3].y = -2;
+                tries[4].x =  2; tries[4].y =  1;
+            } else { /* ROT_L -> ROT_0, ROT_2 -> ROT_R */
+                tries[1].x =  1; tries[1].y =  0;
+                tries[2].x = -2; tries[2].y =  0;
+                tries[3].x =  1; tries[3].y =  2;
+                tries[4].x = -2; tries[4].y = -1;
             }
         } else {
             // Wallkicks for the other pieces.
@@ -350,17 +350,17 @@ state_result_t state_frame(state_t* state, const playerevents_t* playerevents) {
                 tries[2].x = -1; tries[2].y = -1;
                 tries[3].x =  0; tries[3].y =  2;
                 tries[4].x = -1; tries[4].y =  2;
-            } else if ((piece->rot == ROT_L && prot == ROT_2) || (piece->rot == ROT_L && prot == ROT_0)) {
-                tries[1].x = -1; tries[1].y =  0;
-                tries[2].x = -1; tries[2].y =  1;
-                tries[3].x =  0; tries[3].y = -2;
-                tries[4].x = -1; tries[4].y = -2;
             } else if ((piece->rot == ROT_R && prot == ROT_0) || (piece->rot == ROT_R && prot == ROT_2)) {
                 tries[1].x =  1; tries[1].y =  0;
                 tries[2].x =  1; tries[2].y =  1;
                 tries[3].x =  0; tries[3].y = -2;
                 tries[4].x =  1; tries[4].y = -2;
-            } else /* ROT_2 -> ROT_L, ROT_0 -> ROT_L */ {
+            } else if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_2 && prot == ROT_L)) {
+                tries[1].x = -1; tries[1].y =  0;
+                tries[2].x = -1; tries[2].y =  1;
+                tries[3].x =  0; tries[3].y = -2;
+                tries[4].x = -1; tries[4].y = -2;
+            } else /* ROT_L -> ROT_0, ROT_L -> ROT_2 */ {
                 tries[1].x =  1; tries[1].y =  0;
                 tries[2].x =  1; tries[2].y = -1;
                 tries[3].x =  0; tries[3].y =  2;
