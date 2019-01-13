@@ -77,14 +77,22 @@ void game_deinit(void) {
  */
 void game_frame(const gameevents_t* events) {
     switch (g_game.screen) {
-    case SCREEN_MENU:
-        break;
     case SCREEN_INGAME_PLAY:
-        if (state_frame(g_game.state, &(events->game)) == STATE_RESULT_GAMEOVER) {
-            audio_playsound(g_sound_gameover);
-            g_game.screen = SCREEN_INGAME_GAMEOVER;
+        {
+            state_result_t res = state_frame(g_game.state, &(events->game));
+            switch (res) {
+            case STATE_RESULT_OK:
+                break;
+            case STATE_RESULT_SUCCESS:
+            case STATE_RESULT_GAMEOVER:
+                audio_playsound(g_sound_gameover);
+                g_game.screen = SCREEN_INGAME_GAMEOVER;
+                break;
+            case STATE_RESULT_ERROR:
+                break;
+            }
+            break;
         }
-        break;
     default:
         break;
     }
