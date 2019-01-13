@@ -27,6 +27,16 @@ typedef struct ruleset_s {
      * Lua interpreter state
      */
     lua_State* lua;
+
+    /**
+     * Reference to state_frame function inside Lua.
+     */
+    int state_frame_ref;
+
+    /**
+     * Reference to state function inside Lua.
+     */
+    int state_ref;
 } ruleset_t;
 
 ruleset_t* ruleset_new(void);

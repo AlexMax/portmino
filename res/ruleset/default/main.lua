@@ -1,6 +1,21 @@
-local function state_frame(state, playerevents)
-    local events = playerevents.events[0]
-    local board = state.boards[0]
+-- Stubbing out functions
+local EVENT_NONE = 0
+local EVENT_LEFT = 1
+local EVENT_RIGHT = 1 << 1
+local EVENT_SOFTDROP = 1 << 2
+local EVENT_HARDDROP = 1 << 3
+local EVENT_CCW = 1 << 4
+local EVENT_CW = 1 << 5
+local EVENT_HOLD = 1 << 6
+local EVENT_180 = 1 << 7
+
+-- Contains any important state that we need to keep track of.
+local state = {}
+
+local function state_frame()
+    local gametic = ruleset.get_gametic()
+    local events = ruleset.get_player_events(1)
+    local board = ruleset.get_board(1)
 
     -- Get the next piece if we don't have one at this point.
     if board.piece == nil then
@@ -305,6 +320,11 @@ local function state_frame(state, playerevents)
     return STATE_RESULT_OK
 end
 
+local function test_state_frame()
+    return 0
+end
+
 return {
-    state_frame = state_frame
+    state = state,
+    state_frame = test_state_frame
 }
