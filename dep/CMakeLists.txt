@@ -73,6 +73,7 @@ foreach(SOURCE ${LUA_SOURCES})
 endforeach()
 
 add_library(lua STATIC ${LUA_DIR_SOURCES})
+set_property(TARGET lua PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(lua PUBLIC ${LUA_DIR})
 
 ## PhysicsFS

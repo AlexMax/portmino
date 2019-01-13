@@ -60,6 +60,7 @@ typedef struct {
     bool cw_already;
 } playstate_t;
 
+typedef struct ruleset_s ruleset_t;
 typedef struct {
     /**
      * Current gametic.
@@ -90,6 +91,11 @@ typedef struct {
      * In-use player count.
      */
     size_t player_count;
+
+    /**
+     * In-use ruleset.
+     */
+    ruleset_t* ruleset;
 } state_t;
 
 /**
