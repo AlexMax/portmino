@@ -1,4 +1,4 @@
--- Stubbing out functions
+-- Stubbing out defines
 local EVENT_NONE = 0
 local EVENT_LEFT = 1
 local EVENT_RIGHT = 1 << 1
@@ -8,6 +8,158 @@ local EVENT_CCW = 1 << 4
 local EVENT_CW = 1 << 5
 local EVENT_HOLD = 1 << 6
 local EVENT_180 = 1 << 7
+
+-- Piece definitions
+local j_piece = {
+    data = {
+        8, 0, 0,
+        8, 8, 8,
+        0, 0, 0,
+        0, 8, 8,
+        0, 8, 0,
+        0, 8, 0,
+        0, 0, 0,
+        8, 8, 8,
+        0, 0, 8,
+        0, 8, 0,
+        0, 8, 0,
+        8, 8, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 3,
+    height = 3
+}
+
+local l_piece = {
+    data = {
+        0, 0, 4,
+        4, 4, 4,
+        0, 0, 0,
+        0, 4, 0,
+        0, 4, 0,
+        0, 4, 4,
+        0, 0, 0,
+        4, 4, 4,
+        4, 0, 0,
+        4, 4, 0,
+        0, 4, 0,
+        0, 4, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 3,
+    height = 3
+}
+
+local s_piece = {
+    data = {
+        0, 6, 6,
+        6, 6, 0,
+        0, 0, 0,
+        0, 6, 0,
+        0, 6, 6,
+        0, 0, 6,
+        0, 0, 0,
+        0, 6, 6,
+        6, 6, 0,
+        6, 0, 0,
+        6, 6, 0,
+        0, 6, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 3,
+    height = 3,
+}
+
+local z_piece = {
+    data = {
+        3, 3, 0,
+        0, 3, 3,
+        0, 0, 0,
+        0, 0, 3,
+        0, 3, 3,
+        0, 3, 0,
+        0, 0, 0,
+        3, 3, 0,
+        0, 3, 3,
+        0, 3, 0,
+        3, 3, 0,
+        3, 0, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 3,
+    height = 3
+}
+
+local t_piece = {
+    data = {
+        0, 9, 0,
+        9, 9, 9,
+        0, 0, 0,
+        0, 9, 0,
+        0, 9, 9,
+        0, 9, 0,
+        0, 0, 0,
+        9, 9, 9,
+        0, 9, 0,
+        0, 9, 0,
+        9, 9, 0,
+        0, 9, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 3,
+    height = 3
+}
+
+local i_piece = {
+    data = {
+        0, 0, 0, 0,
+        7, 7, 7, 7,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 7, 0,
+        0, 0, 7, 0,
+        0, 0, 7, 0,
+        0, 0, 7, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        7, 7, 7, 7,
+        0, 0, 0, 0,
+        0, 7, 0, 0,
+        0, 7, 0, 0,
+        0, 7, 0, 0,
+        0, 7, 0, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 4,
+    height = 4
+}
+
+local piece_o = {
+    data = {
+        0, 5, 5, 0,
+        0, 5, 5, 0,
+        0, 0, 0, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
+        0, 0, 0, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
+        0, 0, 0, 0,
+        0, 5, 5, 0,
+        0, 5, 5, 0,
+        0, 0, 0, 0
+    },
+    spawn_pos = { 3, 1 },
+    spawn_rot = 0,
+    width = 4,
+    height = 3
+}
 
 -- Contains any important state that we need to keep track of.
 local state = {}
@@ -326,5 +478,8 @@ end
 
 return {
     state = state,
-    state_frame = test_state_frame
+    state_frame = test_state_frame,
+    pieces = {
+        j_piece, l_piece, s_piece, z_piece, t_piece, i_piece, o_piece,
+    }
 }
