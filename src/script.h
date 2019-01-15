@@ -19,33 +19,6 @@
 
 #include "lua.h"
 
-#include "event.h"
-#include "piece.h"
-#include "state.h"
-
-typedef struct ruleset_s {
-    /**
-     * Lua interpreter state
-     */
-    lua_State* lua;
-
-    /**
-     * Reference to state_frame function inside Lua.
-     */
-    int state_frame_ref;
-
-    /**
-     * Reference to state function inside Lua.
-     */
-    int state_ref;
-
-    /**
-     * Pieces loaded from Lua.
-     */
-    piece_configs_t* pieces;
-} ruleset_t;
-
-ruleset_t* ruleset_new(void);
-void ruleset_delete(ruleset_t* ruleset);
-state_result_t ruleset_state_frame(ruleset_t* ruleset, state_t* state,
-                                const playerevents_t* playerevents);
+void script_debug(lua_State* L, int index);
+void script_debug_stack(lua_State* L);
+void script_debug_table(lua_State* L, int index);

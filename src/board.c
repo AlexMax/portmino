@@ -48,17 +48,6 @@ board_t *board_new(void) {
     board->data.size = size;
     board->data.data = calloc(size, sizeof(uint8_t));
 
-    // Initialize default piece configuration.
-    pieces_init();
-
-    board->pieces[0] = &g_j_piece;
-    board->pieces[1] = &g_l_piece;
-    board->pieces[2] = &g_s_piece;
-    board->pieces[3] = &g_z_piece;
-    board->pieces[4] = &g_t_piece;
-    board->pieces[5] = &g_i_piece;
-    board->pieces[6] = &g_o_piece;
-
     // Start with no active piece or ghost allocated.
     board->piece = NULL;
     board->ghost = NULL;

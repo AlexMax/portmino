@@ -34,6 +34,7 @@ set(GAME_SOURCES
     random.c        random.h
     render.c        render.h
     ruleset.c       ruleset.h
+    script.c        script.h
     softblock.c     softblock.h
     softfont.c      softfont.h
     softrender.c    softrender.h

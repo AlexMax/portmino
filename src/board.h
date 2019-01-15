@@ -21,9 +21,6 @@
 #include "piece.h"
 #include "random.h"
 
-// Right now we only support seven piece configurations.
-#define MAX_PIECES 7
-
 // Right now we only support a maximum of 8 next pieces.
 #define MAX_NEXTS 8
 

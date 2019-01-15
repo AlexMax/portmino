@@ -140,7 +140,7 @@ local i_piece = {
     height = 4
 }
 
-local piece_o = {
+local o_piece = {
     data = {
         0, 5, 5, 0,
         0, 5, 5, 0,

@@ -23,12 +23,13 @@
 
 #include "frontend.h"
 #include "ruleset.h"
+#include "script.h"
 #include "vfs.h"
 
 /**
  * Lua: Get the current gametic of the state
  */
-static int ruleset_get_gametic(lua_State *L) {
+static int ruleset_get_gametic(lua_State* L) {
     lua_pushstring(L, "state");
     lua_gettable(L, LUA_REGISTRYINDEX);
 
@@ -45,7 +46,7 @@ static int ruleset_get_gametic(lua_State *L) {
 /**
  * Lua: Grabs player events for a specific player
  */
-static int ruleset_get_player_events(lua_State *L) {
+static int ruleset_get_player_events(lua_State* L) {
     // Parameter 1: Player number, 1-indexed
     lua_Integer player = luaL_checkinteger(L, 1);
     if (player <= 0 || player >= MINO_MAX_PLAYERS) {
@@ -71,7 +72,7 @@ static int ruleset_get_player_events(lua_State *L) {
 /**
  * Push library functions into the state.
  */
-static int ruleset_openlib(lua_State *L) {
+static int ruleset_openlib(lua_State* L) {
     static const luaL_Reg rulesetlib[] = {
         { "get_gametic", ruleset_get_gametic },
         { "get_player_events", ruleset_get_player_events },
@@ -178,6 +179,23 @@ ruleset_t* ruleset_new(void) {
         return NULL;
     }
 
+    // Load our pieces.
+    lua_pushstring(L, "pieces");
+    type = lua_gettable(L, -2);
+    if (type == LUA_TNIL) {
+        lua_close(L);
+        frontend_fatalerror("Could not find table \"pieces\" in module table in ruleset %s", "default");
+        return NULL;
+    } else if (type != LUA_TTABLE) {
+        lua_close(L);
+        frontend_fatalerror("\"pieces\" is not a table in ruleset %s", "default");
+        return NULL;
+    }
+
+    // Iterate through the piece array.
+    piece_configs_t* piece_configs = piece_configs_new(L);
+    lua_pop(L, 1); // pop pieces
+
     // We should only have the ruleset on the stack.  Always finish your
     // Lua meddling with a clean stack.
     if (lua_gettop(L) != 1) {
@@ -196,6 +214,7 @@ ruleset_t* ruleset_new(void) {
     ruleset->lua = L;
     ruleset->state_frame_ref = state_frame_ref;
     ruleset->state_ref = state_ref;
+    ruleset->pieces = piece_configs;
 
     return ruleset;
 }
@@ -207,6 +226,11 @@ void ruleset_delete(ruleset_t* ruleset) {
     if (ruleset->lua != NULL) {
         lua_close(ruleset->lua);
         ruleset->lua = NULL;
+    }
+
+    if (ruleset->pieces != NULL) {
+        piece_configs_delete(ruleset->pieces);
+        ruleset->pieces = NULL;
     }
 
     free(ruleset);

@@ -17,7 +17,12 @@
 
 #pragma once
 
+#include "lua.h"
+
 #include "define.h"
+
+// Right now we only support seven piece configurations.
+#define MAX_PIECES 7
 
 #define ROT_0 0
 #define ROT_R 1
@@ -64,6 +69,11 @@ typedef struct {
 } piece_config_t;
 
 typedef struct {
+    piece_config_t** configs;
+    size_t size;
+} piece_configs_t;
+
+typedef struct {
     /**
      * Current position of the piece, origin is at the top-left.  Can be off
      * the side of the board.
@@ -83,14 +93,8 @@ typedef struct {
     const piece_config_t* config;
 } piece_t;
 
-extern piece_config_t g_j_piece;
-extern piece_config_t g_l_piece;
-extern piece_config_t g_s_piece;
-extern piece_config_t g_z_piece;
-extern piece_config_t g_t_piece;
-extern piece_config_t g_i_piece;
-extern piece_config_t g_o_piece;
-
+piece_configs_t* piece_configs_new(lua_State* L);
+void piece_configs_delete(piece_configs_t* pieces);
 void pieces_init(void);
 void pieces_deinit(void);
 piece_t* piece_new(const piece_config_t* config);
