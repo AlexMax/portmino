@@ -201,8 +201,6 @@ ruleset_t* ruleset_new(void) {
         return NULL;
     }
 
-    script_debug_stack(L);
-
     // We should only have the ruleset on the stack.  Always finish your
     // Lua meddling with a clean stack.
     if (lua_gettop(L) != 1) {
