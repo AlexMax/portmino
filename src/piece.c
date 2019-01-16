@@ -27,28 +27,37 @@
 /**
  * Allocates a piece configuration array table at the top of the Lua state
  * 
- * Assumes you have the table of pieces on the top of the Lua stack.  Leaves
- * the Lua stack the way it found it.
+ * Assumes you have the table of pieces on the top of the Lua stack.  Consumes
+ * the table from the Lua stack and leaves nothing on success, or an error
+ * message on failure.
  */
 piece_configs_t* piece_configs_new(lua_State* L) {
+    // Take note of the top of the stack.
+    int top = lua_gettop(L);
+
     // Push our available pieces into the ruleset.
     lua_Integer pieces_length = luaL_len(L, -1);
     if (pieces_length <= 0) {
-        frontend_fatalerror("No pieces defined in ruleset %s", "default");
+        lua_settop(L, top - 1);
+        lua_pushstring(L, "No pieces defined");
         return NULL;
     } else if (pieces_length > MAX_PIECES) {
-        frontend_fatalerror("Too many pieces defined in ruleset %s", "default");
+        lua_settop(L, top - 1);
+        lua_pushstring(L, "Too many pieces defined");
         return NULL;
     }
 
     piece_configs_t* piece_configs = calloc(1, sizeof(piece_configs_t));
     if (piece_configs == NULL) {
+        lua_pushstring(L, "Allocation error");
         return NULL;
     }
 
     piece_configs->configs = calloc(pieces_length, sizeof(piece_config_t*));
     if (piece_configs->configs == NULL) {
         piece_configs_delete(piece_configs);
+        lua_settop(L, top - 1);
+        lua_pushstring(L, "Allocation error");
         return NULL;
     }
     piece_configs->size = pieces_length;
@@ -57,7 +66,8 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         int type = lua_rawgeti(L, -1, i);
         if (type != LUA_TTABLE) {
             piece_configs_delete(piece_configs);
-            frontend_fatalerror("Piece definition isn't a table in ruleset %s", "default");
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Piece definition isn't a table");
             return NULL;
         }
 
@@ -68,14 +78,16 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         type = lua_gettable(L, -2);
         if (type != LUA_TTABLE) {
             piece_configs_delete(piece_configs);
-            frontend_fatalerror("Piece \"spawn_pos\" isn't a table in ruleset %s", "default");
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Piece \"spawn_pos\" isn't a table");
             return NULL;
         }
 
         lua_Integer spawn_pos_length = luaL_len(L, -1);
         if (spawn_pos_length != 2) {
             piece_configs_delete(piece_configs);
-            frontend_fatalerror("Piece \"spawn_pos\" needs exactly two coordinates in ruleset %s", "default");
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Piece \"spawn_pos\" needs exactly two coordinates");
             return NULL;
         }
 
@@ -109,7 +121,8 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         type = lua_gettable(L, -2);
         if (type != LUA_TTABLE) {
             piece_configs_delete(piece_configs);
-            frontend_fatalerror("Piece \"data\" isn't a table in ruleset %s", "default");
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Piece \"data\" isn't a table");
             return NULL;
         }
 
@@ -117,7 +130,8 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         uint8_t* data = calloc(data_length, sizeof(uint8_t));
         if (data == NULL) {
             piece_configs_delete(piece_configs);
-            frontend_fatalerror("Could not allocate data array in ruleset %s", "default");
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Allocation error");
             return NULL;
         }
 
@@ -135,6 +149,8 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         if (piece_config == NULL) {
             free(data);
             piece_configs_delete(piece_configs);
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Allocation error");
             return NULL;
         }
 
@@ -149,6 +165,7 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         piece_configs->configs[i - 1] = piece_config;
     }
 
+    lua_settop(L, top - 1);
     return piece_configs;
 }
 

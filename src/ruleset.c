@@ -193,8 +193,15 @@ ruleset_t* ruleset_new(void) {
     }
 
     // Iterate through the piece array.
-    piece_configs_t* piece_configs = piece_configs_new(L);
-    lua_pop(L, 1); // pop pieces
+    piece_configs_t* piece_configs = piece_configs_new(L); // pops piece array
+    if (piece_configs == NULL) {
+        // FIXME: Figure out how to close Lua state safely.
+        const char* error = lua_tostring(L, -1);
+        frontend_fatalerror("Error parsing pieces in ruleset %s: %s", "default", error);
+        return NULL;
+    }
+
+    script_debug_stack(L);
 
     // We should only have the ruleset on the stack.  Always finish your
     // Lua meddling with a clean stack.
