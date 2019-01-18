@@ -21,17 +21,9 @@
 #include "board.h"
 
 /**
- * Return a random piece configuration.
- */
-static const piece_config_t* board_get_random_piece(board_t* board) {
-    uint32_t index = random_number(&(board->next_rng), MAX_PIECES);
-    return board->pieces[index];
-}
-
-/**
  * Create a new board structure.
  */
-board_t *board_new(void) {
+board_t *board_new(ruleset_t* ruleset) {
     board_t *board = malloc(sizeof(board_t));
     if (board == NULL) {
         return NULL;
@@ -57,7 +49,7 @@ board_t *board_new(void) {
 
     // Initialize the next piece circular buffer.
     for (size_t i = 0;i < MAX_NEXTS;i++) {
-        board->nexts[i] = board_get_random_piece(board);
+        board->nexts[i] = ruleset_next_piece(ruleset);
     }
     board->next_index = 0;
 
@@ -83,7 +75,7 @@ void board_delete(board_t *board) {
 }
 
 /**
- * Return the configuration of the next piece.
+ * Return the configuration of the next piece
  */
 const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
     index = board->next_index + index % MAX_NEXTS;
@@ -91,48 +83,14 @@ const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
 }
 
 /**
- * Get the next piece, make it the active piece, and advance the next piece index.
+ * "Consume" the next piece
  * 
- * Returns true if the next piece was successfully placed, otherwise false.
- * 
- * TODO: This function is probably a good candidate for turning into Lua.
+ * Advances the next-piece index, wrapping around if necessary, and generates
+ * a new next piece at the end.
  */
-bool board_next_piece(board_t* board, uint32_t state_tic) {
-    if (board->piece != NULL) {
-        // Free the existing piece if it exists.
-        piece_delete(board->piece);
-        board->piece = NULL;
-    }
-
-    // Find the next piece.
-    const piece_config_t* config = board->nexts[board->next_index];
-
-    // See if our newly-spawned piece would collide with an existing piece.
-    vec2i_t spawn_pos = config->spawn_pos;
-    if (!board_test_piece(board, config, spawn_pos, config->spawn_rot)) {
-        spawn_pos.y -= 1;
-        if (!board_test_piece(board, config, spawn_pos, config->spawn_rot)) {
-            return false;
-        }
-
-        // Create the new piece offset from its usual spot.
-        board->piece = piece_new(config);
-        board->piece->pos.y -= 1;
-    } else {
-        // Create the new piece.
-        board->piece = piece_new(config);
-    }
-
-    // Set the spawn tic.
-    board->spawn_tic = state_tic;
-
-    // Generate a new next piece in place.
-    board->nexts[board->next_index] = board_get_random_piece(board);
-
-    // Advance the next index.
+void board_consume_next_piece(board_t* board, ruleset_t* ruleset) {
+    board->nexts[board->next_index] = ruleset_next_piece(ruleset);
     board->next_index = (board->next_index + 1) % MAX_NEXTS;
-
-    return true;
 }
 
 /**

@@ -53,14 +53,6 @@ state_t* state_new(void) {
     state->player_count = 1;
     state->tic = 0;
 
-    for (size_t i = 0;i < state->board_count;i++) {
-        state->boards[i] = board_new();
-        if (state->boards[i] == NULL) {
-            state_delete(state);
-            return NULL;
-        }
-    }
-
     for (size_t i = 0;i < state->player_count;i++) {
         playstate_reset(&(state->playstates[i]));
     }
@@ -69,6 +61,14 @@ state_t* state_new(void) {
     if (state->ruleset == NULL) {
         state_delete(state);
         return NULL;
+    }
+
+    for (size_t i = 0;i < state->board_count;i++) {
+        state->boards[i] = board_new(state->ruleset);
+        if (state->boards[i] == NULL) {
+            state_delete(state);
+            return NULL;
+        }
     }
 
     return state;
@@ -115,5 +115,6 @@ state_result_t state_frame(state_t* state, const playerevents_t* playerevents) {
         return STATE_RESULT_ERROR;
     }
 
-    return ruleset_state_frame(state->ruleset, state, playerevents);
+    ruleset_result_t result = ruleset_frame(state->ruleset, state, playerevents);
+    return STATE_RESULT_OK;
 }

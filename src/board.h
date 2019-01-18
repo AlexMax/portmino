@@ -20,6 +20,7 @@
 #include "define.h"
 #include "piece.h"
 #include "random.h"
+#include "ruleset.h"
 
 // Right now we only support a maximum of 8 next pieces.
 #define MAX_NEXTS 8
@@ -112,10 +113,10 @@ typedef struct {
     uint8_t next_index;
 } board_t;
 
-board_t* board_new(void);
+board_t* board_new(ruleset_t* ruleset);
 void board_delete(board_t* board);
 const piece_config_t* board_get_next_piece(const board_t* board, size_t index);
-bool board_next_piece(board_t* board, uint32_t state_tic);
+void board_consume_next_piece(board_t* board, ruleset_t* ruleset);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,
                                  vec2i_t src, uint8_t rot, vec2i_t dst);

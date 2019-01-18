@@ -61,7 +61,7 @@ typedef struct {
 } playstate_t;
 
 typedef struct ruleset_s ruleset_t;
-typedef struct {
+typedef struct state_s {
     /**
      * Current gametic.
      */

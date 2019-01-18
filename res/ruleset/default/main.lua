@@ -1,4 +1,9 @@
 -- Stubbing out defines
+local STATE_RESULT_OK = 0
+local STATE_RESULT_ERROR = 1
+local STATE_RESULT_GAMEOVER = 2
+local STATE_RESULT_SUCCESS = 3
+
 local EVENT_NONE = 0
 local EVENT_LEFT = 1
 local EVENT_RIGHT = 1 << 1
@@ -472,8 +477,57 @@ local function state_frame()
     return STATE_RESULT_OK
 end
 
+local function board_next_piece(board, tic)
+    if ruleset.board_get_piece(board) ~= nil then
+        ruleset.board_delete_piece(board)
+    end
+
+    -- Find the next piece.
+    local config = ruleset.board_get_next_config(board)
+
+    -- See if our newly-spawned piece would collide with an existing piece.
+    local spawn_pos = ruleset.config_get_spawn_pos(config)
+    local spawn_rot = ruleset.config_get_spawn_rot(config)
+    if not ruleset.board_test_piece(board, config, spawn_pos, spawn_rot) then
+        spawn_pos[2] = spawn_pos[2] - 1
+        if not ruleset.board_test_piece(board, config, spawn_pos, spawn_rot) then
+            return false
+        end
+
+        -- Piece spawns offset from its usual spot
+        ruleset.board_new_piece(board, config)
+        ruleset.board_set_piece_pos(board, spawn_pos)
+    else
+        ruleset.board_new_piece(board, config)
+    end
+
+    -- Set the spawn tic.
+    state.spawn_tic = tic
+
+    -- Advance the next index.
+    ruleset.board_consume_next(board)
+
+    return true
+end
+
 local function test_state_frame()
-    return 0
+    local gametic = ruleset.get_gametic()
+    local events = ruleset.get_player_events(1)
+    local board = ruleset.get_board(1)
+
+    -- Get the next piece if we don't have one at this point.
+    if ruleset.board_get_piece(board) == nil then
+        if not board_next_piece(board, gametic) then
+            return STATE_RESULT_GAMEOVER
+        end
+    end
+
+    return STATE_RESULT_OK
+end
+
+local function next_piece()
+    local configs = ruleset.get_piece_configs()
+    return configs[1]
 end
 
 return {
@@ -481,5 +535,6 @@ return {
     state_frame = test_state_frame,
     pieces = {
         j_piece, l_piece, s_piece, z_piece, t_piece, i_piece, o_piece,
-    }
+    },
+    next_piece = next_piece,
 }

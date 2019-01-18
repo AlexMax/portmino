@@ -92,11 +92,11 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         }
 
         vec2i_t spawn_pos = vec2i_zero();
-        lua_rawgeti(L, -1, i);
+        lua_rawgeti(L, -1, 1);
         spawn_pos.x = (int)lua_tointeger(L, -1);
         lua_pop(L, 1); // pop x
 
-        lua_rawgeti(L, -1, i);
+        lua_rawgeti(L, -1, 2);
         spawn_pos.y = (int)lua_tointeger(L, -1);
         lua_pop(L, 1); // pop y
         lua_pop(L, 1); // pop spawn_pos
