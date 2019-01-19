@@ -20,6 +20,35 @@
 #include "script.h"
 
 /**
+ * Turn the table at the given stack index into a vector.
+ */
+bool script_to_vector(lua_State* L, int index, vec2i_t* vec) {
+    if (lua_type(L, index) != LUA_TTABLE) {
+        return false;
+    }
+
+    lua_getfield(L, index, "x");
+    vec->x = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, index, "y");
+    vec->y = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+
+    return true;
+}
+
+/**
+ * Push a table to the stack with the contents of the given vector.
+ */
+void script_push_vector(lua_State* L, const vec2i_t* vec) {
+    lua_createtable(L, 2, 0);
+    lua_pushinteger(L, vec->x);
+    lua_setfield(L, -2, "x");
+    lua_pushinteger(L, vec->y);
+    lua_setfield(L, -2, "y");
+}
+
+/**
  * Dump the contents of a specific stack index
  */
 void script_debug(lua_State* L, int index) {

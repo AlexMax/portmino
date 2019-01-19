@@ -116,5 +116,12 @@ state_result_t state_frame(state_t* state, const playerevents_t* playerevents) {
     }
 
     ruleset_result_t result = ruleset_frame(state->ruleset, state, playerevents);
-    return STATE_RESULT_OK;
+    switch (result) {
+        case RULESET_RESULT_OK: return STATE_RESULT_OK;
+        case RULESET_RESULT_ERROR: return STATE_RESULT_ERROR;
+        case RULESET_RESULT_TOPOUT: return STATE_RESULT_GAMEOVER;
+    }
+
+    // unreachable
+    return STATE_RESULT_ERROR;
 }

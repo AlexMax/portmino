@@ -17,12 +17,6 @@
 
 #pragma once
 
-#include "define.h"
-
 #include "lua.h"
 
-bool script_to_vector(lua_State* L, int index, vec2i_t* vec);
-void script_push_vector(lua_State* L, const vec2i_t* vec);
-void script_debug(lua_State* L, int index);
-void script_debug_stack(lua_State* L);
-void script_debug_table(lua_State* L, int index);
+int audio_openlib(lua_State* L);

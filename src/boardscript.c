@@ -19,6 +19,7 @@
 #include "lauxlib.h"
 
 #include "board.h"
+#include "script.h"
 #include "state.h"
 
 /**
@@ -131,7 +132,7 @@ static int boardscript_get_piece(lua_State* L) {
 }
 
 /**
- * Lua: Test to see if a piece fits into a specific spot on the board.
+ * Lua: Test to see if a piece collides with a specific spot on the board.
  */
 static int boardscript_test_piece(lua_State* L) {
     // Parameter 1: Board handle
@@ -153,16 +154,9 @@ static int boardscript_test_piece(lua_State* L) {
     }
 
     // Parameter 3: Position table
-    // FIXME: Improve error handling
-    type = lua_type(L, 3);
-    luaL_argcheck(L, (type == LUA_TTABLE), 3, "invalid position");
     vec2i_t pos = { 0, 0 };
-    lua_rawgeti(L, 3, 1);
-    pos.x = lua_tointeger(L, -1);
-    lua_pop(L, 1);
-    lua_rawgeti(L, 3, 2);
-    pos.y = lua_tointeger(L, -1);
-    lua_pop(L, 1);
+    bool ok = script_to_vector(L, 3, &pos);
+    luaL_argcheck(L, ok, 3, "invalid position");
 
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
@@ -170,6 +164,102 @@ static int boardscript_test_piece(lua_State* L) {
     // Actually run the test and return the result
     bool result = board_test_piece(board, config, pos, rot);
     lua_pushboolean(L, result);
+    return 1;
+}
+
+/**
+ * Lua: Repeatedly test collision between two points on a board, and return
+ *      the last location where the piece was successfully placed.
+ */
+static int boardscript_test_piece_between(lua_State* L) {
+    // Parameter 1: Board handle
+    int type = lua_type(L, 1);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
+    board_t* board = lua_touserdata(L, 1);
+    if (board == NULL) {
+        // never returns
+        luaL_argerror(L, 1, "nil board handle");
+    }
+
+    // Parameter 2: Piece configuration handle
+    type = lua_type(L, 2);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
+    const piece_config_t* config = lua_touserdata(L, 2);
+    if (config == NULL) {
+        // never returns
+        luaL_argerror(L, 2, "nil piece configuration handle");
+    }
+
+    // Parameter 3: Source position
+    vec2i_t src = { 0, 0 };
+    bool ok = script_to_vector(L, 3, &src);
+    luaL_argcheck(L, ok, 3, "invalid position");
+
+    // Parameter 4: Rotation integer
+    lua_Integer rot = luaL_checkinteger(L, 4);
+
+    // Parameter 5: Destination position
+    vec2i_t dst = { 0, 0 };
+    ok = script_to_vector(L, 5, &dst);
+    luaL_argcheck(L, ok, 5, "invalid position");
+
+    // Actually run the test and return the result
+    vec2i_t result = board_test_piece_between(board, config, src, rot, dst);
+    script_push_vector(L, &result);
+    return 1;
+}
+
+/**
+ * Lua: Test to see if a piece collides with a specific spot on the board.
+ */
+static int boardscript_lock_piece(lua_State* L) {
+    // Parameter 1: Board handle
+    int type = lua_type(L, 1);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
+    board_t* board = lua_touserdata(L, 1);
+    if (board == NULL) {
+        // never returns
+        luaL_argerror(L, 1, "nil board handle");
+    }
+
+    // Parameter 2: Piece configuration handle
+    type = lua_type(L, 2);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
+    const piece_config_t* config = lua_touserdata(L, 2);
+    if (config == NULL) {
+        // never returns
+        luaL_argerror(L, 2, "nil piece configuration handle");
+    }
+
+    // Parameter 3: Position table
+    vec2i_t pos = { 0, 0 };
+    bool ok = script_to_vector(L, 3, &pos);
+    luaL_argcheck(L, ok, 3, "invalid position");
+
+    // Parameter 4: Rotation integer
+    lua_Integer rot = luaL_checkinteger(L, 4);
+
+    // Actually lock the piece
+    board_lock_piece(board, config, pos, rot);
+    return 0;
+}
+
+/**
+ * Lua: Test to see if a piece collides with a specific spot on the board.
+ */
+static int boardscript_clear_lines(lua_State* L) {
+    // Parameter 1: Board handle
+    int type = lua_type(L, 1);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
+    board_t* board = lua_touserdata(L, 1);
+    if (board == NULL) {
+        // never returns
+        luaL_argerror(L, 1, "nil board handle");
+    }
+
+    // Clear lines and return the number of lines cleared.
+    uint8_t lines = board_clear_lines(board);
+    lua_pushinteger(L, lines);
     return 1;
 }
 
@@ -226,6 +316,9 @@ int boardscript_openlib(lua_State* L) {
         { "delete_piece", boardscript_delete_piece },
         { "get_piece", boardscript_get_piece },
         { "test_piece", boardscript_test_piece },
+        { "test_piece_between", boardscript_test_piece_between },
+        { "lock_piece", boardscript_lock_piece },
+        { "clear_lines", boardscript_clear_lines },
         { "get_next_config", boardscript_get_next_config },
         { "consume_next", boardscript_consume_next },
         { NULL, NULL }

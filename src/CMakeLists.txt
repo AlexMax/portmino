@@ -22,6 +22,7 @@ endif()
 
 set(GAME_SOURCES
     audio.c         audio.h
+    audioscript.c   audioscript.h
     board.c         board.h
     boardscript.c   boardscript.h
     define.c        define.h

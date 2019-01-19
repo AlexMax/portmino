@@ -21,6 +21,7 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+#include "audioscript.h"
 #include "boardscript.h"
 #include "frontend.h"
 #include "piecescript.h"
@@ -135,6 +136,7 @@ ruleset_t* ruleset_new(void) {
         { "mino_ruleset", ruleset_openlib },
         { "mino_board", boardscript_openlib },
         { "mino_piece", piece_openlib },
+        { "mino_audio", audio_openlib },
         { NULL, NULL }
     };
 
@@ -310,13 +312,15 @@ ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
 
     // We expect the top of the stack to contain a function that contains
     // our state_frame function.
-    if (lua_pcall(ruleset->lua, 0, 0, 0) != LUA_OK) {
+    if (lua_pcall(ruleset->lua, 0, 1, 0) != LUA_OK) {
         const char* err = lua_tostring(ruleset->lua, -1);
         frontend_fatalerror("lua error: %s", err);
         return RULESET_RESULT_ERROR;
     }
 
-    return RULESET_RESULT_OK;
+    // Handle our result
+    ruleset_result_t result = lua_tointeger(ruleset->lua, -1);
+    return result;
 }
 
 /**

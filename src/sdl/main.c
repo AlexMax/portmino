@@ -40,6 +40,7 @@ static void sdl_fatalerror(const char *fmt, va_list va) {
     char buffer[8192];
     vsnprintf(buffer, sizeof(buffer), fmt, va);
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, NULL);
+    fputs(buffer, stderr);
     exit(1);
 }
 
