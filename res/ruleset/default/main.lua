@@ -170,9 +170,9 @@ local o_piece = {
 local state = {}
 
 local function state_frame()
-    local gametic = ruleset.get_gametic()
-    local events = ruleset.get_player_events(1)
-    local board = ruleset.get_board(1)
+    local gametic = mino_ruleset.get_gametic()
+    local events = mino_ruleset.get_player_events(1)
+    local board = mino_board.get(1)
 
     -- Get the next piece if we don't have one at this point.
     if board.piece == nil then
@@ -478,45 +478,45 @@ local function state_frame()
 end
 
 local function board_next_piece(board, tic)
-    if ruleset.board_get_piece(board) ~= nil then
-        ruleset.board_delete_piece(board)
+    if mino_board.get_piece(board) ~= nil then
+        mino_board.delete_piece(board)
     end
 
     -- Find the next piece.
-    local config = ruleset.board_get_next_config(board)
+    local config = mino_board.get_next_config(board)
 
     -- See if our newly-spawned piece would collide with an existing piece.
-    local spawn_pos = ruleset.config_get_spawn_pos(config)
-    local spawn_rot = ruleset.config_get_spawn_rot(config)
-    if not ruleset.board_test_piece(board, config, spawn_pos, spawn_rot) then
+    local spawn_pos = mino_piece.config_get_spawn_pos(config)
+    local spawn_rot = mino_piece.config_get_spawn_rot(config)
+    if not mino_board.test_piece(board, config, spawn_pos, spawn_rot) then
         spawn_pos[2] = spawn_pos[2] - 1
-        if not ruleset.board_test_piece(board, config, spawn_pos, spawn_rot) then
+        if not mino_board.test_piece(board, config, spawn_pos, spawn_rot) then
             return false
         end
 
         -- Piece spawns offset from its usual spot
-        ruleset.board_new_piece(board, config)
-        ruleset.board_set_piece_pos(board, spawn_pos)
+        mino_board.new_piece(board, config)
+        mino_board.set_piece_pos(board, spawn_pos)
     else
-        ruleset.board_new_piece(board, config)
+        mino_board.new_piece(board, config)
     end
 
     -- Set the spawn tic.
     state.spawn_tic = tic
 
     -- Advance the next index.
-    ruleset.board_consume_next(board)
+    mino_board.consume_next(board)
 
     return true
 end
 
 local function test_state_frame()
-    local gametic = ruleset.get_gametic()
-    local events = ruleset.get_player_events(1)
-    local board = ruleset.get_board(1)
+    local gametic = mino_ruleset.get_gametic()
+    local events = mino_ruleset.get_player_events(1)
+    local board = mino_board.get(1)
 
     -- Get the next piece if we don't have one at this point.
-    if ruleset.board_get_piece(board) == nil then
+    if mino_board.get_piece(board) == nil then
         if not board_next_piece(board, gametic) then
             return STATE_RESULT_GAMEOVER
         end
@@ -526,7 +526,7 @@ local function test_state_frame()
 end
 
 local function next_piece()
-    local configs = ruleset.get_piece_configs()
+    local configs = mino_ruleset.get_piece_configs()
     return configs[1]
 end
 

@@ -21,8 +21,9 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
-#include "board.h"
+#include "boardscript.h"
 #include "frontend.h"
+#include "piecescript.h"
 #include "ruleset.h"
 #include "script.h"
 #include "state.h"
@@ -72,141 +73,6 @@ static int ruleset_get_player_events(lua_State* L) {
 }
 
 /**
- * Lua: Get a board handle by board ID
- */
-static int ruleset_get_board(lua_State* L) {
-    // Parameter 1: Board number, 1-indexed
-    lua_Integer board = luaL_checkinteger(L, 1);
-    if (board <= 0) {
-         // never returns
-         luaL_argerror(L, 1, "invalid player id");
-    }
-    board -= 1;
-
-    lua_pushstring(L, "state");
-    if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        // never returns
-        luaL_argerror(L, 1, "ruleset_get_board is missing internal state");
-    }
-    state_t* state = lua_touserdata(L, -1);
-
-    if ((size_t)board >= state->board_count) {
-        // never returns
-        luaL_argerror(L, 1, "invalid board id");
-    }
-
-    // Return the board
-    board_t* board_ptr = state->boards[board];
-    lua_pushlightuserdata(L, board_ptr);
-    return 1;
-}
-
-/**
- * Lua: Get a board piece handle by board handle
- */
-static int ruleset_board_get_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    // Fetch the piece and return a handle to it
-    if (board->piece == NULL) {
-        lua_pushnil(L);
-        return 1;
-    }
-
-    lua_pushlightuserdata(L, board->piece);
-    return 1;
-}
-
-/**
- * Lua: Delete the piece on the board given by the board handle
- */
-static int ruleset_board_delete_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    // Delete the piece attached to the board
-    if (board->piece != NULL) {
-        piece_delete(board->piece);
-        board->piece = NULL;
-    }
-
-    return 0;
-}
-
-/**
- * Lua: Get the next piece config handle for the given board handle
- */
-static int ruleset_board_get_next_config(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    // Fetch the next piece and return a handle to its config
-    const piece_config_t* config = board_get_next_piece(board, 0);
-    lua_pushlightuserdata(L, (void*)config);
-    return 1;
-}
-
-/**
- * Lua: Get the spawn position for a given piece config handle.
- */
-static int ruleset_config_get_spawn_pos(lua_State* L) {
-    // Parameter 1: Piece configuration handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 1);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece configuration handle");
-    }
-
-    // Fetch the config and return the spawn point as a table
-    lua_createtable(L, 2, 0);
-    lua_pushinteger(L, config->spawn_pos.x);
-    lua_rawseti(L, -2, 1);
-    lua_pushinteger(L, config->spawn_pos.y);
-    lua_rawseti(L, -2, 2);
-
-    return 1;
-}
-
-/**
- * Lua: Get the spawn position for a given piece config handle.
- */
-static int ruleset_config_get_spawn_rot(lua_State* L) {
-    // Parameter 1: Piece configuration handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 1);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece configuration handle");
-    }
-
-    // Fetch the config and return the spawn point as a table
-    lua_pushinteger(L, config->spawn_rot);
-    return 1;
-}
-
-/**
  * Lua: Return a list of piece configs attached to the state.
  */
 static int ruleset_get_piece_configs(lua_State* L) {
@@ -231,130 +97,18 @@ static int ruleset_get_piece_configs(lua_State* L) {
 }
 
 /**
- * Lua: Test to see if a piece fits into a specific spot on the board.
- */
-static int ruleset_board_test_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    // Parameter 2: Piece configuration handle
-    type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 2);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 2, "nil piece configuration handle");
-    }
-
-    // Parameter 3: Position table
-    // FIXME: Improve error handling
-    type = lua_type(L, 3);
-    luaL_argcheck(L, (type == LUA_TTABLE), 3, "invalid position");
-    vec2i_t pos = { 0, 0 };
-    lua_rawgeti(L, 3, 1);
-    pos.x = lua_tointeger(L, -1);
-    lua_pop(L, 1);
-    lua_rawgeti(L, 3, 2);
-    pos.y = lua_tointeger(L, -1);
-    lua_pop(L, 1);
-
-    // Parameter 4: Rotation integer
-    lua_Integer rot = luaL_checkinteger(L, 4);
-
-    // Actually run the test and return the result
-    bool result = board_test_piece(board, config, pos, rot);
-    lua_pushboolean(L, result);
-    return 1;
-}
-
-/**
- * Lua: Allocate a new piece for the board.
- */
-static int ruleset_board_new_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    // Parameter 2: Piece configuration handle
-    type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 2);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 2, "nil piece configuration handle");
-    }
-
-    // If a piece exists, delete it.
-    if (board->piece != NULL) {
-        piece_delete(board->piece);
-        board->piece = NULL;
-    }
-
-    // Create a piece for the board.
-    board->piece = piece_new(config);
-
-    return 0;
-}
-
-/**
- * Lua: Consume the next piece of the board, cycling through to the next next
- * piece and possibly generating a new next piece.
- */
-static int ruleset_board_consume_next(lua_State* L) {
-    lua_pushstring(L, "state");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const state_t* state = lua_touserdata(L, -1);
-    if (state == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_gametic is missing internal state");
-    }
-
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    board_consume_next_piece(board, state->ruleset);
-    return 0;
-}
-
-/**
  * Push library functions into the state.
  */
 static int ruleset_openlib(lua_State* L) {
     static const luaL_Reg rulesetlib[] = {
         { "get_gametic", ruleset_get_gametic },
         { "get_player_events", ruleset_get_player_events },
-        { "get_board", ruleset_get_board },
-        { "board_get_piece", ruleset_board_get_piece },
-        { "board_delete_piece", ruleset_board_delete_piece },
-        { "board_get_next_config", ruleset_board_get_next_config },
-        { "config_get_spawn_pos", ruleset_config_get_spawn_pos },
-        { "config_get_spawn_rot", ruleset_config_get_spawn_rot },
         { "get_piece_configs", ruleset_get_piece_configs },
-        { "board_test_piece", ruleset_board_test_piece },
-        { "board_new_piece", ruleset_board_new_piece },
-        { "board_consume_next", ruleset_board_consume_next },
         { NULL, NULL }
     };
 
     luaL_newlib(L, rulesetlib);
+
     return 1;
 }
 
@@ -378,7 +132,9 @@ ruleset_t* ruleset_new(void) {
 
     static const luaL_Reg loadedlibs[] = {
         { "_G", luaopen_base },
-        { "ruleset", ruleset_openlib },
+        { "mino_ruleset", ruleset_openlib },
+        { "mino_board", boardscript_openlib },
+        { "mino_piece", piece_openlib },
         { NULL, NULL }
     };
 

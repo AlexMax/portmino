@@ -23,6 +23,7 @@ endif()
 set(GAME_SOURCES
     audio.c         audio.h
     board.c         board.h
+    boardscript.c   boardscript.h
     define.c        define.h
                     event.h
     frontend.c      frontend.h
@@ -30,6 +31,7 @@ set(GAME_SOURCES
     game.c          game.h
     picture.c       picture.h
     piece.c         piece.h
+    piecescript.c   piecescript.h
     platform.c      platform.h
     random.c        random.h
     render.c        render.h
