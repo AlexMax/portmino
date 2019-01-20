@@ -316,9 +316,6 @@ local function state_frame()
     local gravity_tics = 64 -- number of tics between gravity tics
     local gravity_cells = 1 -- number of cells to move the piece per gravity tics.
 
-    -- FIXME: Infinity gravity for testing
-    gravity_tics = 2147483647
-
     -- Soft dropping and hard dropping aren't anything too special, they
     -- just toy with gravity.
     if events & EVENT_SOFTDROP ~= 0 then
