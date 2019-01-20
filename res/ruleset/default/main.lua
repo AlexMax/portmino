@@ -18,8 +18,14 @@ local DEFAULT_DAS = 12
 local DEFAULT_DAS_PERIOD = 2
 local DEFAULT_LOCK_DELAY = 30
 
+local ROT_0 = 0
+local ROT_R = 1
+local ROT_2 = 2
+local ROT_L = 3
+
 -- Piece definitions
 local j_piece = {
+    name = "J",
     data = {
         8, 0, 0,
         8, 8, 8,
@@ -41,6 +47,7 @@ local j_piece = {
 }
 
 local l_piece = {
+    name = "L",
     data = {
         0, 0, 4,
         4, 4, 4,
@@ -62,6 +69,7 @@ local l_piece = {
 }
 
 local s_piece = {
+    name = "S",
     data = {
         0, 6, 6,
         6, 6, 0,
@@ -83,6 +91,7 @@ local s_piece = {
 }
 
 local z_piece = {
+    name = "Z",
     data = {
         3, 3, 0,
         0, 3, 3,
@@ -104,6 +113,7 @@ local z_piece = {
 }
 
 local t_piece = {
+    name = "T",
     data = {
         0, 9, 0,
         9, 9, 9,
@@ -125,6 +135,7 @@ local t_piece = {
 }
 
 local i_piece = {
+    name = "I",
     data = {
         0, 0, 0, 0,
         7, 7, 7, 7,
@@ -150,6 +161,7 @@ local i_piece = {
 }
 
 local o_piece = {
+    name = "O",
     data = {
         0, 5, 5, 0,
         0, 5, 5, 0,
@@ -303,6 +315,9 @@ local function state_frame()
     -- Determine what our gravity is going to be.
     local gravity_tics = 64 -- number of tics between gravity tics
     local gravity_cells = 1 -- number of cells to move the piece per gravity tics.
+
+    -- FIXME: Infinity gravity for testing
+    gravity_tics = 2147483647
 
     -- Soft dropping and hard dropping aren't anything too special, they
     -- just toy with gravity.
@@ -474,56 +489,56 @@ local function state_frame()
             { x = 0, y = 0 },
         }
 
-        -- TODO: Wallkick tables go here
-        -- if (piece->config == &g_o_piece) {
-        --     // Don't wallkick the "O" piece.
-        -- } else if (piece->config == &g_i_piece) {
-        --     // Wallkicks for the "I" piece are unique.
-        --     if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_L && prot == ROT_2)) {
-        --         tries[1].x = -2; tries[1].y =  0;
-        --         tries[2].x =  1; tries[2].y =  0;
-        --         tries[3].x = -2; tries[3].y =  1;
-        --         tries[4].x =  1; tries[4].y = -2;
-        --     } else if ((piece->rot == ROT_R && prot == ROT_0) || (piece->rot == ROT_2 && prot == ROT_L)) {
-        --         tries[1].x =  2; tries[1].y =  0;
-        --         tries[2].x = -1; tries[2].y =  0;
-        --         tries[3].x =  2; tries[3].y = -1;
-        --         tries[4].x = -1; tries[4].y =  2;
-        --     } else if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_R && prot == ROT_2)) {
-        --         tries[1].x = -1; tries[1].y =  0;
-        --         tries[2].x =  2; tries[2].y =  0;
-        --         tries[3].x = -1; tries[3].y = -2;
-        --         tries[4].x =  2; tries[4].y =  1;
-        --     } else { /* ROT_L -> ROT_0, ROT_2 -> ROT_R */
-        --         tries[1].x =  1; tries[1].y =  0;
-        --         tries[2].x = -2; tries[2].y =  0;
-        --         tries[3].x =  1; tries[3].y =  2;
-        --         tries[4].x = -2; tries[4].y = -1;
-        --     }
-        -- } else {
-        --     // Wallkicks for the other pieces.
-        --     if ((piece->rot == ROT_0 && prot == ROT_R) || (piece->rot == ROT_2 && prot == ROT_R)) {
-        --         tries[1].x = -1; tries[1].y =  0;
-        --         tries[2].x = -1; tries[2].y = -1;
-        --         tries[3].x =  0; tries[3].y =  2;
-        --         tries[4].x = -1; tries[4].y =  2;
-        --     } else if ((piece->rot == ROT_R && prot == ROT_0) || (piece->rot == ROT_R && prot == ROT_2)) {
-        --         tries[1].x =  1; tries[1].y =  0;
-        --         tries[2].x =  1; tries[2].y =  1;
-        --         tries[3].x =  0; tries[3].y = -2;
-        --         tries[4].x =  1; tries[4].y = -2;
-        --     } else if ((piece->rot == ROT_0 && prot == ROT_L) || (piece->rot == ROT_2 && prot == ROT_L)) {
-        --         tries[1].x = -1; tries[1].y =  0;
-        --         tries[2].x = -1; tries[2].y =  1;
-        --         tries[3].x =  0; tries[3].y = -2;
-        --         tries[4].x = -1; tries[4].y = -2;
-        --     } else /* ROT_L -> ROT_0, ROT_L -> ROT_2 */ {
-        --         tries[1].x =  1; tries[1].y =  0;
-        --         tries[2].x =  1; tries[2].y = -1;
-        --         tries[3].x =  0; tries[3].y =  2;
-        --         tries[4].x =  1; tries[4].y =  2;
-        --     }
-        -- }
+        local piece_name = mino_piece.config_get_name(piece_config)
+        if piece_name == "O" then
+            -- Don't wallkick the "O" piece.
+        elseif piece_name == "I" then
+            -- Wallkicks for the "I" piece are unique.
+            if (piece_rot == ROT_0 and prot == ROT_R) or (piece_rot == ROT_L and prot == ROT_2) then
+                tries[2].x = -2; tries[2].y =  0
+                tries[3].x =  1; tries[3].y =  0
+                tries[4].x = -2; tries[4].y =  1
+                tries[5].x =  1; tries[5].y = -2
+            elseif (piece_rot == ROT_R and prot == ROT_0) or (piece_rot == ROT_2 and prot == ROT_L) then
+                tries[2].x =  2; tries[2].y =  0
+                tries[3].x = -1; tries[3].y =  0
+                tries[4].x =  2; tries[4].y = -1
+                tries[5].x = -1; tries[5].y =  2
+            elseif (piece_rot == ROT_0 and prot == ROT_L) or (piece_rot == ROT_R and prot == ROT_2) then
+                tries[2].x = -1; tries[2].y =  0
+                tries[3].x =  2; tries[3].y =  0
+                tries[4].x = -1; tries[4].y = -2
+                tries[5].x =  2; tries[5].y =  1
+            else -- ROT_L -> ROT_0, ROT_2 -> ROT_R
+                tries[2].x =  1; tries[2].y =  0
+                tries[3].x = -2; tries[3].y =  0
+                tries[4].x =  1; tries[4].y =  2
+                tries[5].x = -2; tries[5].y = -1
+            end
+        else
+            -- Wallkicks for the other pieces.
+            if (piece_rot == ROT_0 and prot == ROT_R) or (piece_rot == ROT_2 and prot == ROT_R) then
+                tries[2].x = -1; tries[2].y =  0
+                tries[3].x = -1; tries[3].y = -1
+                tries[4].x =  0; tries[4].y =  2
+                tries[5].x = -1; tries[5].y =  2
+            elseif (piece_rot == ROT_R and prot == ROT_0) or (piece_rot == ROT_R and prot == ROT_2) then
+                tries[2].x =  1; tries[2].y =  0
+                tries[3].x =  1; tries[3].y =  1
+                tries[4].x =  0; tries[4].y = -2
+                tries[5].x =  1; tries[5].y = -2
+            elseif (piece_rot == ROT_0 and prot == ROT_L) or (piece_rot == ROT_2 and prot == ROT_L) then
+                tries[2].x =  1; tries[2].y =  0
+                tries[3].x =  1; tries[3].y = -1
+                tries[4].x =  0; tries[4].y =  2
+                tries[5].x =  1; tries[5].y =  2
+            else -- ROT_L -> ROT_0, ROT_L -> ROT_2
+                tries[2].x = -1; tries[2].y =  0
+                tries[3].x = -1; tries[3].y =  1
+                tries[4].x =  0; tries[4].y = -2
+                tries[5].x = -1; tries[5].y = -2
+            end
+        end
 
         -- Finally, run our tests.
         for i, v in ipairs(tries) do

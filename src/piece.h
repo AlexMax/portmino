@@ -31,6 +31,11 @@
 
 typedef struct {
     /**
+     * Name of the piece.
+     */
+    char* name;
+
+    /**
      * What a piece looks like from every rotation.
      * 
      * Total size of this pointer is data_size * data_count.

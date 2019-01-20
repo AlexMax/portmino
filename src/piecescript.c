@@ -119,6 +119,24 @@ static int piecescript_get_config(lua_State* L) {
 }
 
 /**
+ * Lua: Get the name for a given piece config handle.
+ */
+static int piecescript_config_get_name(lua_State* L) {
+    // Parameter 1: Piece configuration handle
+    int type = lua_type(L, 1);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
+    const piece_config_t* config = lua_touserdata(L, 1);
+    if (config == NULL) {
+        // never returns
+        luaL_argerror(L, 1, "nil piece configuration handle");
+    }
+
+    // Fetch the config and return the spawn point as a table
+    lua_pushstring(L, config->name);
+    return 1;
+}
+
+/**
  * Lua: Get the spawn position for a given piece config handle.
  */
 static int piecescript_config_get_spawn_pos(lua_State* L) {
@@ -182,6 +200,7 @@ int piece_openlib(lua_State* L) {
         { "get_rot", piecescript_get_rot },
         { "set_rot", piecescript_set_rot },
         { "get_config", piecescript_get_config },
+        { "config_get_name", piecescript_config_get_name },
         { "config_get_spawn_pos", piecescript_config_get_spawn_pos },
         { "config_get_spawn_rot", piecescript_config_get_spawn_rot },
         { "config_get_rot_count", piecescript_config_get_rot_count },

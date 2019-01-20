@@ -72,11 +72,23 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         }
 
         /// Get the various fields of the piece configuration
+        lua_pushstring(L, "name");
+        lua_gettable(L, -2);
+        const char* cname = lua_tostring(L, -1);
+        if (cname == NULL) {
+            piece_configs_delete(piece_configs);
+            lua_settop(L, top - 1);
+            lua_pushstring(L, "Piece \"name\" isn't a valid string");
+            return NULL;
+        }
+        char* name = strdup(cname);
+        lua_pop(L, 1); // pop name
 
         // Spawn Position is a tuple of integers that contain an x and y coordinate
         lua_pushstring(L, "spawn_pos");
         type = lua_gettable(L, -2);
         if (type != LUA_TTABLE) {
+            free(name);
             piece_configs_delete(piece_configs);
             lua_settop(L, top - 1);
             lua_pushstring(L, "Piece \"spawn_pos\" isn't a table");
@@ -85,6 +97,7 @@ piece_configs_t* piece_configs_new(lua_State* L) {
 
         lua_Integer spawn_pos_length = luaL_len(L, -1);
         if (spawn_pos_length != 2) {
+            free(name);
             piece_configs_delete(piece_configs);
             lua_settop(L, top - 1);
             lua_pushstring(L, "Piece \"spawn_pos\" needs exactly two coordinates");
@@ -120,6 +133,7 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         lua_pushstring(L, "data");
         type = lua_gettable(L, -2);
         if (type != LUA_TTABLE) {
+            free(name);
             piece_configs_delete(piece_configs);
             lua_settop(L, top - 1);
             lua_pushstring(L, "Piece \"data\" isn't a table");
@@ -129,6 +143,7 @@ piece_configs_t* piece_configs_new(lua_State* L) {
         lua_Integer data_length = luaL_len(L, -1);
         uint8_t* data = calloc(data_length, sizeof(uint8_t));
         if (data == NULL) {
+            free(name);
             piece_configs_delete(piece_configs);
             lua_settop(L, top - 1);
             lua_pushstring(L, "Allocation error");
@@ -147,6 +162,7 @@ piece_configs_t* piece_configs_new(lua_State* L) {
 
         piece_config_t* piece_config = calloc(1, sizeof(piece_config_t));
         if (piece_config == NULL) {
+            free(name);
             free(data);
             piece_configs_delete(piece_configs);
             lua_settop(L, top - 1);
@@ -154,6 +170,7 @@ piece_configs_t* piece_configs_new(lua_State* L) {
             return NULL;
         }
 
+        piece_config->name = name;
         piece_config->datas = data;
         piece_config->spawn_pos = spawn_pos;
         piece_config->spawn_rot = spawn_rot;
@@ -177,6 +194,8 @@ void piece_configs_delete(piece_configs_t* piece_configs) {
         if (piece_configs->size != 0) {
             for (size_t i = 0;i < piece_configs->size;i++) {
                 if (piece_configs->configs[i] != NULL) {
+                    free(piece_configs->configs[i]->name);
+                    piece_configs->configs[i]->name = NULL;
                     free(piece_configs->configs[i]->datas);
                     piece_configs->configs[i]->datas = NULL;
                     free(piece_configs->configs[i]);
