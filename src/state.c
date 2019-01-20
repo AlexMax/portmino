@@ -47,7 +47,7 @@ state_t* state_new(void) {
     }
 
     for (size_t i = 0;i < state->board_count;i++) {
-        state->boards[i] = board_new(state->ruleset);
+        state->boards[i] = board_new(state->ruleset, i);
         if (state->boards[i] == NULL) {
             state_delete(state);
             return NULL;

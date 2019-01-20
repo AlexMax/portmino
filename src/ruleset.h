@@ -22,13 +22,14 @@
 #include "event.h"
 #include "piece.h"
 
+typedef struct board_s board_t;
+typedef struct state_s state_t;
+
 typedef enum {
     RULESET_RESULT_OK,
     RULESET_RESULT_ERROR,
     RULESET_RESULT_TOPOUT,
 } ruleset_result_t;
-
-typedef struct state_s state_t;
 
 typedef struct ruleset_s {
     /**
@@ -61,4 +62,4 @@ ruleset_t* ruleset_new(void);
 void ruleset_delete(ruleset_t* ruleset);
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
                                const playerevents_t* playerevents);
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset);
+const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, board_t* board);

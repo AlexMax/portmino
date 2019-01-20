@@ -17,14 +17,6 @@
 
 #pragma once
 
-#include "define.h"
+#include "lua.h"
 
-typedef struct random_s {
-    /**
-     * The current state of the random number generator.
-     */
-    uint32_t state[2];
-} random_t;
-
-void random_init(random_t* random, uint32_t* seed);
-uint32_t random_number(random_t* random, uint32_t range);
+int randomscript_openlib(lua_State* L);

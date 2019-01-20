@@ -192,6 +192,21 @@ local state = {
             -- Have we processed an EVENT_CW last tic?
             cw_already = false,
         }
+    },
+    board = {
+        {
+            -- Tic that the current piece spawned on.
+            spawn_tic = 0,
+
+            -- Random number generator for this board.
+            random = mino_random.new(nil),
+
+            -- Bag of random pieces.
+            bag = {},
+
+            -- Size of the bag.
+            bag_size = 0,
+        }
     }
 }
 
@@ -221,7 +236,7 @@ local function board_next_piece(board, tic)
     end
 
     -- Set the spawn tic.
-    state.spawn_tic = tic
+    state.board[1].spawn_tic = tic
 
     -- Advance the next index.
     mino_board.consume_next(board)
@@ -239,6 +254,7 @@ local function state_frame()
         if not board_next_piece(board, gametic) then
             return STATE_RESULT_GAMEOVER
         end
+        mino_audio.playsound("piece0")
     end
 
     -- Get our piece
@@ -312,7 +328,7 @@ local function state_frame()
     end
 
     -- Handle gravity.
-    if (gametic - state.spawn_tic) % gravity_tics >= gravity_tics - 1 then
+    if (gametic - state.board[1].spawn_tic) % gravity_tics >= gravity_tics - 1 then
         local src = mino_piece.get_pos(piece)
         local dst = mino_piece.get_pos(piece)
         dst.y = dst.y + gravity_cells
@@ -553,9 +569,30 @@ local function state_frame()
     return STATE_RESULT_OK
 end
 
-local function next_piece()
-    local configs = mino_ruleset.get_piece_configs()
-    return configs[1]
+-- Bag randomizer
+local function next_piece(board_id)
+    local board = state.board[1]
+
+    -- If our bag is empty, fill it back up.
+    if board.bag_size == 0 then
+        board.bag = mino_ruleset.get_piece_configs()
+        board.bag_size = #board.bag
+    end
+
+    -- Pick a random piece from the bag.
+    local index = board.random:number(board.bag_size) + 1
+
+    -- Iterate that random number of times through the bag.
+    local key = nil
+    local piece = nil
+    for i = 1, index do
+        key, piece = next(board.bag, key)
+    end
+
+    -- Remove the piece from the bag and return it.
+    board.bag[key] = nil
+    board.bag_size = board.bag_size - 1
+    return piece
 end
 
 return {

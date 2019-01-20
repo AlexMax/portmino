@@ -22,9 +22,11 @@
 #include "lauxlib.h"
 
 #include "audioscript.h"
+#include "board.h"
 #include "boardscript.h"
 #include "frontend.h"
 #include "piecescript.h"
+#include "randomscript.h"
 #include "ruleset.h"
 #include "script.h"
 #include "state.h"
@@ -137,6 +139,7 @@ ruleset_t* ruleset_new(void) {
         { "mino_board", boardscript_openlib },
         { "mino_piece", piece_openlib },
         { "mino_audio", audio_openlib },
+        { "mino_random", randomscript_openlib },
         { NULL, NULL }
     };
 
@@ -157,8 +160,8 @@ ruleset_t* ruleset_new(void) {
 
     // We now have the ruleset on the top of the stack.  Call it!
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
-        lua_close(L);
-        frontend_fatalerror("Could not execute ruleset %s", "default");
+        const char* err = lua_tostring(L, -1); // Error message
+        frontend_fatalerror("Could not execute ruleset %s\n%s", "default", err);
         return NULL;
     }
 
@@ -326,7 +329,7 @@ ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
 /**
  * Return a "next" piece by calling into our Lua function to get it
  */
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset) {
+const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, board_t* board) {
     // Use our reference to grab the next_piece function.
     lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->next_piece_ref);
 
@@ -334,8 +337,12 @@ const piece_config_t* ruleset_next_piece(ruleset_t* ruleset) {
     lua_pushlightuserdata(ruleset->lua, (void*)ruleset);
     lua_settable(ruleset->lua, LUA_REGISTRYINDEX);
 
+    // Pass a 1-indexed board ID to the next piece function, so we know which
+    // board we're spawning the piece on.
+    lua_pushinteger(ruleset->lua, board->id + 1);
+
     // Call it, friendo
-    if (lua_pcall(ruleset->lua, 0, 1, 0) != LUA_OK) {
+    if (lua_pcall(ruleset->lua, 1, 1, 0) != LUA_OK) {
         const char* err = lua_tostring(ruleset->lua, -1);
         frontend_fatalerror("lua error: %s", err);
         return NULL;

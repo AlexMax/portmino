@@ -61,7 +61,12 @@ typedef struct {
     uint8_t* data;
 } board_data_t;
 
-typedef struct {
+typedef struct board_s {
+    /**
+     * Unique id of the board.
+     */
+    size_t id;
+
     /**
      * Configuration of entire board.
      */
@@ -95,7 +100,7 @@ typedef struct {
     uint8_t next_index;
 } board_t;
 
-board_t* board_new(ruleset_t* ruleset);
+board_t* board_new(ruleset_t* ruleset, size_t board_id);
 void board_delete(board_t* board);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,

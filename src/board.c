@@ -23,13 +23,14 @@
 /**
  * Create a new board structure.
  */
-board_t *board_new(ruleset_t* ruleset) {
-    board_t *board = malloc(sizeof(board_t));
+board_t* board_new(ruleset_t* ruleset, size_t board_id) {
+    board_t* board = malloc(sizeof(board_t));
     if (board == NULL) {
         return NULL;
     }
 
     // Define our configuration
+    board->id = board_id;
     board->config.width = 10;
     board->config.height = 22;
     board->config.visible_height = 20;
@@ -46,7 +47,7 @@ board_t *board_new(ruleset_t* ruleset) {
 
     // Initialize the next piece circular buffer.
     for (size_t i = 0;i < MAX_NEXTS;i++) {
-        board->nexts[i] = ruleset_next_piece(ruleset);
+        board->nexts[i] = ruleset_next_piece(ruleset, board);
     }
     board->next_index = 0;
 
@@ -56,7 +57,7 @@ board_t *board_new(ruleset_t* ruleset) {
 /**
  * Delete a board structure.
  */
-void board_delete(board_t *board) {
+void board_delete(board_t* board) {
     if (board->ghost != NULL) {
         piece_delete(board->ghost);
         board->ghost = NULL;
@@ -270,6 +271,6 @@ const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
  * a new next piece at the end.
  */
 void board_consume_next_piece(board_t* board, ruleset_t* ruleset) {
-    board->nexts[board->next_index] = ruleset_next_piece(ruleset);
+    board->nexts[board->next_index] = ruleset_next_piece(ruleset, board);
     board->next_index = (board->next_index + 1) % MAX_NEXTS;
 }

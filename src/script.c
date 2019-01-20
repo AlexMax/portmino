@@ -82,7 +82,7 @@ void script_debug_stack(lua_State* L) {
         return;
     }
 
-    for (int i = 1;i < top;i++) {
+    for (int i = 1;i <= top;i++) {
         fprintf(stderr, "[%d] ", i);
         script_debug(L, i);
         fprintf(stderr, "\n");

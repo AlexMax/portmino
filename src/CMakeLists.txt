@@ -35,6 +35,7 @@ set(GAME_SOURCES
     piecescript.c   piecescript.h
     platform.c      platform.h
     random.c        random.h
+    randomscript.c  randomscript.h
     render.c        render.h
     ruleset.c       ruleset.h
     script.c        script.h
