@@ -19,7 +19,6 @@
 
 #include "define.h"
 #include "piece.h"
-#include "random.h"
 #include "ruleset.h"
 
 // Right now we only support a maximum of 8 next pieces.
@@ -74,31 +73,14 @@ typedef struct {
     board_data_t data;
 
     /**
-     * Piece configurations.
-     * 
-     * These pointers are not owned by this structure.  Don't free them.
-     */
-    const piece_config_t* pieces[MAX_PIECES];
-
-    /**
      * Current piece on the board.
      */
     piece_t* piece;
 
     /**
-     * Tic that the piece spawned on the board.
-     */
-    uint32_t spawn_tic;
-
-    /**
      * Ghost piece on the board.
      */
     piece_t* ghost;
-
-    /**
-     * "Next piece" PRNG.
-     */
-    random_t next_rng;
 
     /**
      * Next pieces circular buffer.
@@ -115,10 +97,10 @@ typedef struct {
 
 board_t* board_new(ruleset_t* ruleset);
 void board_delete(board_t* board);
-const piece_config_t* board_get_next_piece(const board_t* board, size_t index);
-void board_consume_next_piece(board_t* board, ruleset_t* ruleset);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,
                                  vec2i_t src, uint8_t rot, vec2i_t dst);
 void board_lock_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 uint8_t board_clear_lines(board_t* board);
+const piece_config_t* board_get_next_piece(const board_t* board, size_t index);
+void board_consume_next_piece(board_t* board, ruleset_t* ruleset);

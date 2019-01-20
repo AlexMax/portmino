@@ -25,41 +25,6 @@
 // Right now we only support two boards.
 #define MAX_BOARDS 2
 
-/**
- * Contains state for a particular player.
- */
-typedef struct {
-    /**
-     * Tic that EVENT_LEFT began on.  Set to 0 if released.
-     */
-    uint32_t left_tic;
-
-    /**
-     * Tic that EVENT_RIGHT began on.  Set to 0 if released.
-     */
-    uint32_t right_tic;
-
-    /**
-     * Tic that lock delay started on.  Set to 0 if lock delay isn't in effect.
-     */
-    uint32_t lock_tic;
-
-    /**
-     * Tic that EVENT_HARDDROP began on.  Set to 0 if released.
-     */
-    uint32_t harddrop_tic;
-
-    /**
-     * Have we processed an EVENT_CCW last tic?
-     */
-    bool ccw_already;
-
-    /**
-     * Have we processed an EVENT_CW last tic?
-     */
-    bool cw_already;
-} playstate_t;
-
 typedef struct ruleset_s ruleset_t;
 typedef struct state_s {
     /**
@@ -81,11 +46,6 @@ typedef struct state_s {
      * In-use board count.
      */
     size_t board_count;
-
-    /**
-     * Players.
-     */
-    playstate_t playstates[MINO_MAX_PLAYERS];
 
     /**
      * In-use player count.
@@ -123,7 +83,6 @@ typedef enum {
     STATE_RESULT_SUCCESS,
 } state_result_t;
 
-void playstate_reset(playstate_t* ps);
 state_t* state_new(void);
 void state_delete(state_t* state);
 state_result_t state_frame(state_t* state, const playerevents_t* playerevents);

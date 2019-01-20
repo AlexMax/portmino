@@ -17,25 +17,12 @@
 
 #include <stdlib.h>
 
-#include "audio.h"
-#include "state.h"
 #include "ruleset.h"
+#include "state.h"
 
 #define DEFAULT_DAS 12
 #define DEFAULT_DAS_PERIOD 2
 #define DEFAULT_LOCK_DELAY 30
-
-/**
- * Reset a player state struct to nothing.
- */
-void playstate_reset(playstate_t* ps) {
-    ps->left_tic = 0;
-    ps->right_tic = 0;
-    ps->lock_tic = 0;
-    ps->harddrop_tic = 0;
-    ps->ccw_already = false;
-    ps->cw_already = false;
-}
 
 /**
  * Create our gamestate.
@@ -52,10 +39,6 @@ state_t* state_new(void) {
     state->board_count = 1;
     state->player_count = 1;
     state->tic = 0;
-
-    for (size_t i = 0;i < state->player_count;i++) {
-        playstate_reset(&(state->playstates[i]));
-    }
 
     state->ruleset = ruleset_new();
     if (state->ruleset == NULL) {

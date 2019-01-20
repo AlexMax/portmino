@@ -44,9 +44,6 @@ board_t *board_new(ruleset_t* ruleset) {
     board->piece = NULL;
     board->ghost = NULL;
 
-    // Initialize the next piece PRNG.
-    random_init(&board->next_rng, NULL);
-
     // Initialize the next piece circular buffer.
     for (size_t i = 0;i < MAX_NEXTS;i++) {
         board->nexts[i] = ruleset_next_piece(ruleset);
@@ -72,25 +69,6 @@ void board_delete(board_t *board) {
 
     free(board->data.data);
     free(board);
-}
-
-/**
- * Return the configuration of the next piece
- */
-const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
-    index = board->next_index + index % MAX_NEXTS;
-    return board->nexts[board->next_index];
-}
-
-/**
- * "Consume" the next piece
- * 
- * Advances the next-piece index, wrapping around if necessary, and generates
- * a new next piece at the end.
- */
-void board_consume_next_piece(board_t* board, ruleset_t* ruleset) {
-    board->nexts[board->next_index] = ruleset_next_piece(ruleset);
-    board->next_index = (board->next_index + 1) % MAX_NEXTS;
 }
 
 /**
@@ -275,4 +253,23 @@ uint8_t board_clear_lines(board_t* board) {
     }
 
     return lines;
+}
+
+/**
+ * Return the configuration of the next piece
+ */
+const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
+    index = board->next_index + index % MAX_NEXTS;
+    return board->nexts[board->next_index];
+}
+
+/**
+ * "Consume" the next piece
+ * 
+ * Advances the next-piece index, wrapping around if necessary, and generates
+ * a new next piece at the end.
+ */
+void board_consume_next_piece(board_t* board, ruleset_t* ruleset) {
+    board->nexts[board->next_index] = ruleset_next_piece(ruleset);
+    board->next_index = (board->next_index + 1) % MAX_NEXTS;
 }
