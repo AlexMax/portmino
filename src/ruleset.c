@@ -323,6 +323,8 @@ ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
 
     // Handle our result
     ruleset_result_t result = lua_tointeger(ruleset->lua, -1);
+    lua_pop(ruleset->lua, 1); // pop result
+
     return result;
 }
 
