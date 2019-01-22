@@ -17,6 +17,10 @@
 
 #pragma once
 
+#if defined(_MSC_VER)
+#define restrict __restrict
+#endif
+
 #if !defined(HAVE_ASPRINTF)
 int asprintf(char** ret, const char* format, ...);
 #endif
