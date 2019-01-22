@@ -20,8 +20,11 @@
 #include "define.h"
 #include "piece.h"
 
-// Forward declarations
+// Forward declarations.
 typedef struct ruleset_s ruleset_t;
+
+// Maximum number of pieces per board.
+#define MAX_BOARD_PIECES 4
 
 /**
  * Configuration variables for the board.
@@ -72,18 +75,24 @@ typedef struct board_s {
     board_data_t data;
 
     /**
-     * Current piece on the board.
+     * Current pieces on the board.
+     * 
+     * This structure _does_ own the pieces.  Don't delete them from anywhere
+     * else except inside the board structure.
      */
-    piece_t* piece;
+    piece_t* pieces[MAX_BOARD_PIECES];
 
     /**
-     * Ghost piece on the board.
+     * Number of active pieces on the board.
      */
-    piece_t* ghost;
+    size_t piece_count;
 } board_t;
 
 board_t* board_new(ruleset_t* ruleset, size_t board_id);
 void board_delete(board_t* board);
+piece_t* board_set_piece(board_t* board, size_t index, const piece_config_t* config);
+void board_unset_piece(board_t* board, size_t index);
+piece_t* board_get_piece(board_t* board, size_t index);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,
                                  vec2i_t src, uint8_t rot, vec2i_t dst);

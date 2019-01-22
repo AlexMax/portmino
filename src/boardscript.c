@@ -53,9 +53,9 @@ static int boardscript_get(lua_State* L) {
 }
 
 /**
- * Lua: Allocate a new piece for the board.
+ * Lua: Set a new piece for the board.
  */
-static int boardscript_new_piece(lua_State* L) {
+static int boardscript_set_piece(lua_State* L) {
     // Parameter 1: Board handle
     int type = lua_type(L, 1);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
@@ -64,32 +64,39 @@ static int boardscript_new_piece(lua_State* L) {
         // never returns
         luaL_argerror(L, 1, "nil board handle");
     }
+
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        // never returns
+        luaL_argerror(L, 1, "invalid piece id");
+    }
+    index -= 1;
 
     // Parameter 2: Piece configuration handle
-    type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 2);
+    type = lua_type(L, 3);
+    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 3, "invalid piece configuration handle");
+    const piece_config_t* config = lua_touserdata(L, 3);
     if (config == NULL) {
         // never returns
-        luaL_argerror(L, 2, "nil piece configuration handle");
+        luaL_argerror(L, 3, "nil piece configuration handle");
     }
 
-    // If a piece exists, delete it.
-    if (board->piece != NULL) {
-        piece_delete(board->piece);
-        board->piece = NULL;
+    // Fetch the piece and return a handle to it
+    piece_t* piece = board_set_piece(board, index, config);
+    if (piece == NULL) {
+        lua_pushnil(L);
+        return 1;
     }
 
-    // Create a piece for the board.
-    board->piece = piece_new(config);
-
-    return 0;
+    lua_pushlightuserdata(L, piece);
+    return 1;
 }
 
 /**
- * Lua: Delete the piece on the board given by the board handle
+ * Lua: Unset the piece on the board given by the index
  */
-static int boardscript_delete_piece(lua_State* L) {
+static int boardscript_unset_piece(lua_State* L) {
     // Parameter 1: Board handle
     int type = lua_type(L, 1);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
@@ -99,17 +106,21 @@ static int boardscript_delete_piece(lua_State* L) {
         luaL_argerror(L, 1, "nil board handle");
     }
 
-    // Delete the piece attached to the board
-    if (board->piece != NULL) {
-        piece_delete(board->piece);
-        board->piece = NULL;
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        // never returns
+        luaL_argerror(L, 1, "invalid piece id");
     }
+    index -= 1;
 
+    // Delete the piece.
+    board_unset_piece(board, index);
     return 0;
 }
 
 /**
- * Lua: Get a board piece handle by board handle
+ * Lua: Get a board piece handle by index
  */
 static int boardscript_get_piece(lua_State* L) {
     // Parameter 1: Board handle
@@ -121,13 +132,22 @@ static int boardscript_get_piece(lua_State* L) {
         luaL_argerror(L, 1, "nil board handle");
     }
 
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        // never returns
+        luaL_argerror(L, 1, "invalid piece id");
+    }
+    index -= 1;
+
     // Fetch the piece and return a handle to it
-    if (board->piece == NULL) {
+    piece_t* piece = board_get_piece(board, index);
+    if (piece == NULL) {
         lua_pushnil(L);
         return 1;
     }
 
-    lua_pushlightuserdata(L, board->piece);
+    lua_pushlightuserdata(L, piece);
     return 1;
 }
 
@@ -266,8 +286,8 @@ static int boardscript_clear_lines(lua_State* L) {
 int boardscript_openlib(lua_State* L) {
     static const luaL_Reg boardlib[] = {
         { "get", boardscript_get },
-        { "new_piece", boardscript_new_piece },
-        { "delete_piece", boardscript_delete_piece },
+        { "set_piece", boardscript_set_piece },
+        { "unset_piece", boardscript_unset_piece },
         { "get_piece", boardscript_get_piece },
         { "test_piece", boardscript_test_piece },
         { "test_piece_between", boardscript_test_piece_between },

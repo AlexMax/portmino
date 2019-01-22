@@ -225,8 +225,8 @@ local state = {
 local function board_next_piece(board, tic)
     local next = mino_next.get(1)
 
-    if mino_board.get_piece(board) ~= nil then
-        mino_board.delete_piece(board)
+    if mino_board.get_piece(board, 1) ~= nil then
+        mino_board.unset_piece(board, 1)
     end
 
     -- Find the next piece.
@@ -242,11 +242,11 @@ local function board_next_piece(board, tic)
         end
 
         -- Piece spawns offset from its usual spot
-        mino_board.new_piece(board, config)
-        local piece = mino_board.get_piece(board)
+        mino_board.set_piece(board, 1, config)
+        local piece = mino_board.get_piece(board, 1)
         mino_piece.set_pos(piece, spawn_pos)
     else
-        mino_board.new_piece(board, config)
+        mino_board.set_piece(board, 1, config)
     end
 
     -- Set the spawn tic.
@@ -264,7 +264,7 @@ local function state_frame()
     local board = mino_board.get(1)
 
     -- Get the next piece if we don't have one at this point.
-    if mino_board.get_piece(board) == nil then
+    if mino_board.get_piece(board, 1) == nil then
         if not board_next_piece(board, gametic) then
             return STATE_RESULT_GAMEOVER
         end
@@ -272,7 +272,7 @@ local function state_frame()
     end
 
     -- Get our piece
-    local piece = mino_board.get_piece(board)
+    local piece = mino_board.get_piece(board, 1)
     local piece_pos = mino_piece.get_pos(piece)
     local piece_rot = mino_piece.get_rot(piece)
     local piece_config = mino_piece.get_config(piece)
@@ -304,7 +304,7 @@ local function state_frame()
             state.player[1].lock_tic = 0
 
             -- Get the piece pointer again, because we mutated it.
-            piece = mino_board.get_piece(board)
+            piece = mino_board.get_piece(board, 1)
             piece_pos = mino_piece.get_pos(piece)
             piece_rot = mino_piece.get_rot(piece)
             piece_config = mino_piece.get_config(piece)
@@ -366,7 +366,7 @@ local function state_frame()
             -- There is no possible other move we can make this tic.  We
             -- delete the piece here, but we don't advance to the next piece
             -- until the next tic, to ensure gravity isn't screwed up.
-            mino_board.delete_piece(board)
+            mino_board.unset_piece(board, 1)
 
             -- Again, doing a hard drop is mutually exclusive with any other
             -- piece movement this tic.

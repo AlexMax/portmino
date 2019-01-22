@@ -127,62 +127,37 @@ static void* softrender_draw_state(const state_t* state) {
             bpic, vec2i_zero());
     }
 
-    // Draw the ghost piece, if any.
-    if (board->ghost != NULL) {
-        size_t i = board->ghost->rot * board->ghost->config->data_size;
-        size_t end = i + board->ghost->config->data_size;
-        for (int j = 0;i < end;i++,j++) {
-            // What type of block are we rendering?
-            uint8_t btype = board->ghost->config->datas[i];
-            if (!btype) {
-                continue;
-            }
-            picture_t* bpic = softblock_get(g_block, --btype);
-
-            // What is the actual (x, y) coordinate of the block?
-            int ix = board->ghost->pos.x + (j % board->ghost->config->width);
-            int iy = board->ghost->pos.y + (j / board->ghost->config->width);
-            iy -= board->config.height - board->config.visible_height;
-
-            if (iy < 0) {
-                // Don't draw a block above the visible height.
-                continue;
-            }
-
-            // Draw a block.
-            picture_blit(&g_render_ctx.buffer,
-                vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
-                bpic, vec2i_zero());
-        }
-    }
-
-    // Draw the piece, if any.  The normal piece is drawn after the ghost piece
+    // Draw pieces, if any.  The normal piece is drawn after the ghost piece
     // so it gets drawn over top of the ghost in case of overlap.
-    if (board->piece != NULL) {
-        size_t i = board->piece->rot * board->piece->config->data_size;
-        size_t end = i + board->piece->config->data_size;
-        for (int j = 0;i < end;i++,j++) {
-            // What type of block are we rendering?
-            uint8_t btype = board->piece->config->datas[i];
-            if (!btype) {
-                continue;
+    for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
+        if (board->pieces[i] != NULL) {
+            const piece_t* piece = board->pieces[i];
+
+            size_t i = piece->rot * piece->config->data_size;
+            size_t end = i + piece->config->data_size;
+            for (int j = 0;i < end;i++,j++) {
+                // What type of block are we rendering?
+                uint8_t btype = piece->config->datas[i];
+                if (!btype) {
+                    continue;
+                }
+                picture_t* bpic = softblock_get(g_block, --btype);
+
+                // What is the actual (x, y) coordinate of the block?
+                int ix = piece->pos.x + (j % piece->config->width);
+                int iy = piece->pos.y + (j / piece->config->width);
+                iy -= board->config.height - board->config.visible_height;
+
+                if (iy < 0) {
+                    // Don't draw a block above the visible height.
+                    continue;
+                }
+
+                // Draw a block.
+                picture_blit(&g_render_ctx.buffer,
+                    vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
+                    bpic, vec2i_zero());
             }
-            picture_t* bpic = softblock_get(g_block, --btype);
-
-            // What is the actual (x, y) coordinate of the block?
-            int ix = board->piece->pos.x + (j % board->piece->config->width);
-            int iy = board->piece->pos.y + (j / board->piece->config->width);
-            iy -= board->config.height - board->config.visible_height;
-
-            if (iy < 0) {
-                // Don't draw a block above the visible height.
-                continue;
-            }
-
-            // Draw a block.
-            picture_blit(&g_render_ctx.buffer,
-                vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
-                bpic, vec2i_zero());
         }
     }
 

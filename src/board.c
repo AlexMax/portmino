@@ -27,7 +27,7 @@
 board_t* board_new(ruleset_t* ruleset, size_t board_id) {
     (void)ruleset; // We might use the ruleset in the future.
 
-    board_t* board = malloc(sizeof(board_t));
+    board_t* board = calloc(1, sizeof(board_t));
     if (board == NULL) {
         return NULL;
     }
@@ -37,16 +37,14 @@ board_t* board_new(ruleset_t* ruleset, size_t board_id) {
     board->config.width = 10;
     board->config.height = 22;
     board->config.visible_height = 20;
+    board->piece_count = 0;
 
     // Based on that configuration, construct the board itself
     size_t size = board->config.width * board->config.height;
     board->data.size = size;
     board->data.data = calloc(size, sizeof(uint8_t));
 
-    // Start with no active piece or ghost allocated.
-    board->piece = NULL;
-    board->ghost = NULL;
-
+    // We have no active pieces, so no need to do anything else here.
     return board;
 }
 
@@ -54,18 +52,60 @@ board_t* board_new(ruleset_t* ruleset, size_t board_id) {
  * Delete a board structure.
  */
 void board_delete(board_t* board) {
-    if (board->ghost != NULL) {
-        piece_delete(board->ghost);
-        board->ghost = NULL;
-    }
-
-    if (board->piece != NULL) {
-        piece_delete(board->piece);
-        board->piece = NULL;
+    for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
+        piece_delete(board->pieces[i]);
+        board->pieces[i] = NULL;
     }
 
     free(board->data.data);
     free(board);
+}
+
+/**
+ * Allocate a piece owned by the board.
+ * 
+ * If a piece exists at that index, deletes it first.
+ */
+piece_t* board_set_piece(board_t* board, size_t index, const piece_config_t* config) {
+    if (index >= MAX_BOARD_PIECES) {
+        // Out of range board piece.
+        return NULL;
+    }
+
+    if (board->pieces[index] != NULL) {
+        // We have a piece here already.  Recreate it.
+        piece_delete(board->pieces[index]);
+    }
+
+    board->pieces[index] = piece_new(config);
+    return board->pieces[index];
+}
+
+/**
+ * Delete a piece owned by the board by index, with no replacement.
+ */
+void board_unset_piece(board_t* board, size_t index) {
+    if (board->pieces[index] != NULL) {
+        piece_delete(board->pieces[index]);
+        board->pieces[index] = NULL;
+    }
+}
+
+/**
+ * Get a piece from the board by index.
+ */
+piece_t* board_get_piece(board_t* board, size_t index) {
+    if (index >= MAX_BOARD_PIECES) {
+        // Out of range board piece.
+        return NULL;
+    }
+
+    if (board->pieces[index] == NULL) {
+        // No piece exists here.
+        return NULL;
+    }
+
+    return board->pieces[index];
 }
 
 /**
