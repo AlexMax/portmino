@@ -25,6 +25,7 @@
 #include "board.h"
 #include "boardscript.h"
 #include "frontend.h"
+#include "nextscript.h"
 #include "piecescript.h"
 #include "randomscript.h"
 #include "ruleset.h"
@@ -140,6 +141,7 @@ ruleset_t* ruleset_new(void) {
         { "mino_piece", piece_openlib },
         { "mino_audio", audio_openlib },
         { "mino_random", randomscript_openlib },
+        { "mino_next", next_openlib },
         { NULL, NULL }
     };
 
@@ -331,7 +333,7 @@ ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
 /**
  * Return a "next" piece by calling into our Lua function to get it
  */
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, board_t* board) {
+const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* next) {
     // Use our reference to grab the next_piece function.
     lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->next_piece_ref);
 
@@ -341,7 +343,7 @@ const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, board_t* board) {
 
     // Pass a 1-indexed board ID to the next piece function, so we know which
     // board we're spawning the piece on.
-    lua_pushinteger(ruleset->lua, board->id + 1);
+    lua_pushinteger(ruleset->lua, next->id + 1);
 
     // Call it, friendo
     if (lua_pcall(ruleset->lua, 1, 1, 0) != LUA_OK) {

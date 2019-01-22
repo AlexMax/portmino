@@ -19,10 +19,9 @@
 
 #include "define.h"
 #include "piece.h"
-#include "ruleset.h"
 
-// Right now we only support a maximum of 8 next pieces.
-#define MAX_NEXTS 8
+// Forward declarations
+typedef struct ruleset_s ruleset_t;
 
 /**
  * Configuration variables for the board.
@@ -42,11 +41,6 @@ typedef struct {
      * Visible height of the board, starting from the bottom.
      */
     int16_t visible_height;
-
-    /**
-     * Visible number of next pieces.
-     */
-    uint8_t visible_nexts;
 } board_config_t;
 
 typedef struct {
@@ -86,18 +80,6 @@ typedef struct board_s {
      * Ghost piece on the board.
      */
     piece_t* ghost;
-
-    /**
-     * Next pieces circular buffer.
-     * 
-     * These pointers are not owned by this structure.  Don't free them.
-     */
-    const piece_config_t* nexts[MAX_NEXTS];
-
-    /**
-     * Current next piece.
-     */
-    uint8_t next_index;
 } board_t;
 
 board_t* board_new(ruleset_t* ruleset, size_t board_id);
@@ -107,5 +89,3 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
                                  vec2i_t src, uint8_t rot, vec2i_t dst);
 void board_lock_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 uint8_t board_clear_lines(board_t* board);
-const piece_config_t* board_get_next_piece(const board_t* board, size_t index);
-void board_consume_next_piece(board_t* board, ruleset_t* ruleset);

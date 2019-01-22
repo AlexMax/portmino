@@ -29,7 +29,7 @@
 #define ROT_2 2
 #define ROT_L 3
 
-typedef struct {
+typedef struct piece_config_s {
     /**
      * Name of the piece.
      */

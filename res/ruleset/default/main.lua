@@ -223,12 +223,14 @@ local state = {
 }
 
 local function board_next_piece(board, tic)
+    local next = mino_next.get(1)
+
     if mino_board.get_piece(board) ~= nil then
         mino_board.delete_piece(board)
     end
 
     -- Find the next piece.
-    local config = mino_board.get_next_config(board)
+    local config = mino_next.get_next_config(next)
 
     -- See if our newly-spawned piece would collide with an existing piece.
     local spawn_pos = mino_piece.config_get_spawn_pos(config)
@@ -251,7 +253,7 @@ local function board_next_piece(board, tic)
     state.board[1].spawn_tic = tic
 
     -- Advance the next index.
-    mino_board.consume_next(board)
+    mino_next.consume_next(next)
 
     return true
 end
@@ -582,7 +584,7 @@ local function state_frame()
 end
 
 -- Bag randomizer
-local function next_piece(board_id)
+local function next_piece(next_id)
     local board = state.board[1]
 
     -- If our bag is empty, fill it back up.

@@ -263,52 +263,6 @@ static int boardscript_clear_lines(lua_State* L) {
     return 1;
 }
 
-/**
- * Lua: Get the next piece config handle for the given board handle
- */
-static int boardscript_get_next_config(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    // Fetch the next piece and return a handle to its config
-    const piece_config_t* config = board_get_next_piece(board, 0);
-    lua_pushlightuserdata(L, (void*)config);
-    return 1;
-}
-
-/**
- * Lua: Consume the next piece of the board, cycling through to the next next
- * piece and possibly generating a new next piece.
- */
-static int boardscript_consume_next(lua_State* L) {
-    lua_pushstring(L, "state");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const state_t* state = lua_touserdata(L, -1);
-    if (state == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_gametic is missing internal state");
-    }
-
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
-
-    board_consume_next_piece(board, state->ruleset);
-    return 0;
-}
-
 int boardscript_openlib(lua_State* L) {
     static const luaL_Reg boardlib[] = {
         { "get", boardscript_get },
@@ -319,8 +273,6 @@ int boardscript_openlib(lua_State* L) {
         { "test_piece_between", boardscript_test_piece_between },
         { "lock_piece", boardscript_lock_piece },
         { "clear_lines", boardscript_clear_lines },
-        { "get_next_config", boardscript_get_next_config },
-        { "consume_next", boardscript_consume_next },
         { NULL, NULL }
     };
 

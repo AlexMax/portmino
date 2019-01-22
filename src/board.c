@@ -19,11 +19,14 @@
 #include <string.h>
 
 #include "board.h"
+#include "ruleset.h"
 
 /**
  * Create a new board structure.
  */
 board_t* board_new(ruleset_t* ruleset, size_t board_id) {
+    (void)ruleset; // We might use the ruleset in the future.
+
     board_t* board = malloc(sizeof(board_t));
     if (board == NULL) {
         return NULL;
@@ -34,7 +37,6 @@ board_t* board_new(ruleset_t* ruleset, size_t board_id) {
     board->config.width = 10;
     board->config.height = 22;
     board->config.visible_height = 20;
-    board->config.visible_nexts = 3;
 
     // Based on that configuration, construct the board itself
     size_t size = board->config.width * board->config.height;
@@ -44,12 +46,6 @@ board_t* board_new(ruleset_t* ruleset, size_t board_id) {
     // Start with no active piece or ghost allocated.
     board->piece = NULL;
     board->ghost = NULL;
-
-    // Initialize the next piece circular buffer.
-    for (size_t i = 0;i < MAX_NEXTS;i++) {
-        board->nexts[i] = ruleset_next_piece(ruleset, board);
-    }
-    board->next_index = 0;
 
     return board;
 }
@@ -254,23 +250,4 @@ uint8_t board_clear_lines(board_t* board) {
     }
 
     return lines;
-}
-
-/**
- * Return the configuration of the next piece
- */
-const piece_config_t* board_get_next_piece(const board_t* board, size_t index) {
-    index = board->next_index + index % MAX_NEXTS;
-    return board->nexts[board->next_index];
-}
-
-/**
- * "Consume" the next piece
- * 
- * Advances the next-piece index, wrapping around if necessary, and generates
- * a new next piece at the end.
- */
-void board_consume_next_piece(board_t* board, ruleset_t* ruleset) {
-    board->nexts[board->next_index] = ruleset_next_piece(ruleset, board);
-    board->next_index = (board->next_index + 1) % MAX_NEXTS;
 }

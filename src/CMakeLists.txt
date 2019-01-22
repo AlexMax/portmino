@@ -30,6 +30,8 @@ set(GAME_SOURCES
     frontend.c      frontend.h
     hmap.c          hmap.h
     game.c          game.h
+    next.c          next.h
+    nextscript.c    nextscript.h
     picture.c       picture.h
     piece.c         piece.h
     piecescript.c   piecescript.h

@@ -20,6 +20,7 @@
 #include "define.h"
 #include "board.h"
 #include "event.h"
+#include "next.h"
 #include "state.h"
 
 // Right now we only support two boards.
@@ -46,6 +47,16 @@ typedef struct state_s {
      * In-use board count.
      */
     size_t board_count;
+
+    /**
+     * Next piece buffers.
+     */
+    next_t** nexts;
+
+    /**
+     * Next piece buffer count.
+     */
+    size_t next_count;
 
     /**
      * In-use player count.

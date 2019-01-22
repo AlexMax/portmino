@@ -38,6 +38,7 @@ state_t* state_new(void) {
     state->background = NULL;
     state->board_count = 1;
     state->player_count = 1;
+    state->next_count = 1;
     state->tic = 0;
 
     state->ruleset = ruleset_new();
@@ -49,6 +50,20 @@ state_t* state_new(void) {
     for (size_t i = 0;i < state->board_count;i++) {
         state->boards[i] = board_new(state->ruleset, i);
         if (state->boards[i] == NULL) {
+            state_delete(state);
+            return NULL;
+        }
+    }
+
+    state->nexts = calloc(state->next_count, sizeof(next_t));
+    if (state->nexts == NULL) {
+        state_delete(state);
+        return NULL;
+    }
+
+    for (size_t i = 0;i < state->next_count;i++) {
+        state->nexts[i] = next_new(state->ruleset, i);
+        if (state->nexts[i] == NULL) {
             state_delete(state);
             return NULL;
         }
@@ -73,6 +88,18 @@ void state_delete(state_t* state) {
             board_delete(state->boards[i]);
             state->boards[i] = NULL;
         }
+    }
+
+    if (state->nexts != NULL) {
+        for (size_t i = 0;i < state->next_count;i++) {
+            if (state->nexts[i] != NULL) {
+                next_delete(state->nexts[i]);
+                state->nexts[i] = NULL;
+            }
+        }
+
+        free(state->nexts);
+        state->nexts = NULL;
     }
 
     if (state->ruleset != NULL) {
