@@ -23,6 +23,9 @@ local ROT_R = 1
 local ROT_2 = 2
 local ROT_L = 3
 
+local BOARD_PIECE = 1
+local BOARD_GHOST = 2
+
 -- Piece definitions
 local j_piece = {
     name = "J",
@@ -225,8 +228,8 @@ local state = {
 local function board_next_piece(board, tic)
     local next = mino_next.get(1)
 
-    if mino_board.get_piece(board, 1) ~= nil then
-        mino_board.unset_piece(board, 1)
+    if mino_board.get_piece(board, BOARD_PIECE) ~= nil then
+        mino_board.unset_piece(board, BOARD_PIECE)
     end
 
     -- Find the next piece.
@@ -242,11 +245,11 @@ local function board_next_piece(board, tic)
         end
 
         -- Piece spawns offset from its usual spot
-        mino_board.set_piece(board, 1, config)
-        local piece = mino_board.get_piece(board, 1)
+        mino_board.set_piece(board, BOARD_PIECE, config)
+        local piece = mino_board.get_piece(board, BOARD_PIECE)
         mino_piece.set_pos(piece, spawn_pos)
     else
-        mino_board.set_piece(board, 1, config)
+        mino_board.set_piece(board, BOARD_PIECE, config)
     end
 
     -- Set the spawn tic.
@@ -264,7 +267,7 @@ local function state_frame()
     local board = mino_board.get(1)
 
     -- Get the next piece if we don't have one at this point.
-    if mino_board.get_piece(board, 1) == nil then
+    if mino_board.get_piece(board, BOARD_PIECE) == nil then
         if not board_next_piece(board, gametic) then
             return STATE_RESULT_GAMEOVER
         end
@@ -272,7 +275,7 @@ local function state_frame()
     end
 
     -- Get our piece
-    local piece = mino_board.get_piece(board, 1)
+    local piece = mino_board.get_piece(board, BOARD_PIECE)
     local piece_pos = mino_piece.get_pos(piece)
     local piece_rot = mino_piece.get_rot(piece)
     local piece_config = mino_piece.get_config(piece)
@@ -304,7 +307,7 @@ local function state_frame()
             state.player[1].lock_tic = 0
 
             -- Get the piece pointer again, because we mutated it.
-            piece = mino_board.get_piece(board, 1)
+            piece = mino_board.get_piece(board, BOARD_PIECE)
             piece_pos = mino_piece.get_pos(piece)
             piece_rot = mino_piece.get_rot(piece)
             piece_config = mino_piece.get_config(piece)
@@ -366,7 +369,7 @@ local function state_frame()
             -- There is no possible other move we can make this tic.  We
             -- delete the piece here, but we don't advance to the next piece
             -- until the next tic, to ensure gravity isn't screwed up.
-            mino_board.unset_piece(board, 1)
+            mino_board.unset_piece(board, BOARD_PIECE)
 
             -- Again, doing a hard drop is mutually exclusive with any other
             -- piece movement this tic.
@@ -563,21 +566,15 @@ local function state_frame()
         end
     end
 
-    -- if board.ghost == nil then
-    --     -- Create a ghost piece.
-    --     board.ghost = piece_new(piece.config)
-    -- elseif board.ghost.config ~= board.piece.config then
-    --     -- Update the ghost piece configuration.
-    --     board.ghost.config = board.piece.config
-    -- end
+    -- Create the ghost piece
+    local ghost = mino_board.set_piece(board, BOARD_GHOST, piece_config)
 
-    -- local ghost_src = board.piece.pos
-    -- local ghost_dst = { board.piece.pos.x, board.config.height }
-    -- local ghost_loc = board_test_piece_between(board, board.ghost.config,
-    --     ghost_src, piece.rot, ghost_dst)
-
-    -- board.ghost.pos = ghost_loc
-    -- board.ghost.rot = piece.rot
+    -- Push the ghost to the bottom of the screen
+    local ghost_dst = { x = piece_pos.x, y = 22 }
+    local ghost_pos = mino_board.test_piece_between(board, piece_config,
+        piece_pos, piece_rot, ghost_dst)
+    mino_piece.set_pos(ghost, ghost_pos)
+    mino_piece.set_rot(ghost, piece_rot)
 
     -- We're done with all processing for this tic.
     return STATE_RESULT_OK
