@@ -20,10 +20,6 @@
 #include "ruleset.h"
 #include "state.h"
 
-#define DEFAULT_DAS 12
-#define DEFAULT_DAS_PERIOD 2
-#define DEFAULT_LOCK_DELAY 30
-
 /**
  * Create our gamestate.
  *
