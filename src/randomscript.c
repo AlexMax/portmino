@@ -43,8 +43,6 @@ static int randomscript_new(lua_State* L) {
     return 1;
 }
 
-#include "script.h"
-
 /**
  * Lua: Get a random number with a maximum value
  */

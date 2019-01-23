@@ -24,6 +24,7 @@
 #include "audioscript.h"
 #include "board.h"
 #include "boardscript.h"
+#include "eventscript.h"
 #include "frontend.h"
 #include "nextscript.h"
 #include "piecescript.h"
@@ -142,6 +143,7 @@ ruleset_t* ruleset_new(void) {
         { "mino_audio", audio_openlib },
         { "mino_random", randomscript_openlib },
         { "mino_next", next_openlib },
+        { "mino_event", eventscript_openlib },
         { NULL, NULL }
     };
 

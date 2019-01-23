@@ -19,16 +19,6 @@ local STATE_RESULT_ERROR = 1
 local STATE_RESULT_GAMEOVER = 2
 local STATE_RESULT_SUCCESS = 3
 
-local EVENT_NONE = 0
-local EVENT_LEFT = 1
-local EVENT_RIGHT = 1 << 1
-local EVENT_SOFTDROP = 1 << 2
-local EVENT_HARDDROP = 1 << 3
-local EVENT_CCW = 1 << 4
-local EVENT_CW = 1 << 5
-local EVENT_HOLD = 1 << 6
-local EVENT_180 = 1 << 7
-
 local DEFAULT_DAS = 12
 local DEFAULT_DAS_PERIOD = 2
 local DEFAULT_LOCK_DELAY = 30
@@ -278,7 +268,6 @@ end
 
 local function state_frame()
     local gametic = mino_ruleset.get_gametic()
-    local events = mino_ruleset.get_player_events(1)
     local board = mino_board.get(1)
 
     -- Get the next piece if we don't have one at this point.
@@ -338,14 +327,14 @@ local function state_frame()
 
     -- Soft dropping and hard dropping aren't anything too special, they
     -- just toy with gravity.
-    if events & EVENT_SOFTDROP ~= 0 then
+    if mino_event.check_softdrop(1) then
         gravity_tics = 2
         gravity_cells = 1
     end
 
     -- If you press soft and hard drop at the same time, hard drop wins.
     -- If you hold hard drop and press soft drop afterwards, soft drop wins.
-    if events & EVENT_HARDDROP ~= 0 then
+    if mino_event.check_harddrop(1) then
         if state.player[1].harddrop_tic == 0 then
             -- We only pay attention to hard drops on the tic they were invoked.
             -- Othewise, you have rapid-fire dropping or even pieces running
@@ -397,14 +386,14 @@ local function state_frame()
     -- Here we track the number of frames we've been holding a particular
     -- direction.  We use this to track DAS and to also ensure that pressing
     -- both directions at once in a staggered way behaves correctly.
-    if events & EVENT_LEFT ~= 0 then
+    if mino_event.check_left(1) then
         if state.player[1].left_tic == 0 then
             state.player[1].left_tic = gametic
         end
     else
         state.player[1].left_tic = 0
     end
-    if events & EVENT_RIGHT ~= 0 then
+    if mino_event.check_right(1) then
         if state.player[1].right_tic == 0 then
             state.player[1].right_tic = gametic
         end
@@ -466,7 +455,7 @@ local function state_frame()
 
     -- Handle rotation.
     local drot = 0
-    if events & EVENT_CCW ~= 0 then
+    if mino_event.check_ccw(1) then
         if state.player[1].ccw_already == false then
             -- Only rotate if this is the first tic of the event
             drot = drot - 1
@@ -475,7 +464,7 @@ local function state_frame()
     else
         state.player[1].ccw_already = false
     end
-    if events & EVENT_CW ~= 0 then
+    if mino_event.check_cw(1) then
         if state.player[1].cw_already == false then
             -- Only rotate if this is the first tic of the event
             drot = drot + 1
@@ -484,7 +473,8 @@ local function state_frame()
     else
         state.player[1].cw_already = false
     end
-    if events & EVENT_180 ~= 0 then
+    if mino_event.check_180(1) then
+        -- FIXME: This doesn't have debouncing yet
         drot = drot - 2
     end
 
