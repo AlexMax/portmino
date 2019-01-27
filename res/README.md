@@ -1,6 +1,10 @@
-`back.png` is licensed under Creative Commons CC0.  [Source](https://pixabay.com/en/space-deep-space-galaxy-nebula-2638126/)
+`back.png` is licensed under Creative Commons CC0.
+  [Source](https://pixabay.com/en/space-deep-space-galaxy-nebula-2638126/)
 
-The rest of the images in this directory are from Nullpomino.
+`font.png` is a work derived from Unscii, which is in the Public Domain, and
+Nullpomino.  [Source](http://pelulamu.net/unscii/)
+
+The rest of the images and sound effects in this directory are from Nullpomino.
 
 ```
 Copyright (c) 2010, NullNoname
