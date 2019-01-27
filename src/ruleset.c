@@ -26,6 +26,7 @@
 #include "boardscript.h"
 #include "eventscript.h"
 #include "frontend.h"
+#include "globalscript.h"
 #include "nextscript.h"
 #include "piecescript.h"
 #include "randomscript.h"
@@ -136,7 +137,7 @@ ruleset_t* ruleset_new(void) {
     }
 
     static const luaL_Reg loadedlibs[] = {
-        { "_G", luaopen_base },
+        { "_G", globalscript_openlib },
         { "mino_ruleset", ruleset_openlib },
         { "mino_board", boardscript_openlib },
         { "mino_piece", piece_openlib },

@@ -29,6 +29,7 @@ set(GAME_SOURCES
                     event.h
     eventscript.c   eventscript.h
     frontend.c      frontend.h
+    globalscript.c  globalscript.h
     hmap.c          hmap.h
     game.c          game.h
     next.c          next.h
