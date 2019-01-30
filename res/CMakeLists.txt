@@ -5,6 +5,7 @@ set(RESOURCE_SOURCES
     interface/default/board.png
     interface/default/font.png
     ruleset/default/main.lua
+    ruleset/default/pieces.lua
     sfx/default/gameover.wav
     sfx/default/lock.wav
     sfx/default/move.wav

@@ -20,8 +20,12 @@
  * and changes based on the needs of the program.
  */
 
+#include <stdlib.h>
+
 #include "lua.h"
 #include "lauxlib.h"
+
+#include "vfs.h"
 
 /**
  * ipairs traversal function
@@ -111,6 +115,98 @@ static int globalscript_print(lua_State *L) {
 }
 
 /**
+ * "require" error checking function.
+ */
+static int globalscript_require_error(lua_State *L, const char *filename) {
+    return luaL_error(L, "error loading module '%s' from file '%s':\n\t%s",
+                      lua_tostring(L, 1), filename, lua_tostring(L, -1));
+}
+
+#include "script.h"
+
+/**
+ * Lua: "require" function.
+ * 
+ * This is actually a super-stripped down version of "require" that is missing
+ * many features.  It is aware of the current environment, and package.loaded
+ * contains the module itself as opposed to simply being a reference to it.
+ */
+static int globalscript_require(lua_State* L) {
+    // Parameter 1: Name of the package.
+    const char* name = luaL_checkstring(L, 1);
+
+    // Get the current environment
+    int type = lua_getfield(L, LUA_REGISTRYINDEX, "env");
+    if (type != LUA_TTABLE) {
+        luaL_argerror(L, 1, "require is missing internal state");
+        return 0;
+    }
+
+    // Check for the existence of module in package.loaded.
+    type = lua_getfield(L, -1 , "package");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "can't find \"package\" table");
+        return 0;
+    }
+    type = lua_getfield(L, -1, "loaded");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "can't find \"loaded\" table in \"package\" table");
+        return 0;
+    }
+    lua_getfield(L, -1, name);
+    if (lua_toboolean(L, -1)) {
+        // We found it, so return it!
+        return 1;
+    }
+    lua_pop(L, 1); // pop the nil
+
+    // Construct a filename to load from the virtual filesystem.
+    // NOTE: This path construction is safe - PhysFS has no concept of ".."
+    //       and symbolic links will not be traversed without our approval.
+    char* filename;
+    int bytes = asprintf(&filename, "ruleset/default/%s.lua", name);
+    if (bytes < 0) {
+        luaL_error(L, "allocation error inside require");
+        return 0;
+    }
+
+    // Try and load the Lua file.
+    buffer_t* file = vfs_file(filename);
+    free(filename);
+    if (file == NULL) {
+        lua_pushstring(L, "file not found");
+        // never returns
+        globalscript_require_error(L, filename);
+        return 0;
+    }
+
+    // Turn the buffer into a runnable chunk.
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, name, "t") != LUA_OK) {
+        buffer_delete(file);
+        // never returns
+        globalscript_require_error(L, filename);
+        return 0;
+    }
+    buffer_delete(file);
+
+    // Call it.  Result is on the stack.  Errors are propagated back through Lua.
+    lua_call(L, 0, 1);
+
+    // Save our result to the loaded array.
+    if (!lua_isnil(L, -1)) {
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, name); // pop dupe return value
+    } else {
+        lua_pop(L, 1); // discard nil result
+        lua_pushboolean(L, 1); // our return value is "true" instead
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, name); // pop dupe return value
+    }
+
+    return 1;
+}
+
+/**
  * Lua: "tostring" function.
  */
 static int globalscript_tostring(lua_State *L) {
@@ -128,6 +224,7 @@ int globalscript_openlib(lua_State* L) {
         { "next", globalscript_next },
         { "pairs", globalscript_pairs },
         { "print", globalscript_print },
+        { "require", globalscript_require },
         { "tostring", globalscript_tostring },
         { NULL, NULL }
     };

@@ -155,13 +155,55 @@ ruleset_t* ruleset_new(void) {
     }
 
     // Load our file into the newly-created Lua state.
-    if (luaL_loadbuffer(L, (char*)file->data, file->size, "main") != LUA_OK) {
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, "main", "t") != LUA_OK) {
         buffer_delete(file);
         lua_close(L);
         frontend_fatalerror("Could not load ruleset %s", "default");
         return NULL;
     }
     buffer_delete(file);
+
+    // Create a restricted ruleset environment and push a ref to it into
+    // the registry.
+    lua_createtable(L, 0, 0);
+    lua_pushvalue(L, -1);
+    int env_ref = luaL_ref(L, LUA_REGISTRYINDEX); // pop env table dupe
+    if (env_ref == LUA_REFNIL) {
+        lua_close(L);
+        frontend_fatalerror("Can't get a reference for \"env_ref\"");
+        return NULL;
+    }
+
+    // Set up links to the proper modules and globals.
+    const char* modules[] = {
+        "mino_ruleset", "mino_board", "mino_piece", "mino_audio", "mino_random",
+        "mino_next", "mino_event"
+    };
+    lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
+    for (size_t i = 0;i < sizeof(modules) / sizeof(modules[0]);i++) {
+        lua_getfield(L, -1, modules[i]);
+        lua_setfield(L, -3, modules[i]);
+    }
+    lua_pop(L, 1);
+
+    const char* globals[] = {
+        "ipairs", "next", "pairs", "print", "require", "tostring", "_VERSION"
+    };
+    for (size_t i = 0;i < sizeof(globals) / sizeof(globals[0]);i++) {
+        lua_getglobal(L, globals[i]);
+        lua_setfield(L, -2, globals[i]);
+    }
+
+    // Setup the global "package.loaded" table we use for packages.
+    lua_createtable(L, 0, 1); // package table
+    lua_createtable(L, 0, 0); // loaded table
+    lua_setfield(L, -2, "loaded"); // pops loaded table
+    lua_setfield(L, -2, "package"); // pops package table
+
+    // Set our environment context, both in the registry and as our _ENV.
+    lua_pushvalue(L, -1);
+    lua_setfield(L, LUA_REGISTRYINDEX, "env"); // pop env copy
+    lua_setupvalue(L, -2, 1); // pop env
 
     // We now have the ruleset on the top of the stack.  Call it!
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
@@ -283,6 +325,7 @@ ruleset_t* ruleset_new(void) {
     ruleset->state_ref = state_ref;
     ruleset->pieces = piece_configs;
     ruleset->next_piece_ref = next_piece_ref;
+    ruleset->env_ref = env_ref;
 
     return ruleset;
 }
@@ -306,20 +349,23 @@ void ruleset_delete(ruleset_t* ruleset) {
 
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
                                const playerevents_t* playerevents) {
-    // Push our state and playerevents into the registry so we can get at
-    // them from C functions called from inside Lua.
-    lua_pushstring(ruleset->lua, "state");
+    // Push our context into the registry so we can get at them from C
+    // functions called from inside Lua.
+    lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
+    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "env");
     lua_pushlightuserdata(ruleset->lua, state);
-    lua_settable(ruleset->lua, LUA_REGISTRYINDEX);
-    lua_pushstring(ruleset->lua, "playerevents");
+    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "state");
     lua_pushlightuserdata(ruleset->lua, (void*)playerevents);
-    lua_settable(ruleset->lua, LUA_REGISTRYINDEX);
+    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "playerevents");
 
-    // Use our reference to grab the state_frame function.
+    // Use our references to grab the state_frame function and its environment
     lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_frame_ref);
+    lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
 
-    // We expect the top of the stack to contain a function that contains
-    // our state_frame function.
+    // Setup the environment
+    lua_setupvalue(ruleset->lua, -2, 1);
+
+    // Run the state_frame function.
     if (lua_pcall(ruleset->lua, 0, 1, 0) != LUA_OK) {
         const char* err = lua_tostring(ruleset->lua, -1);
         frontend_fatalerror("lua error: %s", err);

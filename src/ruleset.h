@@ -39,6 +39,11 @@ typedef struct ruleset_s {
     lua_State* lua;
 
     /**
+     * Reference to environment.
+     */
+    int env_ref;
+
+    /**
      * Reference to state_frame function inside Lua.
      */
     int state_frame_ref;

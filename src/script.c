@@ -93,12 +93,24 @@ void script_debug_stack(lua_State* L) {
  * Dump the contents of a table at a specific index
  */
 void script_debug_table(lua_State* L, int index) {
+    if (lua_type(L, index) != LUA_TTABLE) {
+        fputs("not a table\n", stderr);
+        return;
+    }
+
+    bool empty = true;
     lua_pushnil(L);
-    while (lua_next(L, index - 1) != 0) {
+    while (lua_next(L, index) != 0) {
+        empty = false;
         script_debug(L, -2); // key
         fputs(", ", stderr);
         script_debug(L, -1); // value
         fputs("\n", stderr);
         lua_pop(L, 1); // keep the key around
+    }
+
+    if (empty == true) {
+        fputs("empty table\n", stderr);
+        return;
     }
 }
