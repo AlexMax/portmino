@@ -122,8 +122,6 @@ static int globalscript_require_error(lua_State *L, const char *filename) {
                       lua_tostring(L, 1), filename, lua_tostring(L, -1));
 }
 
-#include "script.h"
-
 /**
  * Lua: "require" function.
  * 
