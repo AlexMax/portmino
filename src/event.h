@@ -93,3 +93,29 @@ typedef struct {
     playerevents_t interface;
     playerevents_t menu;
 } gameevents_t;
+
+/**
+ * Keeps track of how long a key (event) has been held.
+ */
+typedef struct {
+    struct iholds_s {
+        events_t last;
+    } interface;
+    struct mholds_s {
+        events_t last;
+    } menu;
+} holds_t;
+
+/**
+ * Complete set of all subsystem holds.
+ * 
+ * We don't need to keep track of held tics for the game, as it's up to the
+ * game itself how it wants to handle DAS.
+ */
+typedef struct {
+    holds_t holds[MINO_MAX_PLAYERS];
+} gameholds_t;
+
+void event_holds_reset(gameholds_t* holds);
+playerevents_t event_interface_filter(gameholds_t* holds, const gameevents_t* events);
+playerevents_t event_menu_filter(gameholds_t* holds, const gameevents_t* events);

@@ -26,12 +26,13 @@ set(GAME_SOURCES
     board.c         board.h
     boardscript.c   boardscript.h
     define.c        define.h
-                    event.h
+    event.c         event.h
     eventscript.c   eventscript.h
     frontend.c      frontend.h
     globalscript.c  globalscript.h
     hmap.c          hmap.h
     game.c          game.h
+    mainmenu.c      mainmenu.h
     next.c          next.h
     nextscript.c    nextscript.h
     picture.c       picture.h

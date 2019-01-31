@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "mainmenu.h"
 #include "state.h"
 #include "vfs.h"
 
@@ -45,6 +46,11 @@ typedef struct {
      * This function is run when the renderer is destroyed.
      */
     void (*deinit)(void);
+
+    /**
+     * This function at the main menu to actually do the drawing.
+     */
+    void* (*draw_mainmenu)(const mainmenu_t* menu);
 
     /**
      * This function is run once pre frame to actually do the drawing.
