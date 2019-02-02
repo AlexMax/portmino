@@ -15,14 +15,14 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "softrender.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "mainmenu.h"
 #include "render.h"
 #include "softblock.h"
 #include "softfont.h"
-#include "softrender.h"
 #include "vfs.h"
 
 // Interface constants
@@ -93,34 +93,30 @@ static void softrender_deinit(void) {
 }
 
 /**
- * Draw the main menu using the software renderer.
+ * Return the rendering context
  */
-static void* softrender_draw_mainmenu(const mainmenu_t* menu) {
-    void* context = &g_render_ctx;
-
-    // Clear the background
-    memset(g_render_ctx.buffer.data, 0x00, g_render_ctx.buffer.size);
-
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(100, 50), "Portmino v0.1");
-
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(100, 100), "Play");
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(100, 110), "Records");
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(100, 120), "Ruleset");
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(100, 130), "Options");
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(100, 140), "Quit");
-
-    int y = 100 + (10 * menu->selected);
-    softfont_render(g_font, &g_render_ctx.buffer, vec2i(92, y), ">");
-
-    return context;
+static void* softrender_context(void) {
+    return &g_render_ctx;
 }
 
 /**
- * Draw the game using the software renderer.
+ * Clear the buffer
  */
-static void* softrender_draw_state(const state_t* state) {
-    void* context = &g_render_ctx;
+static void softrender_clear(void) {
+    memset(g_render_ctx.buffer.data, 0x00, g_render_ctx.buffer.size);
+}
 
+/**
+ * Draw text using the software renderer
+ */
+static void softrender_draw_font(vec2i_t pos, const char* text) {
+    softfont_render(g_font, &g_render_ctx.buffer, pos, text);
+}
+
+/**
+ * Draw the game using the software renderer
+ */
+static void softrender_draw_state(const state_t* state) {
     // Draw the background.
     picture_copy(&g_render_ctx.buffer, vec2i_zero(), g_back, vec2i_zero());
     picture_blit(&g_render_ctx.buffer, vec2i(BOARD_X, BOARD_Y), g_board, vec2i_zero());
@@ -213,14 +209,14 @@ static void* softrender_draw_state(const state_t* state) {
                 bpic, vec2i_zero());
         }
     }
-
-    return context;
 }
 
 render_module_t soft_render_module = {
     RENDERER_SOFTWARE,
     softrender_init,
     softrender_deinit,
-    softrender_draw_mainmenu,
+    softrender_context,
+    softrender_clear,
+    softrender_draw_font,
     softrender_draw_state
 };

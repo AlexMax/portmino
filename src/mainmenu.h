@@ -19,25 +19,18 @@
 
 #include "define.h"
 
-#include "event.h"
+#include "screen.h"
 
-typedef enum {
-    MAINMENU_RESULT_NONE,
-    MAINMENU_RESULT_PLAY,
-    MAINMENU_RESULT_RECORDS,
-    MAINMENU_RESULT_RULESET,
-    MAINMENU_RESULT_OPTIONS,
-    MAINMENU_RESULT_QUIT,
-} mainmenu_result_t;
-
-typedef struct {
+typedef struct mainmenu_s {
     /**
      * Currently selected option.
      */
     uint8_t selected;
+
+    /**
+     * Held keys.
+     */
+    gameholds_t holds;
 } mainmenu_t;
 
-mainmenu_t* mainmenu_new(void);
-void mainmenu_delete(mainmenu_t* menu);
-mainmenu_result_t mainmenu_frame(mainmenu_t* menu, const playerevents_t* events);
-void mainmenu_render(mainmenu_t* menu);
+screen_t mainmenu_new(void);

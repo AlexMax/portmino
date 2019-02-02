@@ -43,6 +43,7 @@ set(GAME_SOURCES
     randomscript.c  randomscript.h
     render.c        render.h
     ruleset.c       ruleset.h
+    screen.c        screen.h
     script.c        script.h
     softblock.c     softblock.h
     softfont.c      softfont.h

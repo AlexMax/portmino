@@ -17,7 +17,8 @@
 
 #pragma once
 
-#include "mainmenu.h"
+#include "define.h"
+
 #include "state.h"
 #include "vfs.h"
 
@@ -48,14 +49,24 @@ typedef struct {
     void (*deinit)(void);
 
     /**
-     * This function at the main menu to actually do the drawing.
+     * This function is used to return the rendering context.
      */
-    void* (*draw_mainmenu)(const mainmenu_t* menu);
+    void* (*context)(void);
+
+    /**
+     * Clear everything from the screen.
+     */
+    void (*clear)(void);
+
+    /**
+     * This function draws text on the screen..
+     */
+    void (*draw_font)(vec2i_t pos, const char* text);
 
     /**
      * This function is run once pre frame to actually do the drawing.
      */
-    void* (*draw_state)(const state_t* state);
+    void (*draw_state)(const state_t* state);
 } render_module_t;
 
 render_module_t* render_init(void);
