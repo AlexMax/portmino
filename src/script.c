@@ -15,9 +15,11 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "script.h"
+
 #include <stdio.h>
 
-#include "script.h"
+#include "lua.h"
 
 /**
  * Turn the table at the given stack index into a vector.

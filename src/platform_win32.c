@@ -15,12 +15,12 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "platform.h"
+
 #include <Windows.h>
 #include <Wincrypt.h>
 
 #include "physfs.h"
-
-#include "platform.h"
 
 static HCRYPTPROV g_crypt_provider;
 

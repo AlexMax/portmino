@@ -15,9 +15,18 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "softblock.h"
+
 #include <stdlib.h>
 
-#include "softblock.h"
+#include "picture.h"
+
+typedef struct softblock_s {
+    picture_t** blocks;
+    size_t count;
+    size_t block_width;
+    size_t block_height;
+} softblock_t;
 
 /**
  * Allocate a block atlas from a filename.

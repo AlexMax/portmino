@@ -19,7 +19,8 @@
 
 #include "define.h"
 
-#include "lua.h"
+// Forward declarations.
+typedef struct lua_State lua_State;
 
 bool script_to_vector(lua_State* L, int index, vec2i_t* vec);
 void script_push_vector(lua_State* L, const vec2i_t* vec);

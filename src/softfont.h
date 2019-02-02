@@ -19,11 +19,8 @@
 
 #include "picture.h"
 
-#define MAX_GLYPHS 128
-
-typedef struct {
-    picture_t* glyphs[MAX_GLYPHS];
-} softfont_t;
+// Forward declarations.
+typedef struct softfont_s softfont_t;
 
 softfont_t* softfont_new(const char* path);
 void softfont_delete(softfont_t* font);

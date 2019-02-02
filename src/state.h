@@ -18,15 +18,16 @@
 #pragma once
 
 #include "define.h"
-#include "board.h"
-#include "event.h"
-#include "next.h"
-#include "state.h"
+
+// Forward declarations.
+typedef struct board_s board_t;
+typedef struct next_s next_t;
+typedef struct playerevents_s playerevents_t;
+typedef struct ruleset_s ruleset_t;
 
 // Right now we only support two boards.
 #define MAX_BOARDS 2
 
-typedef struct ruleset_s ruleset_t;
 typedef struct state_s {
     /**
      * Current gametic.

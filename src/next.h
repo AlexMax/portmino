@@ -26,7 +26,7 @@ typedef struct ruleset_s ruleset_t;
 // Right now we only support a maximum of 8 next pieces.
 #define MAX_NEXTS 8
 
-typedef struct {
+typedef struct next_s {
     /**
      * Id of the next buffer.
      */

@@ -15,9 +15,15 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "softfont.h"
+
 #include <stdlib.h>
 
-#include "softfont.h"
+#define MAX_GLYPHS 128
+
+typedef struct softfont_s {
+    picture_t* glyphs[MAX_GLYPHS];
+} softfont_t;
 
 /**
  * Allocate a software font from a filename.

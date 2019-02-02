@@ -77,7 +77,7 @@ typedef enum {
 /**
  * A set of events for all players.
  */
-typedef struct {
+typedef struct playerevents_s {
     events_t events[MINO_MAX_PLAYERS];
 } playerevents_t;
 
@@ -88,7 +88,7 @@ typedef struct {
  * for all subsystems at once, and the core of portmino decides which sets
  * of events are relevent where.
  */
-typedef struct {
+typedef struct gameevents_s {
     playerevents_t game;
     playerevents_t interface;
     playerevents_t menu;

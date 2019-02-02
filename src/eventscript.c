@@ -17,11 +17,9 @@
 
 #include <string.h>
 
-#include "lua.h"
 #include "lauxlib.h"
 
 #include "event.h"
-#include "eventscript.h"
 
 typedef struct {
     playerevents_t* playerevents;

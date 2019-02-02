@@ -19,12 +19,8 @@
 
 #include "picture.h"
 
-typedef struct {
-    picture_t** blocks;
-    size_t count;
-    size_t block_width;
-    size_t block_height;
-} softblock_t;
+// Forward declarations
+typedef struct softblock_s softblock_t;
 
 softblock_t* softblock_new(const char* path);
 void softblock_delete(softblock_t* block);

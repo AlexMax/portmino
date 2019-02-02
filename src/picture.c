@@ -15,12 +15,15 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
+#include "picture.h"
+
+#include <stdlib.h>
+#include <string.h>
+
 #include "stb_image.h"
 
 #include "frontend.h"
-#include "picture.h"
+#include "vfs.h"
 
 /**
  * Size of a pixel of the native picture format, in bits.

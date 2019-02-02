@@ -15,10 +15,11 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "render.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "render.h"
 #include "softrender.h"
 
 /**

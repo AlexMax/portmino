@@ -17,6 +17,7 @@
 
 #pragma once
 
-#include "lua.h"
+// Forward declarations.
+typedef struct lua_State lua_State;
 
 int audio_openlib(lua_State* L);

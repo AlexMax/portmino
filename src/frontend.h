@@ -15,14 +15,14 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdarg.h>
-
 #include "define.h"
+
+#include <stdarg.h>
 
 /**
  * Contains functionality that is specific to a frontend (libretro, SDL).
  */
-typedef struct {
+typedef struct frontend_module_s {
     /**
      * Call this when an unrecoverable error has occurred.
      */

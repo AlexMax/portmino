@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include "lua.h"
-
 #include "define.h"
+
+// Forward declarations.
+typedef struct lua_State lua_State;
 
 // Right now we only support seven piece configurations.
 #define MAX_PIECES 7
@@ -73,12 +74,12 @@ typedef struct piece_config_s {
     uint8_t spawn_rot;
 } piece_config_t;
 
-typedef struct {
+typedef struct piece_configs_s {
     piece_config_t** configs;
     size_t size;
 } piece_configs_t;
 
-typedef struct {
+typedef struct piece_s {
     /**
      * Current position of the piece, origin is at the top-left.  Can be off
      * the side of the board.

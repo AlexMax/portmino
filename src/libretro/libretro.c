@@ -15,15 +15,17 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "libretro.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "audio.h"
+#include "event.h"
 #include "frontend.h"
 #include "game.h"
-#include "libretro.h"
 #include "platform.h"
 #include "softrender.h"
 

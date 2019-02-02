@@ -19,8 +19,8 @@
 
 #include "define.h"
 
-#include "state.h"
-#include "vfs.h"
+// Forward declarations
+typedef struct state_s state_t;
 
 /*
  * Here we define the width and height of the smallest unit of addressable

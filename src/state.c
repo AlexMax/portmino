@@ -15,10 +15,12 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "state.h"
+
 #include <stdlib.h>
 
+#include "board.h"
 #include "ruleset.h"
-#include "state.h"
 
 /**
  * Create our gamestate.

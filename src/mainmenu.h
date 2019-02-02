@@ -21,16 +21,4 @@
 
 #include "screen.h"
 
-typedef struct mainmenu_s {
-    /**
-     * Currently selected option.
-     */
-    uint8_t selected;
-
-    /**
-     * Held keys.
-     */
-    gameholds_t holds;
-} mainmenu_t;
-
 screen_t mainmenu_new(void);

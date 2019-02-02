@@ -15,13 +15,14 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
+#include "audio.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "audio.h"
 #include "frontend.h"
+#include "sound.h"
 
 #define MIXER_CHANNELS 8
 

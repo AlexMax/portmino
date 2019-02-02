@@ -15,9 +15,9 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
-
 #include "frontend.h"
+
+#include <string.h>
 
 frontend_module_t g_frontend_module;
 

@@ -18,9 +18,10 @@
 #pragma once
 
 #include "define.h"
-#include "piece.h"
 
 // Forward declarations.
+typedef struct piece_s piece_t;
+typedef struct piece_config_s piece_config_t;
 typedef struct ruleset_s ruleset_t;
 
 // Maximum number of pieces per board.

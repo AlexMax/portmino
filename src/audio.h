@@ -18,9 +18,11 @@
 #pragma once
 
 #include "define.h"
-#include "sound.h"
 
-typedef struct {
+// Forward declarations
+typedef struct sound_s sound_t;
+
+typedef struct audio_context_s {
     /**
      * A pointer to the data to send to the audio subsystem.
      */

@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "lua.h"
-
-#include "event.h"
+// Forward declarations.
+typedef struct lua_State lua_State;
+typedef struct playerevents_s playerevents_t;
 
 void eventscript_push_playerevents(lua_State* L, const playerevents_t* playerevents);
 int eventscript_openlib(lua_State* L);

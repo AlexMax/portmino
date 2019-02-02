@@ -30,6 +30,18 @@ typedef enum {
     MAINMENU_RESULT_QUIT,
 } mainmenu_result_t;
 
+typedef struct mainmenu_s {
+    /**
+     * Currently selected option.
+     */
+    uint8_t selected;
+
+    /**
+     * Held keys.
+     */
+    gameholds_t holds;
+} mainmenu_t;
+
 /**
  * Process events on the main menu
  */

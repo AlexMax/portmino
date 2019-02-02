@@ -15,9 +15,9 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-
 #include "define.h"
+
+#include <stdlib.h>
 
 void buffer_delete(buffer_t* buf) {
     if (buf->data != NULL) {

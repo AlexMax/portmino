@@ -20,9 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "board.h"
+#include "next.h"
+#include "piece.h"
 #include "render.h"
 #include "softblock.h"
 #include "softfont.h"
+#include "state.h"
 #include "vfs.h"
 
 // Interface constants

@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 
-#include "lua.h"
 #include "lauxlib.h"
 
 #include "vfs.h"

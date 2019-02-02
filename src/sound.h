@@ -19,7 +19,7 @@
 
 #include "define.h"
 
-typedef struct {
+typedef struct sound_s {
     /**
      * Filename of the sound.
      */

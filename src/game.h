@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "event.h"
+typedef struct gameevents_s gameevents_t;
 
 void game_init(void);
 void game_deinit(void);

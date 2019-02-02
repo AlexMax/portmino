@@ -15,13 +15,16 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#include "define.h"
+#include "sound.h"
 
-#define DR_WAV_IMPLEMENTATION
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "dr_wav.h"
 
 #include "frontend.h"
-#include "sound.h"
 #include "vfs.h"
 
 /**

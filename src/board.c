@@ -15,10 +15,12 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "board.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "board.h"
+#include "piece.h"
 #include "ruleset.h"
 
 /**

@@ -24,7 +24,6 @@
 #include "mainmenu.h"
 #include "render.h"
 #include "screen.h"
-#include "state.h"
 #include "vfs.h"
 
 /**

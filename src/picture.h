@@ -18,7 +18,6 @@
 #pragma once
 
 #include "define.h"
-#include "vfs.h"
 
 typedef struct {
     /**

@@ -15,11 +15,12 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "platform.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "platform.h"
 #include "vfs.h"
 
 /**
