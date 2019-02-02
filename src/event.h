@@ -116,6 +116,6 @@ typedef struct {
     holds_t holds[MINO_MAX_PLAYERS];
 } gameholds_t;
 
-void event_holds_reset(gameholds_t* holds);
+void event_holds_init(gameholds_t* holds);
 playerevents_t event_interface_filter(gameholds_t* holds, const gameevents_t* events);
 playerevents_t event_menu_filter(gameholds_t* holds, const gameevents_t* events);

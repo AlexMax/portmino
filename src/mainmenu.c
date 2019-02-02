@@ -94,7 +94,7 @@ static void mainmenu_render(screen_t* screen, render_module_t* render) {
  * Free main menu screen
  */
 static void mainmenu_delete(screen_t* screen) {
-    if (screen->screen.menu) {
+    if (screen->screen.menu != NULL) {
         free(screen->screen.menu);
         screen->screen.menu = NULL;
     }
@@ -119,6 +119,8 @@ screen_t mainmenu_new(void) {
     if (menu == NULL) {
         return screen;
     }
+    menu->selected = 0;
+    event_holds_init(&menu->holds);
 
     screen.config = mainmenu_screen;
     screen.screen.menu = menu;

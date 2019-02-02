@@ -20,10 +20,13 @@
 #include <string.h>
 
 /**
- * Reset the hold struct.
+ * Init the hold struct
+ * 
+ * We initialize everything to being set, because we don't want to count
+ * any keys held before initialization as being set.
  */
-void event_holds_reset(gameholds_t* holds) {
-    memset(holds, 0, sizeof(*holds));
+void event_holds_init(gameholds_t* holds) {
+    memset(holds, 0xFF, sizeof(*holds));
 }
 
 /**

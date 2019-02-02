@@ -32,7 +32,6 @@
  */
 typedef struct {
     screens_t screens;
-    gameholds_t holds;
     render_module_t* render;
 } game_t;
 
@@ -46,9 +45,6 @@ void game_init(void) {
     vfs_init();
     g_game.render = render_init();
     audio_init();
-
-    // Reset holds.
-    event_holds_reset(&g_game.holds);
 
     // We start at the main menu using the default ruleset.
     screens_init(&g_game.screens);

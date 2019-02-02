@@ -21,6 +21,17 @@
 #include <string.h>
 
 /**
+ * Get the top screen
+ */
+static screen_t* screens_top(screens_t* screens) {
+    if (screens->screen_count == 0) {
+        return NULL;
+    }
+
+    return &screens->screens[screens->screen_count - 1];
+}
+
+/**
  * Initialize a screens struct inplace
  */
 void screens_init(screens_t* screens) {
@@ -31,10 +42,9 @@ void screens_init(screens_t* screens) {
  * Deinitialize a screens struct and all screens contained inside
  */
 void screens_deinit(screens_t* screens) {
-    for (size_t i = screens->screen_count;i-- > 0;) {
+    while (screens_top(screens) != NULL) {
         screens_pop(screens);
     }
-    memset(screens, 0, sizeof(*screens));
 }
 
 /**
@@ -48,6 +58,7 @@ bool screens_push(screens_t* screens, screen_t screen) {
 
     if (screens->screen_count >= MAX_SCREENS) {
         // We can't push another screen.
+        screen.config.destruct(&screen);
         return false;
     }
 
@@ -56,17 +67,6 @@ bool screens_push(screens_t* screens, screen_t screen) {
     screens->screen_count += 1;
 
     return true;
-}
-
-/**
- * Get the top screen
- */
-static screen_t* screens_top(screens_t* screens) {
-    if (screens->screen_count == 0) {
-        return NULL;
-    }
-
-    return &screens->screens[screens->screen_count - 1];
 }
 
 /**
@@ -82,6 +82,7 @@ bool screens_pop(screens_t* screens) {
     // Delete the screen context.
     screen->config.destruct(screen);
     screen->config.type = SCREEN_NONE;
+    screens->screen_count -= 1;
 
     // We've popped a screen.
     return true;
