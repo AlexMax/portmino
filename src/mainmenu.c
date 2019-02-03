@@ -21,6 +21,7 @@
 
 #include "event.h"
 #include "render.h"
+#include "rulesetmenu.h"
 
 typedef enum {
     MAINMENU_RESULT_PLAY = 1,
@@ -68,11 +69,11 @@ static int mainmenu_frame(screen_t* screen, const gameevents_t* events) {
 static void mainmenu_navigate(screens_t* screens, int result) {
     switch ((mainmenu_result_t)result) {
     case MAINMENU_RESULT_PLAY:
-        screens_push(screens, mainmenu_new());
         break;
     case MAINMENU_RESULT_RECORDS:
         break;
     case MAINMENU_RESULT_RULESET:
+        screens_push(screens, rulesetmenu_new());
         break;
     case MAINMENU_RESULT_OPTIONS:
         break;
