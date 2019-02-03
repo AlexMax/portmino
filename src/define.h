@@ -61,7 +61,7 @@
 #endif
 
 /**
- * Vector type.
+ * Vector type of two integers
  */
 typedef struct {
     int x;

@@ -109,7 +109,8 @@ static pageinfo_t paginator(size_t pagesize, size_t index, size_t total) {
 static void rulesetmenu_render(screen_t* screen, render_module_t* render) {
     rulesetmenu_t* menu = screen->screen.rulesetmenu;
 
-    render->clear();
+    render->draw_mainmenu_bg();
+
     render->draw_font(vec2i(100, 4), "Rulesets");
 
     // Paginate our ruleset.

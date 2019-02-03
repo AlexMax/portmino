@@ -89,7 +89,7 @@ static void mainmenu_navigate(screens_t* screens, int result) {
 static void mainmenu_render(screen_t* screen, render_module_t* render) {
     mainmenu_t* menu = screen->screen.menu;
 
-    render->clear();
+    render->draw_mainmenu_bg();
 
     render->draw_font(vec2i(100, 50), "Portmino v0.1");
 

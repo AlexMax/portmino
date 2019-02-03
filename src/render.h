@@ -59,7 +59,12 @@ typedef struct {
     void (*clear)(void);
 
     /**
-     * This function draws text on the screen..
+     * Draw the main menu background image.
+     */
+    void(*draw_mainmenu_bg)(void);
+
+    /**
+     * This function draws text on the screen.
      */
     void (*draw_font)(vec2i_t pos, const char* text);
 
