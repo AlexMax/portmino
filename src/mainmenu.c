@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 
+#include "audio.h"
 #include "event.h"
 #include "render.h"
 #include "rulesetmenu.h"
@@ -52,9 +53,11 @@ static int mainmenu_frame(screen_t* screen, const gameevents_t* events) {
 
     if (mevents.events[0] & MEVENT_UP) {
         menu->selected = (menu->selected + 4) % 5;
+        audio_playsound(g_sound_cursor);
     }
     if (mevents.events[0] & MEVENT_DOWN) {
         menu->selected = (menu->selected + 1) % 5;
+        audio_playsound(g_sound_cursor);
     }
     if (mevents.events[0] & MEVENT_OK) {
         return menu->selected + 1;
@@ -74,6 +77,7 @@ static void mainmenu_navigate(screens_t* screens, int result) {
         break;
     case MAINMENU_RESULT_RULESET:
         screens_push(screens, rulesetmenu_new());
+        audio_playsound(g_sound_ok);
         break;
     case MAINMENU_RESULT_OPTIONS:
         break;

@@ -45,9 +45,11 @@ typedef struct {
     size_t frame;
 } audio_mixer_channel_t;
 
+sound_t* g_sound_cursor;
 sound_t* g_sound_gameover;
 sound_t* g_sound_lock;
 sound_t* g_sound_move;
+sound_t* g_sound_ok;
 sound_t* g_sound_piece0;
 sound_t* g_sound_rotate;
 sound_t* g_sound_step;
@@ -112,9 +114,11 @@ void audio_init(void) {
     g_audio_ctx.bytesize = g_audio_ctx.framecount * g_audio_ctx.sizeofframe;
     g_audio_ctx.sampledata = malloc(g_audio_ctx.bytesize);
 
+    g_sound_cursor = sound_new("sfx/default/cursor.wav");
     g_sound_gameover = sound_new("sfx/default/gameover.wav");
     g_sound_lock = sound_new("sfx/default/lock.wav");
     g_sound_move = sound_new("sfx/default/move.wav");
+    g_sound_ok = sound_new("sfx/default/ok.wav");
     g_sound_piece0 = sound_new("sfx/default/piece0.wav");
     g_sound_rotate = sound_new("sfx/default/rotate.wav");
     g_sound_step = sound_new("sfx/default/step.wav");

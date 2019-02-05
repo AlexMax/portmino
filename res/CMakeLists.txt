@@ -6,9 +6,11 @@ set(RESOURCE_SOURCES
     interface/default/font.png
     ruleset/default/main.lua
     ruleset/default/pieces.lua
+    sfx/default/cursor.wav
     sfx/default/gameover.wav
     sfx/default/lock.wav
     sfx/default/move.wav
+    sfx/default/ok.wav
     sfx/default/piece0.wav
     sfx/default/rotate.wav
     sfx/default/step.wav)

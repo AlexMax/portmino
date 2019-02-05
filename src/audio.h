@@ -44,9 +44,11 @@ typedef struct audio_context_s {
     size_t sizeofframe;
 } audio_context_t;
 
+extern sound_t* g_sound_cursor;
 extern sound_t* g_sound_gameover;
 extern sound_t* g_sound_lock;
 extern sound_t* g_sound_move;
+extern sound_t* g_sound_ok;
 extern sound_t* g_sound_piece0;
 extern sound_t* g_sound_rotate;
 extern sound_t* g_sound_step;
