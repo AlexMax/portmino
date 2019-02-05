@@ -148,6 +148,8 @@ static void rulesetmenu_delete(screen_t* screen) {
             free(menu->rulesets[i]);
             menu->rulesets[i] = NULL;
         }
+        free(menu->rulesets);
+        menu->rulesets = NULL;
         free(screen->screen.rulesetmenu);
         screen->screen.rulesetmenu = NULL;
     }
