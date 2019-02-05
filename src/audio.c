@@ -134,6 +134,10 @@ void audio_deinit(void) {
     }
 
     // Delete all sounds
+    if (g_sound_cursor != NULL) {
+        sound_delete(g_sound_cursor);
+        g_sound_gameover = NULL;
+    }
     if (g_sound_gameover != NULL) {
         sound_delete(g_sound_gameover);
         g_sound_gameover = NULL;
@@ -145,6 +149,10 @@ void audio_deinit(void) {
     if (g_sound_move != NULL) {
         sound_delete(g_sound_move);
         g_sound_move = NULL;
+    }
+    if (g_sound_ok != NULL) {
+        sound_delete(g_sound_ok);
+        g_sound_gameover = NULL;
     }
     if (g_sound_piece0 != NULL) {
         sound_delete(g_sound_piece0);

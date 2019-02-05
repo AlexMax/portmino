@@ -100,7 +100,7 @@ void screens_frame(screens_t* screens, const gameevents_t* events) {
 
     // Run the frame for the given stack entry.
     int result = screen->config.frame(screen, events);
-    if (result > 0) {
+    if (result != 0) {
         // We want to navigate away from the screen.  Obey our wishes.
         screen->config.navigate(screens, result);
     }

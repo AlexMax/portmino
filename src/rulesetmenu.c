@@ -28,6 +28,10 @@
  */
 #define RULESET_LINES 25
 
+typedef enum {
+    RULESETMENU_RESULT_BACK = -1,
+} ruleset_result_t;
+
 typedef struct rulesetmenu_s {
     /**
      * Currently selected ruleset.
@@ -66,6 +70,9 @@ static int rulesetmenu_frame(screen_t* screen, const gameevents_t* events) {
     if (mevents.events[0] & MEVENT_OK) {
         return menu->selected + 1;
     }
+    if (mevents.events[0] & MEVENT_CANCEL) {
+        return RULESETMENU_RESULT_BACK;
+    }
 
     return 0;
 }
@@ -74,7 +81,9 @@ static int rulesetmenu_frame(screen_t* screen, const gameevents_t* events) {
  * Navigate to the proper destination
  */
 static void rulesetmenu_navigate(screens_t* screens, int result) {
-    
+    if (result == RULESETMENU_RESULT_BACK) {
+        screens_pop(screens);
+    }
 }
 
 typedef struct {
