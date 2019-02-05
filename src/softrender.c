@@ -17,6 +17,7 @@
 
 #include "softrender.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -110,59 +111,40 @@ static void softrender_clear(void) {
     memset(g_render_ctx.buffer.data, 0x00, g_render_ctx.buffer.size);
 }
 
-#include "random.h"
-
-static uint8_t perlin(double x, double y) {
-    return (rand() % 4);
-}
-
-uint8_t mainmenu[MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT];
-uint8_t mmpalette[4 * 3] = {
-    108, 0x00, 0x00,
-    136, 0x00, 0x00,
-    164, 0x00, 0x00,
-    192, 0x00, 0x00
-};
-
 /**
  * Draw a cool background image
  */
 static void softrender_draw_mainmenu_bg(void) {
+    static uint8_t mainmenu[MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT];
+    static uint8_t mmpalette[4 * 3];
     static bool initialized;
+    static uint32_t frame;
+    static uint8_t cycle[120]; // Two seconds worth
 
     if (!initialized) {
-        // Generate perlin noise for our background.
-        for (size_t y = 0;y < MINO_SOFTRENDER_HEIGHT;y++) {
-            double fy = (double)y / (MINO_SOFTRENDER_HEIGHT - 1);
-            for (size_t x = 0;x < MINO_SOFTRENDER_WIDTH;x++) {
-                double fx = (double)x / (MINO_SOFTRENDER_WIDTH - 1);
-                mainmenu[y * MINO_SOFTRENDER_WIDTH + x] = perlin(fx, fy);
-            }
+        // Generate random noise for our background.
+        for (size_t i = 0;i < sizeof(mainmenu);i++) {
+            mainmenu[i] = rand() % 4;
         }
 
-        // Set our destination palette
+        // Generate palette cycle
+        int a = 192 - 108;
+        double s = (double)a / sizeof(cycle);
+        for (size_t i = 0;i < sizeof(cycle);i++) {
+            double is = i * s * 2;
+            cycle[i] = (a - abs((int)is % (2 * a) - a)) + 108;
+        }
+
         initialized = true;
     } else {
-        static bool up[3];
-
-        // Cycle the palette.
-        for (size_t i = 0;i < sizeof(up);i++) {
-            size_t j = 3 + (i * 3);
-            if (up[i] == true && mmpalette[j] >= 192) {
-                up[i] = false;
-            }
-            if (up[i] == false && mmpalette[j] <= 108) {
-                up[i] = true;
-            }
-
-            if (up[i]) {
-                mmpalette[j] += 1;
-            } else {
-                mmpalette[j] -= 1;
-            }
-        }
+        // Cycle the palette
+        mmpalette[0] = cycle[frame % sizeof(cycle)];
+        mmpalette[3] = cycle[(frame + 30) % sizeof(cycle)];
+        mmpalette[6] = cycle[(frame + 60) % sizeof(cycle)];
+        mmpalette[9] = cycle[(frame + 90) % sizeof(cycle)];
     }
 
+    // Draw using our current colors.
     for (size_t i = 0,j = 0;i < sizeof(mainmenu);i++,j += MINO_SOFTRENDER_BPP) {
         size_t color = mainmenu[i];
         size_t colorindex = color * 3;
@@ -171,6 +153,9 @@ static void softrender_draw_mainmenu_bg(void) {
         g_render_ctx.buffer.data[j + 2] = mmpalette[colorindex + 2];
         g_render_ctx.buffer.data[j + 3] = 0xFF;
     }
+
+    // Increase our frame by one.
+    frame++;
 }
 
 /**
