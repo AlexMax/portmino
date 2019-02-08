@@ -64,7 +64,7 @@ typedef struct ruleset_s {
     int next_piece_ref;
 } ruleset_t;
 
-ruleset_t* ruleset_new(void);
+ruleset_t* ruleset_new(const char* name);
 void ruleset_delete(ruleset_t* ruleset);
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
                                const playerevents_t* playerevents);

@@ -63,39 +63,8 @@ typedef struct state_s {
      * In-use player count.
      */
     size_t player_count;
-
-    /**
-     * In-use ruleset.
-     */
-    ruleset_t* ruleset;
 } state_t;
 
-/**
- * The result of advancing our state a single frame.
- */
-typedef enum {
-    /**
-     * Nothing surprising happened in this frame.
-     */
-    STATE_RESULT_OK,
-
-    /**
-     * State reached an indeterminate or error result.
-     */
-    STATE_RESULT_ERROR,
-
-    /**
-     * State reached a "game over" result, usually a topout.
-     */
-    STATE_RESULT_GAMEOVER,
-
-    /**
-     * State reached a "winning" result, like clearing all the lines.
-     */
-    STATE_RESULT_SUCCESS,
-} state_result_t;
-
-state_t* state_new(void);
+state_t* state_new(ruleset_t* ruleset);
 void state_delete(state_t* state);
-state_result_t state_frame(state_t* state, const playerevents_t* playerevents);
-void state_debug(state_t* state);
+bool state_frame(state_t* state);

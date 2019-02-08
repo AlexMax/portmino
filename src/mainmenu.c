@@ -21,7 +21,10 @@
 
 #include "audio.h"
 #include "event.h"
+#include "ingame.h"
 #include "render.h"
+#include "ruleset.h"
+#include "screen.h"
 #include "rulesetmenu.h"
 
 typedef enum {
@@ -33,6 +36,11 @@ typedef enum {
 } mainmenu_result_t;
 
 typedef struct mainmenu_s {
+    /**
+     * Current ruleset.
+     */
+    ruleset_t* ruleset;
+
     /**
      * Currently selected option.
      */
@@ -70,8 +78,12 @@ static int mainmenu_frame(screen_t* screen, const gameevents_t* events) {
  * Navigate to the proper destination
  */
 static void mainmenu_navigate(screens_t* screens, int result) {
+    mainmenu_t* menu = screens_top(screens)->screen.menu;
+
     switch ((mainmenu_result_t)result) {
     case MAINMENU_RESULT_PLAY:
+        screens_push(screens, ingame_new(menu->ruleset));
+        audio_playsound(g_sound_ok);
         break;
     case MAINMENU_RESULT_RECORDS:
         break;
@@ -112,6 +124,11 @@ static void mainmenu_render(screen_t* screen, render_module_t* render) {
  */
 static void mainmenu_delete(screen_t* screen) {
     if (screen->screen.menu != NULL) {
+        if (screen->screen.menu->ruleset != NULL) {
+            ruleset_delete(screen->screen.menu->ruleset);
+            screen->screen.menu->ruleset = NULL;
+        }
+
         free(screen->screen.menu);
         screen->screen.menu = NULL;
     }
@@ -136,6 +153,15 @@ screen_t mainmenu_new(void) {
     if (menu == NULL) {
         return screen;
     }
+
+    ruleset_t* ruleset = ruleset_new("default");
+    if (ruleset == NULL) {
+        free(menu);
+        menu = NULL;
+        return screen;
+    }
+
+    menu->ruleset = ruleset;
     menu->selected = 0;
     event_holds_init(&menu->holds);
 

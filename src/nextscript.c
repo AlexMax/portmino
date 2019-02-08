@@ -80,14 +80,14 @@ static int nextscript_consume_next(lua_State* L) {
         luaL_argerror(L, 1, "nil next handle");
     }
 
-    lua_pushstring(L, "state");
+    lua_pushstring(L, "ruleset");
     if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
         // never returns
         luaL_argerror(L, 1, "nextscript_consume_next is missing internal state");
     }
-    state_t* state = lua_touserdata(L, -1);
+    ruleset_t* ruleset = lua_touserdata(L, -1);
 
-    next_consume_next_piece(next, state->ruleset);
+    next_consume_next_piece(next, ruleset);
     return 0;
 }
 

@@ -26,16 +26,15 @@
 typedef enum {
     SCREEN_NONE,
     SCREEN_MAINMENU,
-    SCREEN_INGAME_PLAY,
-    SCREEN_INGAME_GAMEOVER,
+    SCREEN_INGAME,
     SCREEN_RULESETMENU,
 } screentype_t;
 
+typedef struct ingame_s ingame_t;
 typedef struct mainmenu_s mainmenu_t;
 typedef struct rulesetmenu_s rulesetmenu_t;
 typedef struct screen_s screen_t;
 typedef struct screens_s screens_t;
-typedef struct state_s state_t;
 
 /**
  * Screen configuration
@@ -90,7 +89,7 @@ struct screen_s {
      */
     union screen_u {
         mainmenu_t* menu;
-        state_t* ingame;
+        ingame_t* ingame;
         rulesetmenu_t* rulesetmenu;
     } screen;
 };
@@ -114,6 +113,7 @@ typedef struct screens_s {
 
 void screens_init(screens_t* screens);
 void screens_deinit(screens_t* screens);
+screen_t* screens_top(screens_t* screens);
 bool screens_push(screens_t* screens, screen_t screen);
 bool screens_pop(screens_t* screens);
 void screens_frame(screens_t* screens, const gameevents_t* events);

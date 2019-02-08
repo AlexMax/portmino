@@ -120,11 +120,20 @@ static int ruleset_openlib(lua_State* L) {
 /**
  * Allocate a new ruleset.
  */
-ruleset_t* ruleset_new(void) {
+ruleset_t* ruleset_new(const char* name) {
+    char* filepath = NULL;
+    int ok = asprintf(&filepath, "ruleset/%s/main.lua", name);
+    if (ok < 0) {
+        frontend_fatalerror("Allocation error.");
+        return NULL;
+    }
+
     // Load the file with our ruleset in it.
-    buffer_t* file = vfs_file("ruleset/default/main.lua");
+    buffer_t* file = vfs_file(filepath);
+    free(filepath);
+    filepath = NULL;
     if (file == NULL) {
-        frontend_fatalerror("Could not find ruleset %s", "default");
+        frontend_fatalerror("Could not find ruleset %s", name);
         return NULL;
     }
 
@@ -352,6 +361,8 @@ ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
     // functions called from inside Lua.
     lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
     lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "env");
+    lua_pushlightuserdata(ruleset->lua, ruleset);
+    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "ruleset");
     lua_pushlightuserdata(ruleset->lua, state);
     lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "state");
     lua_pushlightuserdata(ruleset->lua, (void*)playerevents);

@@ -27,7 +27,7 @@
  *
  * @return state_t* A newly created gamestate.
  */
-state_t* state_new(void) {
+state_t* state_new(ruleset_t* ruleset) {
     state_t* state = calloc(1, sizeof(state_t));
     if (state == NULL) {
         return NULL;
@@ -39,14 +39,8 @@ state_t* state_new(void) {
     state->next_count = 1;
     state->tic = 0;
 
-    state->ruleset = ruleset_new();
-    if (state->ruleset == NULL) {
-        state_delete(state);
-        return NULL;
-    }
-
     for (size_t i = 0;i < state->board_count;i++) {
-        state->boards[i] = board_new(state->ruleset, i);
+        state->boards[i] = board_new(ruleset, i);
         if (state->boards[i] == NULL) {
             state_delete(state);
             return NULL;
@@ -60,7 +54,7 @@ state_t* state_new(void) {
     }
 
     for (size_t i = 0;i < state->next_count;i++) {
-        state->nexts[i] = next_new(state->ruleset, i);
+        state->nexts[i] = next_new(ruleset, i);
         if (state->nexts[i] == NULL) {
             state_delete(state);
             return NULL;
@@ -100,11 +94,6 @@ void state_delete(state_t* state) {
         state->nexts = NULL;
     }
 
-    if (state->ruleset != NULL) {
-        ruleset_delete(state->ruleset);
-        state->ruleset = NULL;
-    }
-
     free(state);
 }
 
@@ -114,22 +103,14 @@ void state_delete(state_t* state) {
  * @param state The state to start from.
  * @param playerevents The events to run on the gamestate.
  */
-state_result_t state_frame(state_t* state, const playerevents_t* playerevents) {
+bool state_frame(state_t* state) {
     // Whatever happens, our gametic increases by one.  Tic 0 does not exist.
     state->tic += 1;
 
     if (state->tic == 0) {
         // How have you been playing for this long?
-        return STATE_RESULT_ERROR;
+        return false;
     }
 
-    ruleset_result_t result = ruleset_frame(state->ruleset, state, playerevents);
-    switch (result) {
-        case RULESET_RESULT_OK: return STATE_RESULT_OK;
-        case RULESET_RESULT_ERROR: return STATE_RESULT_ERROR;
-        case RULESET_RESULT_TOPOUT: return STATE_RESULT_GAMEOVER;
-    }
-
-    // unreachable
-    return STATE_RESULT_ERROR;
+    return true;
 }

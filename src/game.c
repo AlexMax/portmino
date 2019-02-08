@@ -21,20 +21,22 @@
 #include <string.h>
 
 #include "audio.h"
+#include "frontend.h"
 #include "mainmenu.h"
 #include "render.h"
+#include "ruleset.h"
 #include "screen.h"
 #include "vfs.h"
 
 /**
- * The top-level "game" struct.
+ * The global screen stack.
  */
-typedef struct {
-    screens_t screens;
-    render_module_t* render;
-} game_t;
+static screens_t g_screens;
 
-static game_t g_game;
+/**
+ * The current in-use renderer.
+ */
+static render_module_t* g_render;
 
 /**
  * Initialize the game.
@@ -42,23 +44,26 @@ static game_t g_game;
 void game_init(void) {
     // Initialize subsystems.
     vfs_init();
-    g_game.render = render_init();
+    g_render = render_init();
     audio_init();
 
-    // We start at the main menu using the default ruleset.
-    screens_init(&g_game.screens);
-    screens_push(&g_game.screens, mainmenu_new());
+    // We start at the main menu.
+    screens_init(&g_screens);
+    screens_push(&g_screens, mainmenu_new());
 }
 
 /**
  * Clean up the game.
  */
 void game_deinit(void) {
-    screens_deinit(&g_game.screens);
+    // Destroy the screen stack.
+    screens_deinit(&g_screens);
+
+    // Deinit subsystems.
     audio_deinit();
-    if (g_game.render != NULL) {
-        render_deinit(g_game.render);
-        g_game.render = NULL;
+    if (g_render != NULL) {
+        render_deinit(g_render);
+        g_render = NULL;
     }
     vfs_deinit();
 }
@@ -68,7 +73,7 @@ void game_deinit(void) {
  */
 void game_frame(const gameevents_t* events) {
     // Pass our events to the screen that needs it.
-    screens_frame(&g_game.screens, events);
+    screens_frame(&g_screens, events);
 }
 
 /**
@@ -76,8 +81,8 @@ void game_frame(const gameevents_t* events) {
  */
 void* game_draw(void) {
     // Render the proper screen.
-    screens_render(&g_game.screens, g_game.render);
+    screens_render(&g_screens, g_render);
 
     // Return the context.
-    return g_game.render->context();
+    return g_render->context();
 }

@@ -32,6 +32,7 @@ set(GAME_SOURCES
     globalscript.c  globalscript.h
     hmap.c          hmap.h
     game.c          game.h
+    ingame.c        ingame.h
     mainmenu.c      mainmenu.h
     next.c          next.h
     nextscript.c    nextscript.h

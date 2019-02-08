@@ -17,10 +17,9 @@
 
 #pragma once
 
-// Forward declarations.
-typedef struct gameevents_s gameevents_t;
+#include "screen.h"
 
-void game_init(void);
-void game_deinit(void);
-void game_frame(const gameevents_t* events);
-void* game_draw(void);
+// Forward declarations.
+typedef struct ruleset_s ruleset_t;
+
+screen_t ingame_new(ruleset_t* ruleset);

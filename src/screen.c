@@ -21,17 +21,6 @@
 #include <string.h>
 
 /**
- * Get the top screen
- */
-static screen_t* screens_top(screens_t* screens) {
-    if (screens->screen_count == 0) {
-        return NULL;
-    }
-
-    return &screens->screens[screens->screen_count - 1];
-}
-
-/**
  * Initialize a screens struct inplace
  */
 void screens_init(screens_t* screens) {
@@ -45,6 +34,17 @@ void screens_deinit(screens_t* screens) {
     while (screens_top(screens) != NULL) {
         screens_pop(screens);
     }
+}
+
+/**
+ * Get the top screen
+ */
+screen_t* screens_top(screens_t* screens) {
+    if (screens->screen_count == 0) {
+        return NULL;
+    }
+
+    return &screens->screens[screens->screen_count - 1];
 }
 
 /**
