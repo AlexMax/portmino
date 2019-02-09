@@ -77,9 +77,12 @@ endif()
 
 add_subdirectory(compat)
 add_subdirectory(lib)
-add_subdirectory(libretro)
+
+if(NOT EMSCRIPTEN)
+    add_subdirectory(libretro)
+endif()
 
 # Only build SDL front-end if we've found SDL2
-if(SDL2_FOUND)
+if(SDL2_FOUND OR EMSCRIPTEN)
     add_subdirectory(sdl)
 endif()
