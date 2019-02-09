@@ -15,6 +15,10 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -172,7 +176,6 @@ static void clean_exit(void) {
 }
 
 int main(int argc, char** argv) {
-    (void)argc; (void)argv;
     atexit(clean_exit);
 
     // Initialize the front-end.
@@ -233,7 +236,13 @@ int main(int argc, char** argv) {
     SDL_PauseAudioDevice(g_audio_device, 0);
 
     // Initialize the game before we run it.
-    game_init();
+    game_init(argc, argv);
+
+#ifdef __EMSCRIPTEN__
+    // Emscripten runs our main loop for us...
+    emscripten_set_main_loop(sdl_run, 60, 1);
+    return 0;
+#endif
 
     // Timing code.
     //

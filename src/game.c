@@ -39,11 +39,23 @@ static screens_t g_screens;
 static render_module_t* g_render;
 
 /**
- * Initialize the game.
+ * Initialize the game
+ * 
+ * Pass in argc and argv so we can parse options and initialize the VFS.
  */
-void game_init(void) {
+void game_init(int argc, char** argv) {
     // Initialize subsystems.
-    vfs_init();
+    bool ok;
+    if (argc > 0) {
+        // Started from command line
+        ok = vfs_init(argv[0]);
+    } else {
+        // Shared library or something
+        ok = vfs_init(NULL);
+    }
+    if (!ok) {
+        frontend_fatalerror("Could not initialize virtual filesystem.\n");
+    }
     g_render = render_init();
     audio_init();
 

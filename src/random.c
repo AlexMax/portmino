@@ -21,6 +21,7 @@
  */
 
 #include <stdlib.h>
+#include <time.h>
 
 #include "frontend.h"
 #include "platform.h"
@@ -54,14 +55,18 @@ static uint32_t random_next(random_t* random) {
  * 
  * Pass NULL for the second parameter if you want a completely random seed,
  * or pass a pointer to the seed for a specific seed.
+ * 
+ * NOTE: This function is _not safe_ for any cryptographic use.  Half of
+ *       the seed is hardcoded, the other half might be generated using
+ *       libc rand as a fallback.
  */
 void random_init(random_t* random, uint32_t* seed) {
     // Only half the seed is variable, so we can actually show it.
     random->state[1] = 0x12EBE5E;
     if (seed == NULL) {
         if (!platform()->random_get_seed(&(random->state[0]))) {
-            frontend_fatalerror("Unable to obtain a random seed.");
-            return;
+            srand(time(NULL));
+            random->state[0] = rand();
         }
     } else {
         random->state[0] = *seed;

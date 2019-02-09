@@ -65,8 +65,8 @@ static bool vfs_load(const char* name) {
 /**
  * Initializes the virtual filesystem.
  */
-bool vfs_init(void) {
-    if (PHYSFS_init(NULL) == 0) {
+bool vfs_init(const char* argv0) {
+    if (PHYSFS_init(argv0) == 0) {
         return false;
     }
 

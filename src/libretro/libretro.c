@@ -117,7 +117,7 @@ RETRO_API void retro_init(void) {
     };
     frontend_init(&module);
     platform_init();
-    game_init();
+    game_init(0, NULL);
 }
 
 RETRO_API void retro_deinit(void) {
@@ -159,7 +159,7 @@ RETRO_API void retro_set_controller_port_device(unsigned port, unsigned device) 
 
 RETRO_API void retro_reset(void) {
     game_deinit();
-    game_init();
+    game_init(0, NULL);
 }
 
 RETRO_API void retro_run(void) {
