@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
 
 #ifdef __EMSCRIPTEN__
     // Emscripten runs our main loop for us...
-    emscripten_set_main_loop(sdl_run, 60, 1);
+    emscripten_set_main_loop(sdl_run, 0, 1);
     return 0;
 #endif
 

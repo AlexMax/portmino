@@ -54,7 +54,9 @@ set(GAME_SOURCES
     state.c         state.h
     vfs.c           vfs.h)
 
-if(UNIX)
+if(EMSCRIPTEN)
+    set(PLATFORM_SOURCES platform_emscripten.c)
+elseif(UNIX)
     set(PLATFORM_SOURCES platform_unix.c)
 elseif(WIN32)
     set(PLATFORM_SOURCES platform_win32.c)

@@ -21,7 +21,6 @@
  */
 
 #include <stdlib.h>
-#include <time.h>
 
 #include "frontend.h"
 #include "platform.h"
@@ -65,8 +64,8 @@ void random_init(random_t* random, uint32_t* seed) {
     random->state[1] = 0x12EBE5E;
     if (seed == NULL) {
         if (!platform()->random_get_seed(&(random->state[0]))) {
-            srand(time(NULL));
-            random->state[0] = rand();
+            frontend_fatalerror("Unable to obtain a random seed.");
+            return;
         }
     } else {
         random->state[0] = *seed;
