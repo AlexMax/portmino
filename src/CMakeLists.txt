@@ -34,12 +34,14 @@ set(GAME_SOURCES
     game.c          game.h
     ingame.c        ingame.h
     mainmenu.c      mainmenu.h
+    menu.c          menu.h
     next.c          next.h
     nextscript.c    nextscript.h
     picture.c       picture.h
     piece.c         piece.h
     piecescript.c   piecescript.h
     platform.c      platform.h
+    playmenu.c      playmenu.h
     random.c        random.h
     randomscript.c  randomscript.h
     render.c        render.h

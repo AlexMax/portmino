@@ -1,7 +1,7 @@
 set(SDL_SOURCES
     main.c)
 
-add_executable(portmino WIN32 ${SDL_SOURCES})
+add_executable(portmino ${SDL_SOURCES})
 add_sanitizers(portmino)
 if(EMSCRIPTEN)
     # Emscripten comes with SDL2 built-in

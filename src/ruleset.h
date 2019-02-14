@@ -24,6 +24,7 @@
 #include "piece.h"
 
 typedef struct board_s board_t;
+typedef struct menulist_s menulist_t;
 typedef struct state_s state_t;
 
 typedef enum {
@@ -33,6 +34,11 @@ typedef enum {
 } ruleset_result_t;
 
 typedef struct ruleset_s {
+    /**
+     * Name of the ruleset
+     */
+    char* name;
+
     /**
      * Lua interpreter state
      */
@@ -66,6 +72,7 @@ typedef struct ruleset_s {
 
 ruleset_t* ruleset_new(const char* name);
 void ruleset_delete(ruleset_t* ruleset);
+menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
                                const playerevents_t* playerevents);
 const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* board);

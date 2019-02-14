@@ -16,6 +16,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "lualib.h"
 #include "lauxlib.h"
@@ -26,6 +27,7 @@
 #include "eventscript.h"
 #include "frontend.h"
 #include "globalscript.h"
+#include "menu.h"
 #include "nextscript.h"
 #include "piecescript.h"
 #include "randomscript.h"
@@ -121,6 +123,12 @@ static int ruleset_openlib(lua_State* L) {
  * Allocate a new ruleset.
  */
 ruleset_t* ruleset_new(const char* name) {
+    char* rulesetname = strdup(name);
+    if (rulesetname == NULL) {
+        frontend_fatalerror("Allocation error.");
+        return NULL;
+    }
+
     char* filepath = NULL;
     int ok = asprintf(&filepath, "ruleset/%s/main.lua", name);
     if (ok < 0) {
@@ -328,6 +336,7 @@ ruleset_t* ruleset_new(const char* name) {
         return NULL;
     }
 
+    ruleset->name = rulesetname;
     ruleset->lua = L;
     ruleset->state_frame_ref = state_frame_ref;
     ruleset->state_ref = state_ref;
@@ -353,6 +362,24 @@ void ruleset_delete(ruleset_t* ruleset) {
     }
 
     free(ruleset);
+}
+
+/**
+ * Get a list of gametypes that can be played in a given ruleset
+ * 
+ * This function allocates a menulist.  It's up to the caller to free it.
+ */
+menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
+    menulist_t* list = menulist_new();
+
+    menulist_params_t params;
+    params.value = "value";
+    params.label = "label";
+    params.help = "help";
+    params.position = 10;
+    menulist_push(list, &params);
+
+    return list;
 }
 
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,

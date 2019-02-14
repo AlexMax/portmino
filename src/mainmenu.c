@@ -21,7 +21,7 @@
 
 #include "audio.h"
 #include "event.h"
-#include "ingame.h"
+#include "playmenu.h"
 #include "render.h"
 #include "ruleset.h"
 #include "screen.h"
@@ -56,7 +56,7 @@ typedef struct mainmenu_s {
  * Process events on the main menu
  */
 static int mainmenu_frame(screen_t* screen, const gameevents_t* events) {
-    mainmenu_t* menu = screen->screen.menu;
+    mainmenu_t* menu = screen->screen.mainmenu;
     playerevents_t mevents = event_menu_filter(&menu->holds, events);
 
     if (mevents.events[0] & MEVENT_UP) {
@@ -78,11 +78,11 @@ static int mainmenu_frame(screen_t* screen, const gameevents_t* events) {
  * Navigate to the proper destination
  */
 static void mainmenu_navigate(screens_t* screens, int result) {
-    mainmenu_t* menu = screens_top(screens)->screen.menu;
+    mainmenu_t* menu = screens_top(screens)->screen.mainmenu;
 
     switch ((mainmenu_result_t)result) {
     case MAINMENU_RESULT_PLAY:
-        screens_push(screens, ingame_new(menu->ruleset));
+        screens_push(screens, playmenu_new(menu->ruleset));
         audio_playsound(g_sound_ok);
         break;
     case MAINMENU_RESULT_RECORDS:
@@ -103,7 +103,7 @@ static void mainmenu_navigate(screens_t* screens, int result) {
  * Render the main menu
  */
 static void mainmenu_render(screen_t* screen, render_module_t* render) {
-    mainmenu_t* menu = screen->screen.menu;
+    mainmenu_t* menu = screen->screen.mainmenu;
 
     render->draw_mainmenu_bg();
 
@@ -123,14 +123,14 @@ static void mainmenu_render(screen_t* screen, render_module_t* render) {
  * Free main menu screen
  */
 static void mainmenu_delete(screen_t* screen) {
-    if (screen->screen.menu != NULL) {
-        if (screen->screen.menu->ruleset != NULL) {
-            ruleset_delete(screen->screen.menu->ruleset);
-            screen->screen.menu->ruleset = NULL;
+    if (screen->screen.mainmenu != NULL) {
+        if (screen->screen.mainmenu->ruleset != NULL) {
+            ruleset_delete(screen->screen.mainmenu->ruleset);
+            screen->screen.mainmenu->ruleset = NULL;
         }
 
-        free(screen->screen.menu);
-        screen->screen.menu = NULL;
+        free(screen->screen.mainmenu);
+        screen->screen.mainmenu = NULL;
     }
 }
 
@@ -166,6 +166,6 @@ screen_t mainmenu_new(void) {
     event_holds_init(&menu->holds);
 
     screen.config = mainmenu_screen;
-    screen.screen.menu = menu;
+    screen.screen.mainmenu = menu;
     return screen;
 }
