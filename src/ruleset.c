@@ -15,9 +15,12 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "define.h"
+
 #include <stdlib.h>
 #include <string.h>
 
+#include "physfs.h"
 #include "lualib.h"
 #include "lauxlib.h"
 
@@ -351,6 +354,11 @@ ruleset_t* ruleset_new(const char* name) {
  * Free a ruleset.
  */
 void ruleset_delete(ruleset_t* ruleset) {
+    if (ruleset->name != NULL) {
+        free(ruleset->name);
+        ruleset->name = NULL;
+    }
+
     if (ruleset->lua != NULL) {
         lua_close(ruleset->lua);
         ruleset->lua = NULL;
@@ -370,16 +378,78 @@ void ruleset_delete(ruleset_t* ruleset) {
  * This function allocates a menulist.  It's up to the caller to free it.
  */
 menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
-    menulist_t* list = menulist_new();
+    char* gametypepath = NULL;
+    int ok = asprintf(&gametypepath, "gametype/%s", ruleset->name);
+    if (ok < 0) {
+        // Allocation error
+        goto fail;
+    }
 
-    menulist_params_t params;
-    params.value = "value";
-    params.label = "label";
-    params.help = "help";
-    params.position = 10;
-    menulist_push(list, &params);
+    menulist_t* list = menulist_new();
+    if (list == NULL) {
+        // Allocation error
+        goto fail;
+    }
+
+    // Iterate over all of the ruleset gametype directories
+    char** gametypes = PHYSFS_enumerateFiles(gametypepath);
+    free(gametypepath);
+    gametypepath = NULL;
+    if (gametypes == NULL) {
+        // Allocation error
+        goto fail;
+    }
+    for (char** i = gametypes;*i != NULL;i++) {
+        // Try and find a file called main.lua in every directory
+        char* mainpath = NULL;
+        ok = asprintf(&mainpath, "gametype/%s/%s/main.lua", ruleset->name, *i);
+        if (ok < 0) {
+            // Allocation error.
+            goto fail;
+        }
+
+        PHYSFS_Stat stat;
+        ok = PHYSFS_stat(mainpath, &stat);
+        free(mainpath);
+        if (ok == 0) {
+            // File does not exist.
+            continue;
+        }
+        if (stat.filetype != PHYSFS_FILETYPE_REGULAR) {
+            // File isn't a file.
+            continue;
+        }
+
+        menulist_params_t params;
+        params.value = *i;
+        params.label = *i;
+        params.help = "help";
+        params.position = 10;
+        menulist_push(list, &params);
+    }
+    PHYSFS_freeList(gametypes);
+    gametypes = NULL;
+
 
     return list;
+
+fail:
+    if (gametypepath != NULL) {
+        free(gametypepath);
+        gametypepath = NULL;
+    }
+
+    if (list != NULL) {
+        menulist_delete(list);
+        list = NULL;
+    }
+
+    if (gametypes != NULL) {
+        PHYSFS_freeList(gametypes);
+        gametypes = NULL;
+    }
+
+    return NULL;
 }
 
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,

@@ -102,7 +102,7 @@ bool menulist_push(menulist_t* menulist, const menulist_params_t* params) {
     }
 
     // The item is allocated, realloc the menulist.
-    menuitem_t** newitems = realloc(menulist->items, menulist->count + 1);
+    menuitem_t** newitems = realloc(menulist->items, sizeof(menuitem_t*) * (menulist->count + 1));
     if (newitems == NULL) {
         return false;
     }

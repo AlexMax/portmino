@@ -76,7 +76,7 @@ static void playmenu_render(screen_t* screen, render_module_t* render) {
     for (size_t i = 0;i < count;i++) {
         const menuitem_t* item = menulist_get(menu->list, i);
 
-        render->draw_font(vec2i(100, 100), item->label);
+        render->draw_font(vec2i(100, 100 + 8 * i), item->label);
     }
 }
 
