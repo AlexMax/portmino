@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "lua.h"
+#include "lauxlib.h"
 
 /**
  * Turn the table at the given stack index into a vector.
@@ -48,6 +49,40 @@ void script_push_vector(lua_State* L, const vec2i_t* vec) {
     lua_setfield(L, -2, "x");
     lua_pushinteger(L, vec->y);
     lua_setfield(L, -2, "y");
+}
+
+/**
+ * Take a configuration file and push a table that contains all defined
+ * configuration values to the stack, or an error message if there was a
+ * problem parsing the file
+ * 
+ * Configuration files are just Lua scripts run in the context of an empty
+ * environment.
+ */
+bool script_load_config(lua_State* L, buffer_t* file, const char* name) {
+    // Load the file into Lua as a chunk.
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, name, "t") != LUA_OK) {
+        // We have an error on the stack, just return it.
+        return false;
+    }
+
+    // Our environment is an empty table
+    lua_newtable(L);
+    lua_pushvalue(L, -1); // copy env ptr
+    lua_setupvalue(L, -3, 1); // set environment to env pointer, pops env ptr
+
+    // Move the chunk to the top of the stack and call it.
+    lua_insert(L, -2);
+    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+        // Right now we have an error message _and_ our useless environment
+        // pointer.  Get rid of the environment and return just the error.
+        lua_insert(L, -1);
+        lua_pop(L, 1);
+        return false;
+    }
+
+    // We have the pointer to our environment at the top of the stack.
+    return true;
 }
 
 /**

@@ -26,9 +26,6 @@ local function draw_hud(state)
 end
 
 return {
-    label = "Score Attack",
-    help = "Get a high score within the time limit.",
-    position = 30,
     init = init,
     after_frame = after_frame,
     draw_hud = draw_hud,

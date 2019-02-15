@@ -26,6 +26,10 @@
 // Forward declarations
 typedef struct ruleset_s ruleset_t;
 
+typedef enum {
+    PLAYMENU_RESULT_BACK = -1,
+} gametype_result_t;
+
 typedef struct playmenu_s {
     /**
      * Current ruleset
@@ -40,9 +44,9 @@ typedef struct playmenu_s {
     menulist_t* list;
 
     /**
-     * Currently selected option.
+     * Currently selected gametype.
      */
-    uint8_t selected;
+    size_t selected;
 
     /**
      * Held keys.
@@ -54,14 +58,33 @@ typedef struct playmenu_s {
  * Process events on the main menu
  */
 static int playmenu_frame(screen_t* screen, const gameevents_t* events) {
+    playmenu_t* menu = screen->screen.playmenu;
+    playerevents_t mevents = event_menu_filter(&menu->holds, events);
 
+    size_t gametype_count = menulist_count(menu->list);
+    if (mevents.events[0] & MEVENT_UP) {
+        menu->selected = (menu->selected + gametype_count - 1) % gametype_count;
+    }
+    if (mevents.events[0] & MEVENT_DOWN) {
+        menu->selected = (menu->selected + 1) % gametype_count;
+    }
+    if (mevents.events[0] & MEVENT_OK) {
+        return menu->selected + 1;
+    }
+    if (mevents.events[0] & MEVENT_CANCEL) {
+        return PLAYMENU_RESULT_BACK;
+    }
+
+    return 0;
 }
 
 /**
  * Navigate to the proper destination
  */
 static void playmenu_navigate(screens_t* screens, int result) {
-
+    if (result == PLAYMENU_RESULT_BACK) {
+        screens_pop(screens);
+    }
 }
 
 /**
@@ -72,11 +95,24 @@ static void playmenu_render(screen_t* screen, render_module_t* render) {
 
     render->draw_mainmenu_bg();
 
+    render->draw_font(vec2i(100, 4), "Select Gamemode");
+
+    // Draw our game modes
     size_t count = menulist_count(menu->list);
     for (size_t i = 0;i < count;i++) {
+        size_t y = 16 + (i * 8);
         const menuitem_t* item = menulist_get(menu->list, i);
-
-        render->draw_font(vec2i(100, 100 + 8 * i), item->label);
+        if (item->label != NULL) {
+            render->draw_font(vec2i(50, y), item->label);
+        } else {
+            render->draw_font(vec2i(50, y), item->value);
+        }
+        if (menu->selected == i) {
+            render->draw_font(vec2i(42, y), ">");
+            if (item->help != NULL) {
+                render->draw_font(vec2i(4, 228), item->help);
+            }
+        }
     }
 }
 

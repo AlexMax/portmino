@@ -26,9 +26,6 @@ local function draw_hud(state)
 end
 
 return {
-    label = "Endurance",
-    help = "Can you survive until the end?",
-    position = 10,
     init = init,
     after_frame = after_frame,
     draw_hud = draw_hud,

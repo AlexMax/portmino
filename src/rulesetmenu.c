@@ -36,7 +36,7 @@ typedef struct rulesetmenu_s {
     /**
      * Currently selected ruleset.
      */
-    int selected;
+    size_t selected;
 
     /**
      * Ruleset filenames.
@@ -131,9 +131,8 @@ static void rulesetmenu_render(screen_t* screen, render_module_t* render) {
     render->draw_font(vec2i(50, 228), pagedesc);
 
     // Draw our rules.
-    size_t j = 0;
-    for (size_t i = pageinfo.startindex;i <= pageinfo.endindex;i++,j++) {
-        size_t y = 16 + (j * 8);
+    for (size_t i = pageinfo.startindex;i <= pageinfo.endindex;i++) {
+        size_t y = 16 + (i * 8);
         render->draw_font(vec2i(50, y), menu->rulesets[i]);
         if (menu->selected == i) {
             render->draw_font(vec2i(42, y), ">");

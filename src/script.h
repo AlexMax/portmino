@@ -24,6 +24,7 @@ typedef struct lua_State lua_State;
 
 bool script_to_vector(lua_State* L, int index, vec2i_t* vec);
 void script_push_vector(lua_State* L, const vec2i_t* vec);
+bool script_load_config(lua_State* L, buffer_t* file, const char* name);
 void script_debug(lua_State* L, int index);
 void script_debug_stack(lua_State* L);
 void script_debug_table(lua_State* L, int index);

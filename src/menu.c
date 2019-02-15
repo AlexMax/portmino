@@ -80,31 +80,31 @@ bool menulist_push(menulist_t* menulist, const menulist_params_t* params) {
         return false;
     }
 
-    item->value = strdup(params->value);
-    if (item->value == NULL) {
-        free(item);
-        return false;
+    if (params->value != NULL) {
+        item->value = strdup(params->value);
+        if (item->value == NULL) {
+            goto fail;
+        }
     }
 
-    item->label = strdup(params->label);
-    if (item->label == NULL) {
-        free(item->value);
-        free(item);
-        return false;
+    if (params->label != NULL) {
+        item->label = strdup(params->label);
+        if (item->label == NULL) {
+            goto fail;
+        }
     }
 
-    item->help = strdup(params->help);
-    if (item->help == NULL) {
-        free(item->value);
-        free(item->label);
-        free(item);
-        return false;
+    if (params->help != NULL) {
+        item->help = strdup(params->help);
+        if (item->help == NULL) {
+            goto fail;
+        }
     }
 
     // The item is allocated, realloc the menulist.
     menuitem_t** newitems = realloc(menulist->items, sizeof(menuitem_t*) * (menulist->count + 1));
     if (newitems == NULL) {
-        return false;
+        goto fail;
     }
 
     menulist->items = newitems;
@@ -112,6 +112,17 @@ bool menulist_push(menulist_t* menulist, const menulist_params_t* params) {
     menulist->count += 1;
 
     return true;
+
+fail:
+
+    free(item->value);
+    item->value = NULL;
+    free(item->label);
+    item->label = NULL;
+    free(item->help);
+    item->help = NULL;
+
+    return false;
 }
 
 /**

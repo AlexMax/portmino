@@ -26,9 +26,6 @@ local function draw_hud(state)
 end
 
 return {
-    label = "Time Attack",
-    help = "Clear a specific number of lines as quickly as possible.",
-    position = 20,
     init = init,
     after_frame = after_frame,
     draw_hud = draw_hud,

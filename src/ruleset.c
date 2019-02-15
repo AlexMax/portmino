@@ -400,36 +400,50 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
         goto fail;
     }
     for (char** i = gametypes;*i != NULL;i++) {
-        // Try and find a file called main.lua in every directory
+        // Try and find a file called manifest.cfg in every directory
         char* mainpath = NULL;
-        ok = asprintf(&mainpath, "gametype/%s/%s/main.lua", ruleset->name, *i);
+        ok = asprintf(&mainpath, "gametype/%s/%s/manifest.cfg", ruleset->name, *i);
         if (ok < 0) {
             // Allocation error.
             goto fail;
         }
 
-        PHYSFS_Stat stat;
-        ok = PHYSFS_stat(mainpath, &stat);
+        buffer_t* file = vfs_file(mainpath);
         free(mainpath);
-        if (ok == 0) {
-            // File does not exist.
-            continue;
-        }
-        if (stat.filetype != PHYSFS_FILETYPE_REGULAR) {
-            // File isn't a file.
+        if (file == NULL) {
+            // TODO: A warning message would be nice.
             continue;
         }
 
+        int top = lua_gettop(ruleset->lua);
+
+        // Load the config file - pushes the data or an error to the stack.
+        if (!script_load_config(ruleset->lua, file, *i)) {
+            fprintf(stderr, "%s\n", lua_tostring(ruleset->lua, -1));
+            buffer_delete(file);
+            lua_settop(ruleset->lua, top);
+            continue;
+        }
+        buffer_delete(file);
+
+        // Set our menu parameters using values from Lua.
         menulist_params_t params;
         params.value = *i;
-        params.label = *i;
-        params.help = "help";
-        params.position = 10;
+        lua_getfield(ruleset->lua, -1, "label");
+        params.label = lua_tostring(ruleset->lua, -1);
+        lua_getfield(ruleset->lua, -2, "help");
+        params.help = lua_tostring(ruleset->lua, -1);
+        lua_getfield(ruleset->lua, -3, "position");
+        params.position = lua_tointeger(ruleset->lua, -1);
+
+        // Push the menu parameters into our menu
         menulist_push(list, &params);
+
+        // Clean up the stack
+        lua_settop(ruleset->lua, top);
     }
     PHYSFS_freeList(gametypes);
     gametypes = NULL;
-
 
     return list;
 

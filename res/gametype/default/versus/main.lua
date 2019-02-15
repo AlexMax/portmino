@@ -26,9 +26,6 @@ local function draw_hud(state)
 end
 
 return {
-    label = "Versus (2P)",
-    help = "Try and knock your opponent out!",
-    position = 60,
     init = init,
     after_frame = after_frame,
     draw_hud = draw_hud,

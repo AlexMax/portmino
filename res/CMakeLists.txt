@@ -3,9 +3,13 @@ set(RESOURCE_SOURCES
     background/default/1.png
     block/default/8px.png
     gametype/default/endurance/main.lua
+    gametype/default/endurance/manifest.cfg
     gametype/default/scoreattack/main.lua
+    gametype/default/scoreattack/manifest.cfg
     gametype/default/timeattack/main.lua
+    gametype/default/timeattack/manifest.cfg
     gametype/default/versus/main.lua
+    gametype/default/versus/manifest.cfg
     interface/default/board.png
     interface/default/font.png
     ruleset/default/main.lua
