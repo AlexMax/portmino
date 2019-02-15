@@ -77,7 +77,9 @@ bool vfs_init(const char* argv0) {
  * Deinitialize the virtual filesystem.
  */
 void vfs_deinit(void) {
-    PHYSFS_deinit();
+    if (PHYSFS_isInit()) {
+        PHYSFS_deinit();
+    }
 }
 
 /**
