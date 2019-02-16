@@ -44,7 +44,7 @@ typedef struct {
 picture_t* picture_new(int width, int height);
 picture_t* picture_new_vfs(const char* path);
 void picture_delete(picture_t* pic);
-void picture_copy(picture_t* restrict dest, vec2i_t dstloc,
-                  const picture_t* restrict source, vec2i_t srcloc);
-void picture_blit(picture_t* restrict dest, vec2i_t dstloc,
-                  const picture_t* restrict source, vec2i_t srcloc);
+void picture_copy(picture_t* restrict dest, vec2i_t dstpos,
+                  const picture_t* restrict source, vec2i_t srcpos);
+void picture_blit(picture_t* restrict dest, vec2i_t dstpos,
+                  const picture_t* restrict source, vec2i_t srcpos);

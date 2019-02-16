@@ -56,4 +56,4 @@ extern sound_t* g_sound_step;
 void audio_init(void);
 void audio_deinit(void);
 void audio_playsound(const sound_t* sound);
-audio_context_t* audio_frame(size_t samples);
+audio_context_t* audio_frame(size_t frames);

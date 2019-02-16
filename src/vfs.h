@@ -22,4 +22,4 @@
 bool vfs_init(const char* argv0);
 void vfs_deinit(void);
 buffer_t* vfs_file(const char* filename);
-char* vfs_path_join(const char* base, const char* append, const char sep);
+char* vfs_path_join(const char* base, const char* append, char sep);

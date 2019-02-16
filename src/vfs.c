@@ -128,7 +128,7 @@ buffer_t* vfs_file(const char* filename) {
  * @param sep Directory separator.  PHYSFS paths always use '/'.
  * @return char* Joined path.
  */
-char* vfs_path_join(const char* base, const char* append, const char sep) {
+char* vfs_path_join(const char* base, const char* append, char sep) {
     if (strlen(base) == 0) {
         // There is no base to append to.
         return NULL;

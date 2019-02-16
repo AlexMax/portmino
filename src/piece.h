@@ -100,7 +100,7 @@ typedef struct piece_s {
 } piece_t;
 
 piece_configs_t* piece_configs_new(lua_State* L);
-void piece_configs_delete(piece_configs_t* pieces);
+void piece_configs_delete(piece_configs_t* piece_configs);
 void pieces_init(void);
 void pieces_deinit(void);
 piece_t* piece_new(const piece_config_t* config);

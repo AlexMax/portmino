@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "frontend.h"
 #include "sound.h"
 
@@ -199,7 +200,7 @@ void audio_playsound(const sound_t* sound) {
  */
 audio_context_t* audio_frame(size_t frames) {
     if (frames != MINO_AUDIO_HZ / MINO_FPS) {
-        frontend_fatalerror("Size isn't correct - dynamic audio frame sizes aren't implemented yet");
+        error_push("Dynamic audio frame sizes aren't implemented yet");
         return NULL;
     }
 

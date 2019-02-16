@@ -75,4 +75,4 @@ void ruleset_delete(ruleset_t* ruleset);
 menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
                                const playerevents_t* playerevents);
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* board);
+const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* next);

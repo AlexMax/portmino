@@ -30,7 +30,7 @@
 /**
  * Convert sound data to our samplerate
  */
-static void sound_to_samplerate(int16_t* dst, int16_t* src, uint64_t srclen) {
+static void sound_to_samplerate(int16_t* dst, const int16_t* src, uint64_t srclen) {
     for (uint64_t i = 0, j = 0;i < srclen;i+=2,j+=4) {
         dst[j] = src[i];
         dst[j+1] = src[i+1];
@@ -42,7 +42,7 @@ static void sound_to_samplerate(int16_t* dst, int16_t* src, uint64_t srclen) {
 /**
  * Convert sound data to stereo
  */
-static void sound_to_stereo(int16_t* dst, int16_t* src, uint64_t srclen) {
+static void sound_to_stereo(int16_t* dst, const int16_t* src, uint64_t srclen) {
     for (uint64_t i = 0, j = 0;i < srclen;i++,j+=2) {
         dst[j] = src[i];
         dst[j + 1] = src[i];
