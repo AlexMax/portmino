@@ -114,11 +114,14 @@ static int globalscript_print(lua_State *L) {
 }
 
 /**
- * "require" error checking function.
+ * "require" error checking function
+ * 
+ * Assumes the module is in stack slot 1 and that the error message and file
+ * name are the at the top of the stack.
  */
-static int globalscript_require_error(lua_State *L, const char *filename) {
+static int globalscript_require_error(lua_State *L) {
     return luaL_error(L, "error loading module '%s' from file '%s':\n\t%s",
-                      lua_tostring(L, 1), filename, lua_tostring(L, -1));
+                      lua_tostring(L, 1), lua_tostring(L, -1), lua_tostring(L, -2));
 }
 
 /**
@@ -129,6 +132,9 @@ static int globalscript_require_error(lua_State *L, const char *filename) {
  * contains the module itself as opposed to simply being a reference to it.
  */
 static int globalscript_require(lua_State* L) {
+    char* filename = NULL;
+    buffer_t* file = NULL;
+
     // Parameter 1: Name of the package.
     const char* name = luaL_checkstring(L, 1);
 
@@ -160,7 +166,6 @@ static int globalscript_require(lua_State* L) {
     // Construct a filename to load from the virtual filesystem.
     // NOTE: This path construction is safe - PhysFS has no concept of ".."
     //       and symbolic links will not be traversed without our approval.
-    char* filename;
     int bytes = asprintf(&filename, "ruleset/default/%s.lua", name);
     if (bytes < 0) {
         luaL_error(L, "allocation error inside require");
@@ -168,23 +173,23 @@ static int globalscript_require(lua_State* L) {
     }
 
     // Try and load the Lua file.
-    buffer_t* file = vfs_file(filename);
-    free(filename);
-    if (file == NULL) {
+    if ((file = vfs_file(filename)) == NULL) {
         lua_pushstring(L, "file not found");
-        // never returns
-        globalscript_require_error(L, filename);
-        return 0;
+        lua_pushstring(L, filename);
+        goto fail;
     }
 
     // Turn the buffer into a runnable chunk.
     if (luaL_loadbufferx(L, (char*)file->data, file->size, name, "t") != LUA_OK) {
-        buffer_delete(file);
-        // never returns
-        globalscript_require_error(L, filename);
-        return 0;
+        lua_pushstring(L, filename);
+        goto fail;
     }
+
+    // We don't need the file or filename anymore.
+    free(filename);
+    filename = NULL;
     buffer_delete(file);
+    file = NULL;
 
     // Call it.  Result is on the stack.  Errors are propagated back through Lua.
     lua_call(L, 0, 1);
@@ -201,6 +206,12 @@ static int globalscript_require(lua_State* L) {
     }
 
     return 1;
+
+fail:
+    free(filename);
+    free(file);
+    globalscript_require_error(L); // never returns
+    return 0;
 }
 
 /**
