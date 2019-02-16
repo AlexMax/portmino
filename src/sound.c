@@ -130,12 +130,11 @@ sound_t* sound_new(const char* path) {
  * Free a sound
  */
 void sound_delete(sound_t* sound) {
-    if (sound->name != NULL) {
-        free(sound->name);
-    }
-    if (sound->sampledata != NULL) {
-        free(sound->sampledata); /* drwav_free is just "free" */
+    if (sound == NULL) {
+        return;
     }
 
+    free(sound->name);
+    free(sound->sampledata); /* drwav_free is just "free" */
     free(sound);
 }

@@ -135,38 +135,22 @@ void audio_deinit(void) {
     }
 
     // Delete all sounds
-    if (g_sound_cursor != NULL) {
-        sound_delete(g_sound_cursor);
-        g_sound_cursor = NULL;
-    }
-    if (g_sound_gameover != NULL) {
-        sound_delete(g_sound_gameover);
-        g_sound_gameover = NULL;
-    }
-    if (g_sound_lock != NULL) {
-        sound_delete(g_sound_lock);
-        g_sound_lock = NULL;
-    }
-    if (g_sound_move != NULL) {
-        sound_delete(g_sound_move);
-        g_sound_move = NULL;
-    }
-    if (g_sound_ok != NULL) {
-        sound_delete(g_sound_ok);
-        g_sound_ok = NULL;
-    }
-    if (g_sound_piece0 != NULL) {
-        sound_delete(g_sound_piece0);
-        g_sound_piece0 = NULL;
-    }
-    if (g_sound_rotate != NULL) {
-        sound_delete(g_sound_rotate);
-        g_sound_rotate = NULL;
-    }
-    if (g_sound_step != NULL) {
-        sound_delete(g_sound_step);
-        g_sound_step = NULL;
-    }
+    sound_delete(g_sound_cursor);
+    g_sound_cursor = NULL;
+    sound_delete(g_sound_gameover);
+    g_sound_gameover = NULL;
+    sound_delete(g_sound_lock);
+    g_sound_lock = NULL;
+    sound_delete(g_sound_move);
+    g_sound_move = NULL;
+    sound_delete(g_sound_ok);
+    g_sound_ok = NULL;
+    sound_delete(g_sound_piece0);
+    g_sound_piece0 = NULL;
+    sound_delete(g_sound_rotate);
+    g_sound_rotate = NULL;
+    sound_delete(g_sound_step);
+    g_sound_step = NULL;
 
     // Free the context.
     if (g_audio_ctx.sampledata != NULL) {
@@ -200,7 +184,7 @@ void audio_playsound(const sound_t* sound) {
  */
 audio_context_t* audio_frame(size_t frames) {
     if (frames != MINO_AUDIO_HZ / MINO_FPS) {
-        error_push("Dynamic audio frame sizes aren't implemented yet");
+        error_push("Dynamic audio frame sizes aren't implemented yet.");
         return NULL;
     }
 

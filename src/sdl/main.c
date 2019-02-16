@@ -92,6 +92,9 @@ static mevent_t sdl_scancode_to_mevent(int code) {
     }
 }
 
+/**
+ * Run one gametic worth of input, gameplay, video, and audio
+ */
 static void sdl_run(void) {
     // Performance counter
     uint64_t pcount;
@@ -160,25 +163,64 @@ static void sdl_run(void) {
     return;
 }
 
-static void clean_exit(void) {
+/**
+ * The main loop that runs the game
+ *
+ * We need to hit 16.666...ms as often as possible, so we can prevent clock
+ * drift and stuttering sound buffers.  We start with a target frametime of
+ * 17ms, 17ms, 16ms over three frames, which adds up to the same thing as
+ * 16.666... over three frames.
+ * 
+ * In addition, we keep an "adjustment" number that is calculated by
+ * comparing the time it took to run the last frame (including any sleep)
+ * to our target time.  If the frame is short, we don't particularly care,
+ * but if the frame goes long, we amortize the discrepency by subtracting
+ * the sleep by one over the next few frames.
+ */
+void sdl_loop(void) {
+    int targets[] = { 17, 17, 16 };
+    size_t i = 0;
+    int32_t fadjust = 0;
+    while (true) {
+        int ftarget = targets[i];
+        if (fadjust < 0) {
+            // Amortize the adjustment over many frames.
+            ftarget -= 1;
+            fadjust += 1;
+        }
+
+        // Actually run the frame, calculating how long we need to sleep.
+        uint32_t fstart = SDL_GetTicks();
+        sdl_run();
+        int32_t ftime = SDL_GetTicks() - fstart;
+
+        if (ftime < ftarget) {
+            // Sleep the rest of the frametime.
+            SDL_Delay(ftarget - ftime);
+        }
+
+        // Find any discrepencies between our desired total frame time
+        // and actual frame time over the next few tics. 
+        int32_t fttime = SDL_GetTicks() - fstart;
+        int32_t adjust = ftarget - fttime;
+        if (adjust < 0) {
+            fadjust += adjust;
+        }
+
+        i = (i + 1) % 3;
+    }
+}
+
+/**
+ * The main atexit handler
+ */
+static void sdl_clean_exit(void) {
     game_deinit();
 
-    if (g_audio_device != 0) {
-        SDL_CloseAudioDevice(g_audio_device);
-    }
-
-    if (g_texture != NULL) {
-        SDL_DestroyTexture(g_texture);
-    }
-
-    if (g_renderer != NULL) {
-        SDL_DestroyRenderer(g_renderer);
-    }
-
-    if (g_window != NULL) {
-        SDL_DestroyWindow(g_window);
-    }
-
+    SDL_CloseAudioDevice(g_audio_device);
+    SDL_DestroyTexture(g_texture);
+    SDL_DestroyRenderer(g_renderer);
+    SDL_DestroyWindow(g_window);
     SDL_Quit();
 
     platform_deinit();
@@ -186,7 +228,7 @@ static void clean_exit(void) {
 }
 
 int main(int argc, char** argv) {
-    atexit(clean_exit);
+    atexit(sdl_clean_exit);
 
     // Initialize the front-end.
     frontend_module_t frontend = {
@@ -257,49 +299,7 @@ int main(int argc, char** argv) {
     return 0;
 #endif
 
-    // Timing code.
-    //
-    // We need to hit 16.666...ms as often as possible, so we can prevent clock
-    // drift and stuttering sound buffers.  We start with a target frametime of
-    // 17ms, 17ms, 16ms over three frames, which adds up to the same thing as
-    // 16.666... over three frames.
-    //
-    // In addition, we keep an "adjustment" number that is calculated by
-    // comparing the time it took to run the last frame (including any sleep)
-    // to our target time.  If the frame is short, we don't particularly care,
-    // but if the frame goes long, we amortize the discrepency by subtracting
-    // the sleep by one over the next few frames.
-    int targets[] = { 17, 17, 16 };
-    size_t i = 0;
-    int32_t fadjust = 0;
-    while (true) {
-        int ftarget = targets[i];
-        if (fadjust < 0) {
-            // Amortize the adjustment over many frames.
-            ftarget -= 1;
-            fadjust += 1;
-        }
-
-        // Actually run the frame, calculating how long we need to sleep.
-        uint32_t fstart = SDL_GetTicks();
-        sdl_run();
-        int32_t ftime = SDL_GetTicks() - fstart;
-
-        if (ftime < ftarget) {
-            // Sleep the rest of the frametime.
-            SDL_Delay(ftarget - ftime);
-        }
-
-        // Find any discrepencies between our desired total frame time
-        // and actual frame time over the next few tics. 
-        int32_t fttime = SDL_GetTicks() - fstart;
-        int32_t adjust =  ftarget - fttime;
-        if (adjust < 0) {
-            fadjust += adjust;
-        }
-
-        i = (i + 1) % 3;
-    }
-
+    // Run our main loop.  Never returns.
+    sdl_loop();
     return 1;
 }
