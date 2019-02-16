@@ -9,16 +9,21 @@ endfunction()
 
 if(MSVC)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS)
+
+    # Extra warnings for clang-cl.exe
+    checked_add_compile_option(-Wno-pragma-pack W_NO_PACK)
 else()
     add_compile_options(-Wall -Wextra)
 
-    # Not sure if these warnings exist or not.
-    checked_add_compile_option(-Werror=implicit-function-declaration E_IMPLICIT_FUNC)
-    checked_add_compile_option(-Werror=incompatible-pointer-types E_INCOMPAT_PTR)
-    checked_add_compile_option(-Wformat=2 W_FORMAT_2)
-    checked_add_compile_option(-Wnull-dereference W_NULL_DEREF)
+    # Extra warnings for GCC
     checked_add_compile_option(-Wrestrict W_RESTRICT)
 endif()
+
+# These warnings exist in both GCC and Clang
+checked_add_compile_option(-Werror=implicit-function-declaration E_IMPLICIT_FUNC)
+checked_add_compile_option(-Werror=incompatible-pointer-types E_INCOMPAT_PTR)
+checked_add_compile_option(-Wformat=2 W_FORMAT_2)
+checked_add_compile_option(-Wnull-dereference W_NULL_DEREF)
 
 set(GAME_SOURCES
     audio.c         audio.h
