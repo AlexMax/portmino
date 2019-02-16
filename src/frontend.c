@@ -37,6 +37,14 @@ void frontend_deinit(void) {
 }
 
 /**
+ * Get a buffer containing a compiled-in basemino.pk3, or NULL if the file
+ * wasn't compiled in
+ */
+buffer_t* frontend_basemino(void) {
+    return g_frontend_module.basemino();
+}
+
+/**
  * Show an error message and terminate the game.
  */
 void frontend_fatalerror(const char *fmt, ...) {

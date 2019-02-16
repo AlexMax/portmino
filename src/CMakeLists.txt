@@ -85,8 +85,9 @@ if(UNIX)
     target_link_libraries(portmino-core m)
 endif()
 
-add_subdirectory(compat)
-add_subdirectory(lib)
+foreach(DIR basemino compat lib)
+    add_subdirectory(${DIR})
+endforeach()
 
 if(NOT EMSCRIPTEN)
     add_subdirectory(libretro)

@@ -24,6 +24,12 @@
  */
 typedef struct frontend_module_s {
     /**
+     * Call this to get a buffer containing basemino.pk3 if it has been compiled
+     * in, otherwise NULL.
+     */
+    buffer_t* (*basemino)(void);
+
+    /**
      * Call this when an unrecoverable error has occurred.
      */
     void (*fatalerror)(const char *fmt, va_list va);
@@ -31,4 +37,5 @@ typedef struct frontend_module_s {
 
 bool frontend_init(const frontend_module_t* module);
 void frontend_deinit(void);
+buffer_t* frontend_basemino(void);
 void frontend_fatalerror(const char *fmt, ...);

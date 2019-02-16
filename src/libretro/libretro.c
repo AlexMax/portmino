@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "audio.h"
+#include "basemino.h"
 #include "event.h"
 #include "frontend.h"
 #include "game.h"
@@ -35,6 +36,16 @@ static retro_video_refresh_t video_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
+
+static buffer_t g_basemino;
+
+static buffer_t* retro_basemino(void) {
+    if (g_basemino.data == NULL) {
+        g_basemino.data = basemino_pk3;
+        g_basemino.size = basemino_pk3_len;
+    }
+    return &g_basemino;
+}
 
 ATTRIB_PRINTF(1, 0)
 static void retro_fatalerror(const char *fmt, va_list va) {
@@ -113,6 +124,7 @@ RETRO_API void retro_set_input_state(retro_input_state_t cb) {
 
 RETRO_API void retro_init(void) {
     frontend_module_t module = {
+        retro_basemino,
         retro_fatalerror,
     };
     frontend_init(&module);
