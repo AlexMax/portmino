@@ -61,6 +61,11 @@
 #endif
 
 /**
+ * Count the number of items in a sized array.
+ */
+#define ARRAY_LEN(a) (sizeof(a) / sizeof((a)[0]))
+
+/**
  * Vector type of two integers
  */
 typedef struct {

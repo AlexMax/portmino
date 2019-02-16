@@ -26,6 +26,7 @@
 #include <SDL.h>
 
 #include "audio.h"
+#include "error.h"
 #include "event.h"
 #include "frontend.h"
 #include "game.h"
@@ -43,8 +44,17 @@ ATTRIB_PRINTF(1, 0)
 static void sdl_fatalerror(const char *fmt, va_list va) {
     char buffer[8192];
     vsnprintf(buffer, sizeof(buffer), fmt, va);
+
+    // Display any error messages we have stacked up.
+    char* i = NULL;
+    while ((i = error_pop()) != NULL) {
+        strncat(buffer, "\n", sizeof(buffer));
+        strncat(buffer, i, sizeof(buffer));
+    }
+
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, NULL);
     fputs(buffer, stderr);
+
     exit(1);
 }
 
@@ -236,7 +246,10 @@ int main(int argc, char** argv) {
     SDL_PauseAudioDevice(g_audio_device, 0);
 
     // Initialize the game before we run it.
-    game_init(argc, argv);
+    if (!game_init(argc, argv)) {
+        frontend_fatalerror("game_init failure");
+        return 1;
+    }
 
 #ifdef __EMSCRIPTEN__
     // Emscripten runs our main loop for us...

@@ -27,6 +27,7 @@
 #include "audioscript.h"
 #include "board.h"
 #include "boardscript.h"
+#include "error.h"
 #include "eventscript.h"
 #include "frontend.h"
 #include "globalscript.h"
@@ -126,33 +127,28 @@ static int ruleset_openlib(lua_State* L) {
  * Allocate a new ruleset.
  */
 ruleset_t* ruleset_new(const char* name) {
-    char* rulesetname = strdup(name);
-    if (rulesetname == NULL) {
-        frontend_fatalerror("Allocation error.");
-        return NULL;
-    }
+    char* filename = NULL;
+    buffer_t* file = NULL;
+    lua_State* L = NULL;
+    piece_configs_t* piece_configs = NULL;
+    ruleset_t* ruleset = NULL;
 
-    char* filepath = NULL;
-    int ok = asprintf(&filepath, "ruleset/%s/main.lua", name);
+    int ok = asprintf(&filename, "ruleset/%s/main.lua", name);
     if (ok < 0) {
-        frontend_fatalerror("Allocation error.");
+        error_push_allocerr();
         return NULL;
     }
 
     // Load the file with our ruleset in it.
-    buffer_t* file = vfs_file(filepath);
-    free(filepath);
-    filepath = NULL;
-    if (file == NULL) {
-        frontend_fatalerror("Could not find ruleset %s", name);
-        return NULL;
+    if ((file = vfs_file(filename)) == NULL) {
+        error_push("Could not find ruleset %s.", name);
+        goto fail;
     }
 
     // Create a new Lua state
-    lua_State* L = luaL_newstate();
-    if (L == NULL) {
-        buffer_delete(file);
-        return NULL;
+    if ((L = luaL_newstate()) == NULL) {
+        error_push_allocerr();
+        goto fail;
     }
 
     static const luaL_Reg loadedlibs[] = {
@@ -174,13 +170,16 @@ ruleset_t* ruleset_new(const char* name) {
     }
 
     // Load our file into the newly-created Lua state.
-    if (luaL_loadbufferx(L, (char*)file->data, file->size, "main", "t") != LUA_OK) {
-        buffer_delete(file);
-        lua_close(L);
-        frontend_fatalerror("Could not load ruleset %s", "default");
-        return NULL;
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, filename, "t") != LUA_OK) {
+        error_push("%s", lua_tostring(L, -1));
+        goto fail;
     }
+
+    // Free resources that we don't need anymore.
+    free(filename);
+    filename = NULL;
     buffer_delete(file);
+    file = NULL;
 
     // Create a restricted ruleset environment and push a ref to it into
     // the registry.
@@ -188,9 +187,8 @@ ruleset_t* ruleset_new(const char* name) {
     lua_pushvalue(L, -1);
     int env_ref = luaL_ref(L, LUA_REGISTRYINDEX); // pop env table dupe
     if (env_ref == LUA_REFNIL) {
-        lua_close(L);
-        frontend_fatalerror("Can't get a reference for \"env_ref\"");
-        return NULL;
+        error_push_allocerr();
+        goto fail;
     }
 
     // Set up links to the proper modules and globals.
@@ -199,7 +197,7 @@ ruleset_t* ruleset_new(const char* name) {
         "mino_next", "mino_event"
     };
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
-    for (size_t i = 0;i < sizeof(modules) / sizeof(modules[0]);i++) {
+    for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
         lua_getfield(L, -1, modules[i]);
         lua_setfield(L, -3, modules[i]);
     }
@@ -208,7 +206,7 @@ ruleset_t* ruleset_new(const char* name) {
     const char* globals[] = {
         "ipairs", "next", "pairs", "print", "require", "tostring", "_VERSION"
     };
-    for (size_t i = 0;i < sizeof(globals) / sizeof(globals[0]);i++) {
+    for (size_t i = 0;i < ARRAY_LEN(globals);i++) {
         lua_getglobal(L, globals[i]);
         lua_setfield(L, -2, globals[i]);
     }
@@ -226,120 +224,109 @@ ruleset_t* ruleset_new(const char* name) {
 
     // We now have the ruleset on the top of the stack.  Call it!
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
-        const char* err = lua_tostring(L, -1); // Error message
-        frontend_fatalerror("Could not execute ruleset %s\n%s", "default", err);
-        return NULL;
+        error_push("%s", lua_tostring(L, -1));
+        goto fail;
     }
 
     // We should have a table at the top of the stack that contains the
     // functions that implement the ruleset.
     if (lua_type(L, -1) != LUA_TTABLE) {
-        lua_close(L);
-        frontend_fatalerror("Could not find module table in ruleset %s", "default");
-        return NULL;
+        error_push("Could not find module table in ruleset %s.", name);
+        goto fail;
     }
 
     // Check for a table key that contains the state_frame function.
     lua_pushstring(L, "state_frame");
     int type = lua_gettable(L, -2);
     if (type == LUA_TNIL) {
-        lua_close(L);
-        frontend_fatalerror("Could not find function \"state_frame\" in module table in ruleset %s", "default");
-        return NULL;
+        error_push("Could not find function \"state_frame\" in module table in ruleset %s.", name);
+        goto fail;
     } else if (type != LUA_TFUNCTION) {
-        lua_close(L);
-        frontend_fatalerror("\"state_frame\" is not a function in ruleset %s", "default");
-        return NULL;
+        error_push("\"state_frame\" is not a function in ruleset %s.", name);
+        goto fail;
     }
 
     // Create a reference to the state_frame function.
     int state_frame_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     if (state_frame_ref == LUA_REFNIL) {
-        lua_close(L);
-        frontend_fatalerror("Can't get a reference for \"state_frame\"");
-        return NULL;
+        error_push_allocerr();
+        goto fail;
     }
 
     // Check for a table key that contains the state table.
     lua_pushstring(L, "state");
     type = lua_gettable(L, -2);
     if (type == LUA_TNIL) {
-        lua_close(L);
-        frontend_fatalerror("Could not find table \"state\" in module table in ruleset %s", "default");
-        return NULL;
+        error_push("Could not find table \"state\" in module table in ruleset %s.", name);
+        goto fail;
     } else if (type != LUA_TTABLE) {
-        lua_close(L);
-        frontend_fatalerror("\"state\" is not a table in ruleset %s", "default");
-        return NULL;
+        error_push("\"state\" is not a table in ruleset %s.", name);
+        goto fail;
     }
 
     // Create a reference to the state table.
     int state_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     if (state_ref == LUA_REFNIL) {
-        lua_close(L);
-        frontend_fatalerror("Can't get a reference for \"state\"");
-        return NULL;
+        error_push_allocerr();
+        goto fail;
     }
 
     // Load our pieces.
     lua_pushstring(L, "pieces");
     type = lua_gettable(L, -2);
     if (type == LUA_TNIL) {
-        lua_close(L);
-        frontend_fatalerror("Could not find table \"pieces\" in module table in ruleset %s", "default");
-        return NULL;
+        error_push("Could not find table \"pieces\" in module table in ruleset %s.", name);
+        goto fail;
     } else if (type != LUA_TTABLE) {
-        lua_close(L);
-        frontend_fatalerror("\"pieces\" is not a table in ruleset %s", "default");
-        return NULL;
+        error_push("\"pieces\" is not a table in ruleset %s.", name);
+        goto fail;
     }
 
     // Iterate through the piece array.
-    piece_configs_t* piece_configs = piece_configs_new(L); // pops piece array
-    if (piece_configs == NULL) {
-        // FIXME: Figure out how to close Lua state safely.
-        const char* error = lua_tostring(L, -1);
-        frontend_fatalerror("Error parsing pieces in ruleset %s: %s", "default", error);
-        return NULL;
+    if ((piece_configs = piece_configs_new(L)) == NULL) {
+        error_push("Error parsing pieces in ruleset %s: %s", name, lua_tostring(L, -1));
+        goto fail;
     }
 
     // Check for a table key that contains the next_piece function.
     lua_pushstring(L, "next_piece");
     type = lua_gettable(L, -2);
     if (type == LUA_TNIL) {
-        lua_close(L);
-        frontend_fatalerror("Could not find function \"next_piece\" in module table in ruleset %s", "default");
-        return NULL;
+        error_push("Could not find function \"next_piece\" in module table in ruleset %s.", name);
+        goto fail;
     } else if (type != LUA_TFUNCTION) {
-        lua_close(L);
-        frontend_fatalerror("\"next_piece\" is not a function in ruleset %s", "default");
-        return NULL;
+        error_push("\"next_piece\" is not a function in ruleset %s.", name);
+        goto fail;
     }
 
     // Create a reference to the next_piece function.
     int next_piece_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     if (next_piece_ref == LUA_REFNIL) {
-        lua_close(L);
-        frontend_fatalerror("Can't get a reference for \"next_piece\"");
-        return NULL;
+        error_push_allocerr();
+        goto fail;
     }
 
     // We should only have the ruleset on the stack.  Always finish your
     // Lua meddling with a clean stack.
     if (lua_gettop(L) != 1) {
-        lua_close(L);
-        frontend_fatalerror("Lua stack not cleaned up in ruleset_new");
-        return NULL;
+        error_push("Lua stack not cleaned up.");
+        goto fail;
     }
     lua_pop(L, 1);
 
     // We're all set!  Create the structure to actually hold our ruleset.
-    ruleset_t* ruleset = calloc(1, sizeof(ruleset_t));
-    if (ruleset == NULL) {
-        return NULL;
+    if ((ruleset = calloc(1, sizeof(ruleset_t))) == NULL) {
+        error_push_allocerr();
+        goto fail;
     }
 
-    ruleset->name = rulesetname;
+    // Copy our ruleset name - has the potential to fail.
+    ruleset->name = strdup(name);
+    if (ruleset->name == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
     ruleset->lua = L;
     ruleset->state_frame_ref = state_frame_ref;
     ruleset->state_ref = state_ref;
@@ -348,26 +335,33 @@ ruleset_t* ruleset_new(const char* name) {
     ruleset->env_ref = env_ref;
 
     return ruleset;
+
+fail:
+    free(filename);
+    buffer_delete(file);
+    lua_close(L);
+    piece_configs_delete(piece_configs);
+    ruleset_delete(ruleset);
+
+    return NULL;
 }
 
 /**
  * Free a ruleset.
  */
 void ruleset_delete(ruleset_t* ruleset) {
-    if (ruleset->name != NULL) {
-        free(ruleset->name);
-        ruleset->name = NULL;
+    if (ruleset == NULL) {
+        return;
     }
 
-    if (ruleset->lua != NULL) {
-        lua_close(ruleset->lua);
-        ruleset->lua = NULL;
-    }
+    free(ruleset->name);
+    ruleset->name = NULL;
 
-    if (ruleset->pieces != NULL) {
-        piece_configs_delete(ruleset->pieces);
-        ruleset->pieces = NULL;
-    }
+    lua_close(ruleset->lua);
+    ruleset->lua = NULL;
+
+    piece_configs_delete(ruleset->pieces);
+    ruleset->pieces = NULL;
 
     free(ruleset);
 }
@@ -419,7 +413,7 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
 
         // Load the config file - pushes the data or an error to the stack.
         if (!script_load_config(ruleset->lua, file, *i)) {
-            fprintf(stderr, "%s\n", lua_tostring(ruleset->lua, -1));
+            error_push("%s", lua_tostring(ruleset->lua, -1));
             buffer_delete(file);
             lua_settop(ruleset->lua, top);
             continue;

@@ -43,7 +43,7 @@ static render_module_t* g_render;
  * 
  * Pass in argc and argv so we can parse options and initialize the VFS.
  */
-void game_init(int argc, char** argv) {
+bool game_init(int argc, char** argv) {
     // Initialize subsystems.
     bool ok;
     if (argc > 0) {
@@ -54,14 +54,21 @@ void game_init(int argc, char** argv) {
         ok = vfs_init(NULL);
     }
     if (!ok) {
-        frontend_fatalerror("Could not initialize virtual filesystem.\n");
+        return false;
     }
     g_render = render_init();
     audio_init();
 
     // We start at the main menu.
+    screen_t mainmenu = mainmenu_new();
+    if (mainmenu.config.type == SCREEN_NONE) {
+        return false;
+    }
+
     screens_init(&g_screens);
-    screens_push(&g_screens, mainmenu_new());
+    screens_push(&g_screens, mainmenu);
+
+    return true;
 }
 
 /**

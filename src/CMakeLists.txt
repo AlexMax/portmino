@@ -26,6 +26,7 @@ set(GAME_SOURCES
     board.c         board.h
     boardscript.c   boardscript.h
     define.c        define.h
+    error.c         error.h
     event.c         event.h
     eventscript.c   eventscript.h
     frontend.c      frontend.h

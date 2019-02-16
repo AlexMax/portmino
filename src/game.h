@@ -17,10 +17,12 @@
 
 #pragma once
 
+#include "define.h"
+
 // Forward declarations.
 typedef struct gameevents_s gameevents_t;
 
-void game_init(int argc, char** argv);
+bool game_init(int argc, char** argv);
 void game_deinit(void);
 void game_frame(const gameevents_t* events);
 void* game_draw(void);

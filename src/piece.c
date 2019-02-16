@@ -189,6 +189,10 @@ piece_configs_t* piece_configs_new(lua_State* L) {
  * Frees a piece configuration array
  */
 void piece_configs_delete(piece_configs_t* piece_configs) {
+    if (piece_configs == NULL) {
+        return;
+    }
+
     if (piece_configs->configs != NULL) {
         if (piece_configs->size != 0) {
             for (size_t i = 0;i < piece_configs->size;i++) {

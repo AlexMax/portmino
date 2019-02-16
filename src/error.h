@@ -15,18 +15,17 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "define.h"
+#pragma once
 
-#include <stdlib.h>
+/**
+ * Push a generic memory allocation error
+ * 
+ * These are needed in a number of spots, to the point where we need some
+ * way to disambiguate them.
+ */
+#define error_push_allocerr() \
+    error_push("%s:%d Memory allocation error.", __FILE__, __LINE__)
 
-void buffer_delete(buffer_t* buf) {
-    if (buf == NULL) {
-        return;
-    }
-
-    if (buf->data != NULL) {
-        free(buf->data);
-    }
-
-    free(buf);
-}
+ATTRIB_PRINTF(1, 2)
+void error_push(const char* fmt, ...);
+char* error_pop(void);
