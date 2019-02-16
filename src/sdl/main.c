@@ -48,8 +48,8 @@ static void sdl_fatalerror(const char *fmt, va_list va) {
     // Display any error messages we have stacked up.
     char* i = NULL;
     while ((i = error_pop()) != NULL) {
-        strncat(buffer, "\n", sizeof(buffer));
-        strncat(buffer, i, sizeof(buffer));
+        strncat(buffer, "\n", sizeof(buffer) - 1);
+        strncat(buffer, i, sizeof(buffer) - 1);
     }
 
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, NULL);
