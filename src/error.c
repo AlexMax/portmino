@@ -88,8 +88,6 @@ void error_push(const char* fmt, ...) {
  * Read an error message and mark it as read
  */
 char* error_pop(void) {
-    error_debug();
-
     if (g_error_count == 0) {
         // No errors to pop
         return NULL;

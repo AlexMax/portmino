@@ -56,8 +56,14 @@ bool game_init(int argc, char** argv) {
     if (!ok) {
         return false;
     }
-    g_render = render_init();
-    audio_init();
+
+    if ((g_render = render_init()) == NULL) {
+        return false;
+    }
+
+    if (!audio_init()) {
+        return false;
+    }
 
     // We start at the main menu.
     screen_t mainmenu = mainmenu_new();

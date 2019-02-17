@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "board.h"
+#include "error.h"
 #include "next.h"
 #include "piece.h"
 #include "render.h"
@@ -48,7 +49,7 @@ static picture_t* g_board;
 static softblock_t* g_block;
 static softfont_t* g_font;
 
-static void softrender_init(void) {
+static bool softrender_init(void) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
 
     // Initialize the buffer picture in-place.
@@ -80,10 +81,12 @@ static void softrender_init(void) {
         goto fail;
     }
 
-    return;
+    return true;
 
 fail:
     softrender_deinit();
+    error_push("Could not initialize software renderer.");
+    return false;
 }
 
 static void softrender_deinit(void) {

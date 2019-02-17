@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "softrender.h"
 
 /**
@@ -27,7 +28,9 @@
  */
 render_module_t* render_init(void) {
     // TODO: Figure out what kind of renderer that we want to use here.
-    soft_render_module.init();
+    if (!soft_render_module.init()) {
+        return NULL;
+    }
     return &soft_render_module;
 }
 

@@ -103,7 +103,7 @@ static void audio_mixer_debug(void) {
 /**
  * Initialize the audio subsystem.
  */
-void audio_init(void) {
+bool audio_init(void) {
     // Initialize the mixer
     for (size_t i = 0;i < MIXER_CHANNELS;i++) {
         audio_mixer_channel_reset(&g_audio_mixer[i]);
@@ -113,16 +113,41 @@ void audio_init(void) {
     g_audio_ctx.framecount = MINO_AUDIO_HZ / MINO_FPS;
     g_audio_ctx.sizeofframe = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
     g_audio_ctx.bytesize = g_audio_ctx.framecount * g_audio_ctx.sizeofframe;
-    g_audio_ctx.sampledata = malloc(g_audio_ctx.bytesize);
+    if ((g_audio_ctx.sampledata = malloc(g_audio_ctx.bytesize)) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
 
-    g_sound_cursor = sound_new("sfx/default/cursor.wav");
-    g_sound_gameover = sound_new("sfx/default/gameover.wav");
-    g_sound_lock = sound_new("sfx/default/lock.wav");
-    g_sound_move = sound_new("sfx/default/move.wav");
-    g_sound_ok = sound_new("sfx/default/ok.wav");
-    g_sound_piece0 = sound_new("sfx/default/piece0.wav");
-    g_sound_rotate = sound_new("sfx/default/rotate.wav");
-    g_sound_step = sound_new("sfx/default/step.wav");
+    if ((g_sound_cursor = sound_new("sfx/default/cursor.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_gameover = sound_new("sfx/default/gameover.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_lock = sound_new("sfx/default/lock.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_move = sound_new("sfx/default/move.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_ok = sound_new("sfx/default/ok.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_piece0 = sound_new("sfx/default/piece0.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_rotate = sound_new("sfx/default/rotate.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_step = sound_new("sfx/default/step.wav")) == NULL) {
+        goto fail;
+    }
+
+    return true;
+
+fail:
+    error_push("Could not initialize audio subsystem");
+    return false;
 }
 
 /**
@@ -153,10 +178,8 @@ void audio_deinit(void) {
     g_sound_step = NULL;
 
     // Free the context.
-    if (g_audio_ctx.sampledata != NULL) {
-        free(g_audio_ctx.sampledata);
-        g_audio_ctx.sampledata = NULL;
-    }
+    free(g_audio_ctx.sampledata);
+    g_audio_ctx.sampledata = NULL;
 }
 
 /**

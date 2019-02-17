@@ -41,7 +41,7 @@ typedef struct {
     /**
      * This function is run when the renderer is initialized.
      */
-    void (*init)(void);
+    bool (*init)(void);
 
     /**
      * This function is run when the renderer is destroyed.
@@ -61,7 +61,7 @@ typedef struct {
     /**
      * Draw the main menu background image.
      */
-    void(*draw_mainmenu_bg)(void);
+    void (*draw_mainmenu_bg)(void);
 
     /**
      * This function draws text on the screen.
