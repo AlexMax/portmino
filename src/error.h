@@ -29,3 +29,4 @@
 ATTRIB_PRINTF(1, 2)
 void error_push(const char* fmt, ...);
 char* error_pop(void);
+size_t error_count(void);

@@ -68,10 +68,21 @@ static void sdl_fatalerror(const char *fmt, va_list va) {
     vsnprintf(buffer, sizeof(buffer), fmt, va);
 
     // Display any error messages we have stacked up.
-    char* i = NULL;
-    while ((i = error_pop()) != NULL) {
-        strncat(buffer, "\n", sizeof(buffer) - 1);
-        strncat(buffer, i, sizeof(buffer) - 1);
+    char work[1024];
+    if (error_count() > 0) {
+        // Show a count of errors
+        snprintf(work, sizeof(work), "\nMost recent %zu errors...", error_count());
+        strncat(buffer, work, sizeof(buffer) - 1);
+
+        // Pop all errors from the queue
+        char* i = NULL;
+        while ((i = error_pop()) != NULL) {
+            strncat(buffer, "\n- ", sizeof(buffer) - 1);
+            strncat(buffer, i, sizeof(buffer) - 1);
+        }
+    } else {
+        // Why are we erroring out if the error stack is empty?
+        strncat(buffer, "\nError stack is empty...", sizeof(buffer) - 1);
     }
 
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Portmino", buffer, NULL);
@@ -311,7 +322,7 @@ int main(int argc, char** argv) {
 
     // Initialize the game before we run it.
     if (!game_init(argc, argv)) {
-        frontend_fatalerror("game_init failure");
+        frontend_fatalerror("Could not initialize the game.");
         return 1;
     }
 

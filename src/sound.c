@@ -59,7 +59,7 @@ sound_t* sound_new(const char* path) {
 
     buffer_t* file = vfs_file(path);
     if (file == NULL) {
-        frontend_fatalerror("Could not find sound %s", path);
+        error_push("Could not find sound %s.", path);
         return NULL;
     }
 

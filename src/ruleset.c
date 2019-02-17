@@ -339,7 +339,9 @@ ruleset_t* ruleset_new(const char* name) {
 fail:
     free(filename);
     buffer_delete(file);
-    lua_close(L);
+    if (L != NULL) {
+        lua_close(L);
+    }
     piece_configs_delete(piece_configs);
     ruleset_delete(ruleset);
 
