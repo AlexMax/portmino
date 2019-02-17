@@ -4,6 +4,10 @@ project(Portmino C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# Global cache values
+set(PORTMINO_EMBED_RESOURCE OFF
+    CACHE BOOL "Embed resource file in all targets, including those that don't need it, like SDL.")
+
 # Use folders in Visual Studio.  This helps us hide irrelevant targets in subprojects.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 

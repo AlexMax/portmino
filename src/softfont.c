@@ -67,11 +67,13 @@ softfont_t* softfont_new(const char* path) {
  * Free a software font struct.
  */
 void softfont_delete(softfont_t* font) {
+    if (font == NULL) {
+        return;
+    }
+
     for (size_t i = 0;i < MAX_GLYPHS;i++) {
-        if (font->glyphs[i] != NULL) {
-            picture_delete(font->glyphs[i]);
-            font->glyphs[i] = NULL;
-        }
+        picture_delete(font->glyphs[i]);
+        font->glyphs[i] = NULL;
     }
 
     free(font);

@@ -40,6 +40,28 @@ static SDL_AudioDeviceID g_audio_device;
 
 static double g_pfreq;
 
+#if defined(MINO_EMBED_RESOURCE)
+
+#include "basemino.h"
+
+static buffer_t g_basemino;
+
+static buffer_t* sdl_basemino(void) {
+    if (g_basemino.data == NULL) {
+        g_basemino.data = basemino_pk3;
+        g_basemino.size = basemino_pk3_len;
+    }
+    return &g_basemino;
+}
+
+#else
+
+static buffer_t* sdl_basemino(void) {
+    return NULL;
+}
+
+#endif
+
 ATTRIB_PRINTF(1, 0)
 static void sdl_fatalerror(const char *fmt, va_list va) {
     char buffer[8192];
@@ -232,7 +254,7 @@ int main(int argc, char** argv) {
 
     // Initialize the front-end.
     frontend_module_t frontend = {
-        sdl_fatalerror
+        sdl_basemino, sdl_fatalerror
     };
     if (!frontend_init(&frontend)) {
         fprintf(stderr, "frontend_init failure\n");

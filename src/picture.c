@@ -22,6 +22,7 @@
 
 #include "stb_image.h"
 
+#include "error.h"
 #include "frontend.h"
 #include "vfs.h"
 
@@ -63,15 +64,16 @@ picture_t* picture_new(int width, int height) {
  * Create a new picture from a virtual file path.
  */
 picture_t* picture_new_vfs(const char* path) {
-    picture_t* pic = malloc(sizeof(picture_t));
-    if (pic == NULL) {
-        return NULL;
+    buffer_t* file = NULL;
+    picture_t* pic = NULL;
+
+    if ((file = vfs_file(path)) == NULL) {
+        error_push("Could not find picture %s", path);
+        goto fail;
     }
 
-    buffer_t* file = vfs_file(path);
-    if (file == NULL) {
-        picture_delete(pic);
-        frontend_fatalerror("Could not find picture %s", path);
+    if ((pic = calloc(1, sizeof(picture_t))) == NULL) {
+        error_push_allocerr();
         return NULL;
     }
 
@@ -79,16 +81,15 @@ picture_t* picture_new_vfs(const char* path) {
     pic->data = stbi_load_from_memory(file->data, file->size,
         &x, &y, &bpp, MINO_PICTURE_BPP);
     if (pic->data == NULL) {
-        picture_delete(pic);
-        buffer_delete(file);
-        frontend_fatalerror("Could not load picture %s", path);
-        return NULL;
+        error_push("Could not load picture %s", path);
+        goto fail;
     }
     buffer_delete(file);
+    file = NULL;
 
     if (x > UINT16_MAX || y > UINT16_MAX) {
-        picture_delete(pic);
-        return NULL;
+        error_push("Picture (%s) dimensions are too large (%ux%u).", path, x, y);
+        goto fail;
     }
 
     pic->width = x;
@@ -105,15 +106,22 @@ picture_t* picture_new_vfs(const char* path) {
     }
 
     return pic;
+
+fail:
+    buffer_delete(file);
+    picture_delete(pic);
+    return NULL;
 }
 
 /**
  * Delete a picture structure.
  */
 void picture_delete(picture_t* pic) {
-    if (pic->data != NULL) {
-        free(pic->data); // stbi_image_free is just "free"
+    if (pic == NULL) {
+        return;
     }
+
+    free(pic->data); // stbi_image_free is just "free"
     free(pic);
 }
 

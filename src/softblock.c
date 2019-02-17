@@ -84,19 +84,19 @@ softblock_t* softblock_new(const char* path) {
  * Free a block atlas.
  */
 void softblock_delete(softblock_t* block) {
+    if (block == NULL) {
+        return;
+    }
+
     if (block->count > 0) {
         for (size_t i = 0;i < block->count;i++) {
-            if (block->blocks[i] != NULL) {
-                picture_delete(block->blocks[i]);
-                block->blocks[i] = NULL;
-            }
+            picture_delete(block->blocks[i]);
+            block->blocks[i] = NULL;
         }
     }
 
-    if (block->blocks != NULL) {
-        free(block->blocks);
-        block->blocks = NULL;
-    }
+    free(block->blocks);
+    block->blocks = NULL;
 
     free(block);
 }

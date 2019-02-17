@@ -37,6 +37,9 @@
 #define NEXT_X_START 18
 #define NEXT_Y (BOARD_Y - 20)
 
+// Forward declarations
+static void softrender_deinit(void);
+
 static softrender_context_t g_render_ctx;
 
 // FIXME: Don't use a global picture
@@ -49,52 +52,58 @@ static void softrender_init(void) {
     size_t size = MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT * MINO_SOFTRENDER_BPP;
 
     // Initialize the buffer picture in-place.
-    g_render_ctx.buffer.data = calloc(size, sizeof(uint8_t));
+    if ((g_render_ctx.buffer.data = calloc(size, sizeof(uint8_t))) == NULL) {
+        goto fail;
+    }
     g_render_ctx.buffer.size = size;
     g_render_ctx.buffer.width = MINO_SOFTRENDER_WIDTH;
     g_render_ctx.buffer.height = MINO_SOFTRENDER_HEIGHT;
 
-    g_back = picture_new_vfs("background/default/1.png");
+    if ((g_back = picture_new_vfs("background/default/1.png")) == NULL) {
+        goto fail;
+    }
 
-    g_board = picture_new_vfs("interface/default/board.png");
+    if ((g_board = picture_new_vfs("interface/default/board.png")) == NULL) {
+        goto fail;
+    }
+
     // Board picture has adjustable transparency.
     for (size_t i = 0;i < g_board->size;i += MINO_SOFTRENDER_BPP) {
         g_board->data[i + 3] = 192;
     }
 
-    g_block = softblock_new("block/default/8px.png");
+    if ((g_block = softblock_new("block/default/8px.png")) == NULL) {
+        goto fail;
+    }
 
-    g_font = softfont_new("interface/default/font.png");
+    if ((g_font = softfont_new("interface/default/font.png")) == NULL) {
+        goto fail;
+    }
+
+    return;
+
+fail:
+    softrender_deinit();
 }
 
 static void softrender_deinit(void) {
-    if (g_back != NULL) {
-        picture_delete(g_back);
-        g_back = NULL;
-    }
+    picture_delete(g_back);
+    g_back = NULL;
 
-    if (g_board != NULL) {
-        picture_delete(g_board);
-        g_board = NULL;
-    }
+    picture_delete(g_board);
+    g_board = NULL;
 
-    if (g_block != NULL) {
-        softblock_delete(g_block);
-        g_block = NULL;
-    }
+    softblock_delete(g_block);
+    g_block = NULL;
 
-    if (g_font != NULL) {
-        softfont_delete(g_font);
-        g_font = NULL;
-    }
+    softfont_delete(g_font);
+    g_font = NULL;
 
-    if (g_render_ctx.buffer.data != NULL) {
-        free(g_render_ctx.buffer.data);
-        g_render_ctx.buffer.data = NULL;
-        g_render_ctx.buffer.size = 0;
-        g_render_ctx.buffer.width = 0;
-        g_render_ctx.buffer.height = 0;
-    }
+    free(g_render_ctx.buffer.data);
+    g_render_ctx.buffer.data = NULL;
+    g_render_ctx.buffer.size = 0;
+    g_render_ctx.buffer.width = 0;
+    g_render_ctx.buffer.height = 0;
 }
 
 /**
