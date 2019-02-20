@@ -1,27 +1,27 @@
 ## libsamplerate
-add_subdirectory(libsamplerate-master EXCLUDE_FROM_ALL)
-set_target_properties(
-    callback_hang_test
-    callback_test
-    clone_test
-    downsample_test
-    float_short_test
-    misc_test
-    multi_channel_test
-    multichan_throughput_test
-    nullptr_test
-    reset_test
-    simple_test
-    snr_bw_test
-    streaming_test
-    termination_test
-    throughput_test
-    timewarp-file
-    varispeed-play
-    varispeed_test
-    PROPERTIES
-    EXCLUDE_FROM_DEFAULT_BUILD 1
-    FOLDER ExcludedTargets)
+#add_subdirectory(libsamplerate-master EXCLUDE_FROM_ALL)
+#set_target_properties(
+#    callback_hang_test
+#    callback_test
+#    clone_test
+#    downsample_test
+#    float_short_test
+#    misc_test
+#    multi_channel_test
+#    multichan_throughput_test
+#    nullptr_test
+#    reset_test
+#    simple_test
+#    snr_bw_test
+#    streaming_test
+#    termination_test
+#    throughput_test
+#    timewarp-file
+#    varispeed-play
+#    varispeed_test
+#    PROPERTIES
+#    EXCLUDE_FROM_DEFAULT_BUILD 1
+#    FOLDER ExcludedTargets)
 
 ## Lua
 

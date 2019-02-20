@@ -24,6 +24,7 @@
 
 #include "dr_wav.h"
 
+#include "error.h"
 #include "frontend.h"
 #include "vfs.h"
 

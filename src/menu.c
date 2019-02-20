@@ -114,13 +114,13 @@ bool menulist_push(menulist_t* menulist, const menulist_params_t* params) {
     return true;
 
 fail:
-
     free(item->value);
     item->value = NULL;
     free(item->label);
     item->label = NULL;
     free(item->help);
     item->help = NULL;
+    free(item);
 
     return false;
 }

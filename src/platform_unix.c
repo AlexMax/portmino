@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "vfs.h"
 
 /**
@@ -125,52 +126,64 @@ static const char** unix_data_dirs(void) {
         return (const char**)g_data_dirs;
     }
 
+    char* xdg_data_home = NULL;
+    char* xdg_data_dirs = NULL;
+    char* xdg_all_dirs = NULL;;
+
     // Home data directory
-    char* xdg_data_home = getenv("XDG_DATA_HOME");
-    if (xdg_data_home == NULL) {
+    xdg_data_home = getenv("XDG_DATA_HOME");
+    if (xdg_data_home == NULL || xdg_data_home[0] == '\0') {
+        // Not set.  Use the standard location.
         xdg_data_home = vfs_path_join(g_home_dir, ".local/share", '/');
         if (xdg_data_home == NULL) {
+            error_push_allocerr();
             return NULL;
         }
     } else {
+        // Duplicate the env, so we can free it later.
         xdg_data_home = strdup(xdg_data_home);
         if (xdg_data_home == NULL) {
+            error_push_allocerr();
             return NULL;
         }
     }
 
     // XDG data directories
-    char* xdg_data_dirs = getenv("XDG_DATA_DIRS");
+    xdg_data_dirs = getenv("XDG_DATA_DIRS");
     if (xdg_data_dirs == NULL) {
+        // Not set.  Use the standard location.
         xdg_data_dirs = strdup("/usr/local/share/:/usr/share/");
         if (xdg_data_dirs == NULL) {
-            free(xdg_data_home);
-            return NULL;
+            error_push_allocerr();
+            goto fail;
         }
     } else {
+        // Duplicate the env, so we can free it later.
         xdg_data_dirs = strdup(xdg_data_dirs);
         if (xdg_data_dirs == NULL) {
-            free(xdg_data_home);
-            return NULL;
+            error_push_allocerr();
+            goto fail;
         }
     }
 
     // Combine the list of directories into one big list.
-    char* xdg_all_dirs;
-    int bytes = asprintf(&xdg_all_dirs, "%s:%s", xdg_data_home, xdg_data_dirs);
+    int ok = asprintf(&xdg_all_dirs, "%s:%s", xdg_data_home, xdg_data_dirs);
     free(xdg_data_home);
+    xdg_data_home = NULL;
     free(xdg_data_dirs);
-    if (bytes < 0) {
-        // Allocation was unsuccessful.
-        return NULL;
+    xdg_data_dirs = NULL;
+    if (ok < 0) {
+        error_push_allocerr();
+        goto fail;
     }
 
     // Split the list of data dirs into separate strings.
     g_data_dirs = malloc(sizeof(char*));
     if (g_data_dirs == NULL) {
-        // Allocation was unsuccessful.
-        return NULL;
+        error_push_allocerr();
+        goto fail;
     }
+    *g_data_dirs = NULL; // Empty list
 
     size_t index = 0;
     char* token = NULL;
@@ -179,13 +192,16 @@ static const char** unix_data_dirs(void) {
         // Join the current directory with the portmino subdirectory.
         char* dir = vfs_path_join(token, MINO_SUBDIR, '/');
         if (dir == NULL) {
-            break;
+            error_push_allocerr();
+            goto fail;
         }
 
         // Make room for the next entry...
         char** new_data_dirs = realloc(g_data_dirs, sizeof(char*) * (index + 2));
         if (new_data_dirs == NULL) {
-            break;
+            free(dir);
+            error_push_allocerr();
+            goto fail;
         }
         g_data_dirs = new_data_dirs;
 
@@ -198,15 +214,24 @@ static const char** unix_data_dirs(void) {
         g_data_dirs[index] = NULL;
     }
 
-    // If our iteration stopped midway through, ensure that the last index
-    // we were looking at is set to NULL.
-    if (g_data_dirs[index] != NULL) {
-        free(g_data_dirs[index]);
-        g_data_dirs[index] = NULL;
-    }
-
     free(xdg_all_dirs);
     return (const char**)g_data_dirs;
+
+fail:
+    free(xdg_data_home);
+    free(xdg_data_dirs);
+    free(xdg_all_dirs);
+
+    if (g_data_dirs != NULL) {
+        for (size_t i = 0;g_data_dirs[i] != NULL;i++) {
+            free(g_data_dirs[i]);
+            g_data_dirs[i] = NULL;
+        }
+    }
+    free(g_data_dirs);
+    g_data_dirs = NULL;
+
+    return NULL;
 }
 
 static bool unix_random_get_seed(uint32_t* seed) {

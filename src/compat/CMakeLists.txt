@@ -1,3 +1,5 @@
+include(CheckSymbolExists)
+
 set(COMPAT_SOURCES compat.h null.c)
 
 set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")

@@ -25,6 +25,9 @@ endif()
 find_package(Sanitizers)
 find_package(SDL2)
 
-foreach(DIR dep res src)
+# Unit testing
+include(CTest)
+
+foreach(DIR dep res src test)
     add_subdirectory(${DIR})
 endforeach()
