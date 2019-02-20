@@ -4,7 +4,7 @@ project(Portmino C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Global cache values
+# Global cache values - these are settings that are actually germane to the build process.
 set(PORTMINO_EMBED_RESOURCE OFF
     CACHE BOOL "Embed resource file in all targets, including those that don't need it, like SDL.")
 
@@ -12,7 +12,7 @@ set(PORTMINO_EMBED_RESOURCE OFF
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Force colored output with GCC/Clang.  This ensures that we get colored output with Ninja.
-option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
+option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." ON)
 if(${FORCE_COLORED_OUTPUT})
     if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
         add_compile_options(-fdiagnostics-color=always)
@@ -25,9 +25,14 @@ endif()
 find_package(Sanitizers)
 find_package(SDL2)
 
-# Unit testing
-include(CTest)
-
-foreach(DIR dep res src test)
+# Portmino directories
+foreach(DIR dep res src)
     add_subdirectory(${DIR})
 endforeach()
+
+# Unit testing
+option(BUILD_TESTING "Build unit tests - requires cmocka." OFF)
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(test)
+endif()
