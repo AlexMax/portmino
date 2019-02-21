@@ -80,7 +80,7 @@ if(UNIX)
 endif()
 target_include_directories(portmino-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(portmino-core portmino-lib portmino-compat
-                      lua physfs-static)
+                      lua-x physfs-static)
 if(UNIX)
     target_link_libraries(portmino-core m)
 endif()

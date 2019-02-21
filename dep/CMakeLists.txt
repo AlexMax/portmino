@@ -1,3 +1,18 @@
+# Some stuff to remember about ExternalProject
+#
+# - BUILD_BYPRODUCTS is necessary for Ninja to pick up on the dependency.
+# - In custom build steps, be explicit about both DEPENDEES and DEPENDERS or
+#   else the build step might not be executed after a clean.
+
+include(ExternalProject)
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/local/include")
+
+## cmocka
+ExternalProject_Add(cmocka
+    URL "https://cmocka.org/files/1.1/cmocka-1.1.3.tar.xz"
+    CMAKE_ARGS "-DWITH_STATIC_LIB=ON" "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
+    EXCLUDE_FROM_ALL ON)
+
 ## libsamplerate
 #add_subdirectory(libsamplerate-master EXCLUDE_FROM_ALL)
 #set_target_properties(
@@ -24,57 +39,22 @@
 #    FOLDER ExcludedTargets)
 
 ## Lua
+set(LUA_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/local/lib/${CMAKE_STATIC_LIBRARY_PREFIX}lua${CMAKE_STATIC_LIBRARY_SUFFIX}")
+ExternalProject_Add(lua
+    URL "http://www.lua.org/ftp/lua-5.3.5.tar.gz"
+    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
+    BUILD_BYPRODUCTS ${LUA_LIBRARY}
+    EXCLUDE_FROM_ALL ON)
+ExternalProject_Add_Step(lua copy-cmake
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/buildlua.cmake ${CMAKE_CURRENT_BINARY_DIR}/lua-prefix/src/lua/CMakeLists.txt
+    DEPENDEES download DEPENDERS configure
+    COMMENT "Copy CMakeLists.txt")
 
-# Lua does not have CMake build files.  Thus, we must compile it ourselves.
-set(LUA_DIR "lua-5.3.5/src")
-set(LUA_SOURCES
-    lapi.c      lapi.h
-    lauxlib.c   lauxlib.h
-    lbaselib.c
-    lbitlib.c
-    lcode.c     lcode.h
-    lcorolib.c
-    lctype.c    lctype.h
-    ldblib.c
-    ldebug.c    ldebug.h
-    ldo.c       ldo.h
-    ldump.c
-    lfunc.c     lfunc.h
-    lgc.c       lgc.h
-    linit.c
-    liolib.c
-    llex.c      llex.h
-                llimits.h
-    lmathlib.c
-    lmem.c      lmem.h
-    loadlib.c
-    lobject.c   lobject.h
-    lopcodes.c  lopcodes.h
-    loslib.c
-    lparser.c   lparser.h
-                lprefix.h
-    lstate.c    lstate.h
-    lstring.c   lstring.h
-    lstrlib.c
-    ltable.c    ltable.h
-    ltablib.c
-    ltm.c       ltm.h
-                lua.h
-                luaconf.h
-                lualib.h
-    lundump.c   lundump.h
-    lutf8lib.c
-    lvm.c       lvm.h
-    lzio.c      lzio.h)
-
-set(LUA_DIR_SOURCES "")
-foreach(SOURCE ${LUA_SOURCES})
-    list(APPEND LUA_DIR_SOURCES "${LUA_DIR}/${SOURCE}")
-endforeach()
-
-add_library(lua STATIC ${LUA_DIR_SOURCES})
-set_property(TARGET lua PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(lua PUBLIC ${LUA_DIR})
+add_library(lua-x STATIC IMPORTED GLOBAL)
+add_dependencies(lua-x lua)
+set_target_properties(lua-x PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/local/include"
+    IMPORTED_LOCATION ${LUA_LIBRARY})
 
 ## PhysicsFS
 
