@@ -89,11 +89,12 @@ foreach(DIR basemino compat lib)
     add_subdirectory(${DIR})
 endforeach()
 
-if(NOT EMSCRIPTEN)
-    add_subdirectory(libretro)
-endif()
-
-# Only build SDL front-end if we've found SDL2
-if(SDL2_FOUND OR EMSCRIPTEN)
+if(EMSCRIPTEN)
+    # Emscripten comes with SDL2 and has no concept of shared libraries.
     add_subdirectory(sdl)
+else()
+    add_subdirectory(libretro)
+    if(SDL2_FOUND)
+        add_subdirectory(sdl)
+    endif()
 endif()

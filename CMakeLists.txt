@@ -23,7 +23,9 @@ endif()
 
 # Dependencies
 find_package(Sanitizers)
-find_package(SDL2)
+if(NOT EMSCRIPTEN)
+    find_package(SDL2)
+endif()
 
 # Portmino directories
 foreach(DIR dep res src)
