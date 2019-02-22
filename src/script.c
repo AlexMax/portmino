@@ -18,9 +18,53 @@
 #include "script.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "lua.h"
 #include "lauxlib.h"
+
+#include "audioscript.h"
+#include "boardscript.h"
+#include "error.h"
+#include "eventscript.h"
+#include "globalscript.h"
+#include "piecescript.h"
+#include "randomscript.h"
+#include "rulesetscript.h"
+#include "nextscript.h"
+
+/**
+ * Create a lua state that contains all of our libraries
+ */
+lua_State* script_newstate(void) {
+    lua_State* L = NULL;
+
+    // Create a new Lua state
+    if ((L = luaL_newstate()) == NULL) {
+        error_push_allocerr();
+        return NULL;
+    }
+
+    static const luaL_Reg loadedlibs[] = {
+        { "_G", globalscript_openlib },
+        { "mino_audio", audioscript_openlib },
+        { "mino_board", boardscript_openlib },
+        { "mino_event", eventscript_openlib },
+        { "mino_next", nextscript_openlib },
+        { "mino_piece", piecescript_openlib },
+        { "mino_random", randomscript_openlib },
+        { "mino_ruleset", rulesetscript_openlib },
+        { NULL, NULL }
+    };
+
+    // Push our library functions into the new state.
+    for (const luaL_Reg* lib = loadedlibs; lib->func; lib++) {
+        luaL_requiref(L, lib->name, lib->func, 1);
+        lua_pop(L, 1);
+    }
+
+    return L;
+}
 
 /**
  * Turn the table at the given stack index into a vector.

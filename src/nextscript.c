@@ -91,7 +91,7 @@ static int nextscript_consume_next(lua_State* L) {
     return 0;
 }
 
-int next_openlib(lua_State* L) {
+int nextscript_openlib(lua_State* L) {
     static const luaL_Reg nextlib[] = {
         { "get", nextscript_get },
         { "get_next_config", nextscript_get_next_config },

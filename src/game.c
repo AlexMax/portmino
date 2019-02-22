@@ -26,6 +26,7 @@
 #include "render.h"
 #include "ruleset.h"
 #include "screen.h"
+#include "script.h"
 #include "vfs.h"
 
 /**
@@ -37,6 +38,11 @@ static screens_t g_screens;
  * The current in-use renderer.
  */
 static render_module_t* g_render;
+
+/**
+ * Our global Lua interpreter state that we use for everything.
+ */
+static lua_State* g_lua;
 
 /**
  * Initialize the game
@@ -65,8 +71,12 @@ bool game_init(int argc, char** argv) {
         return false;
     }
 
+    if ((g_lua = script_newstate()) == NULL) {
+        return false;
+    }
+
     // We start at the main menu.
-    screen_t mainmenu = mainmenu_new();
+    screen_t mainmenu = mainmenu_new(g_lua);
     if (mainmenu.config.type == SCREEN_NONE) {
         return false;
     }
@@ -85,6 +95,11 @@ void game_deinit(void) {
     screens_deinit(&g_screens);
 
     // Deinit subsystems.
+    if (g_lua != NULL) {
+        lua_close(g_lua);
+        g_lua = NULL;
+    }
+
     audio_deinit();
     if (g_render != NULL) {
         render_deinit(g_render);

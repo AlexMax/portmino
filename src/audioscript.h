@@ -20,4 +20,4 @@
 // Forward declarations.
 typedef struct lua_State lua_State;
 
-int audio_openlib(lua_State* L);
+int audioscript_openlib(lua_State* L);

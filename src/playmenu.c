@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 
+#include "ingame.h"
 #include "menu.h"
 #include "ruleset.h"
 #include "screen.h"
@@ -82,9 +83,19 @@ static int playmenu_frame(screen_t* screen, const gameevents_t* events) {
  * Navigate to the proper destination
  */
 static void playmenu_navigate(screens_t* screens, int result) {
+    playmenu_t* menu = screens_top(screens)->screen.playmenu;
+
     if (result == PLAYMENU_RESULT_BACK) {
         screens_pop(screens);
+        return;
     }
+
+    // Always go ingame...we'll figure out which gametype they selected later
+    screen_t ingame = ingame_new(menu->ruleset);
+    if (ingame.config.type == SCREEN_NONE) {
+        return;
+    }
+    screens_push(screens, ingame);
 }
 
 /**
@@ -150,6 +161,7 @@ screen_t playmenu_new(ruleset_t* ruleset) {
     if (menu == NULL) {
         return screen;
     }
+    event_holds_init(&menu->holds);
 
     // Get a list of gametypes for this ruleset.
     menulist_t* menulist = ruleset_get_gametypes(ruleset);

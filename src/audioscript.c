@@ -41,7 +41,7 @@ static int audioscript_playsound(lua_State* L) {
     return 0;
 }
 
-int audio_openlib(lua_State* L) {
+int audioscript_openlib(lua_State* L) {
     static const luaL_Reg audiolib[] = {
         { "playsound", audioscript_playsound },
         { NULL, NULL }

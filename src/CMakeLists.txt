@@ -53,6 +53,7 @@ set(GAME_SOURCES
     render.c        render.h
     ruleset.c       ruleset.h
     rulesetmenu.c   rulesetmenu.h
+    rulesetscript.c rulesetscript.h
     screen.c        screen.h
     script.c        script.h
     softblock.c     softblock.h

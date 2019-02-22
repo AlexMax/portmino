@@ -193,7 +193,7 @@ static int piecescript_config_get_rot_count(lua_State* L) {
 /**
  * Push library functions into the state.
  */
-int piece_openlib(lua_State* L) {
+int piecescript_openlib(lua_State* L) {
     static const luaL_Reg piecelib[] = {
         { "get_pos", piecescript_get_pos },
         { "set_pos", piecescript_set_pos },

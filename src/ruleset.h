@@ -35,14 +35,16 @@ typedef enum {
 
 typedef struct ruleset_s {
     /**
+     * Lua interpreter state
+     * 
+     * This is not an owning reference.  Do not free it.
+     */
+    lua_State* lua;
+
+    /**
      * Name of the ruleset
      */
     char* name;
-
-    /**
-     * Lua interpreter state
-     */
-    lua_State* lua;
 
     /**
      * Reference to environment.
@@ -70,7 +72,7 @@ typedef struct ruleset_s {
     int next_piece_ref;
 } ruleset_t;
 
-ruleset_t* ruleset_new(const char* name);
+ruleset_t* ruleset_new(lua_State* L, const char* name);
 void ruleset_delete(ruleset_t* ruleset);
 menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);
 ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,

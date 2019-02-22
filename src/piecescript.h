@@ -20,4 +20,4 @@
 // Forward declarations.
 typedef struct lua_State lua_State;
 
-int piece_openlib(lua_State* L);
+int piecescript_openlib(lua_State* L);

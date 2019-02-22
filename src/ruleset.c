@@ -15,121 +15,29 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "ruleset.h"
+
 #include "define.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "physfs.h"
-#include "lualib.h"
+#include "lua.h"
 #include "lauxlib.h"
+#include "physfs.h"
 
-#include "audioscript.h"
-#include "board.h"
-#include "boardscript.h"
 #include "error.h"
-#include "eventscript.h"
 #include "frontend.h"
-#include "globalscript.h"
 #include "menu.h"
-#include "nextscript.h"
-#include "piecescript.h"
-#include "randomscript.h"
-#include "ruleset.h"
 #include "script.h"
-#include "state.h"
 #include "vfs.h"
-
-/**
- * Lua: Get the current gametic of the state
- */
-static int ruleset_get_gametic(lua_State* L) {
-    lua_pushstring(L, "state");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const state_t* state = lua_touserdata(L, -1);
-    if (state == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_gametic is missing internal state");
-    }
-
-    lua_pushnumber(L, state->tic);
-    return 1;
-}
-
-/**
- * Lua: Grabs player events for a specific player
- */
-static int ruleset_get_player_events(lua_State* L) {
-    // Parameter 1: Player number, 1-indexed
-    lua_Integer player = luaL_checkinteger(L, 1);
-    if (player <= 0 || player >= MINO_MAX_PLAYERS) {
-         // never returns
-         luaL_argerror(L, 1, "invalid player id");
-    }
-    player -= 1;
-
-    lua_pushstring(L, "playerevents");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const playerevents_t* playerevents = lua_touserdata(L, -1);
-    if (playerevents == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_player_events is missing internal state");
-    }
-
-    // Result: Player events bitfield.
-    lua_pushinteger(L, playerevents->events[player]);
-    return 1;
-}
-
-/**
- * Lua: Return a list of piece configs attached to the state.
- */
-static int ruleset_get_piece_configs(lua_State* L) {
-    lua_pushstring(L, "ruleset");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const ruleset_t* ruleset = lua_touserdata(L, -1);
-    if (ruleset == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_piece_configs is missing internal state");
-    }
-
-    // Fetch the pieces and return an array of configs as a table.
-    lua_createtable(L, ruleset->pieces->size, 0);
-    for (size_t i = 1;i <= ruleset->pieces->size;i++) {
-        // Lua is 1-indexed, but C is 0.
-        lua_pushlightuserdata(L, ruleset->pieces->configs[i - 1]);
-        lua_rawseti(L, -2, i);
-    }
-
-    return 1;
-}
-
-/**
- * Push library functions into the state.
- */
-static int ruleset_openlib(lua_State* L) {
-    static const luaL_Reg rulesetlib[] = {
-        { "get_gametic", ruleset_get_gametic },
-        { "get_player_events", ruleset_get_player_events },
-        { "get_piece_configs", ruleset_get_piece_configs },
-        { NULL, NULL }
-    };
-
-    luaL_newlib(L, rulesetlib);
-
-    return 1;
-}
 
 /**
  * Allocate a new ruleset.
  */
-ruleset_t* ruleset_new(const char* name) {
+ruleset_t* ruleset_new(lua_State* L, const char* name) {
     char* filename = NULL;
     buffer_t* file = NULL;
-    lua_State* L = NULL;
     piece_configs_t* piece_configs = NULL;
     ruleset_t* ruleset = NULL;
 
@@ -143,30 +51,6 @@ ruleset_t* ruleset_new(const char* name) {
     if ((file = vfs_file(filename)) == NULL) {
         error_push("Could not find ruleset %s.", name);
         goto fail;
-    }
-
-    // Create a new Lua state
-    if ((L = luaL_newstate()) == NULL) {
-        error_push_allocerr();
-        goto fail;
-    }
-
-    static const luaL_Reg loadedlibs[] = {
-        { "_G", globalscript_openlib },
-        { "mino_ruleset", ruleset_openlib },
-        { "mino_board", boardscript_openlib },
-        { "mino_piece", piece_openlib },
-        { "mino_audio", audio_openlib },
-        { "mino_random", randomscript_openlib },
-        { "mino_next", next_openlib },
-        { "mino_event", eventscript_openlib },
-        { NULL, NULL }
-    };
-
-    // Push our library functions into state.
-    for (const luaL_Reg* lib = loadedlibs; lib->func; lib++) {
-        luaL_requiref(L, lib->name, lib->func, 1);
-        lua_pop(L, 1);
     }
 
     // Load our file into the newly-created Lua state.
@@ -339,9 +223,6 @@ ruleset_t* ruleset_new(const char* name) {
 fail:
     free(filename);
     buffer_delete(file);
-    if (L != NULL) {
-        lua_close(L);
-    }
     piece_configs_delete(piece_configs);
     ruleset_delete(ruleset);
 
@@ -359,9 +240,6 @@ void ruleset_delete(ruleset_t* ruleset) {
     free(ruleset->name);
     ruleset->name = NULL;
 
-    lua_close(ruleset->lua);
-    ruleset->lua = NULL;
-
     piece_configs_delete(ruleset->pieces);
     ruleset->pieces = NULL;
 
@@ -375,20 +253,23 @@ void ruleset_delete(ruleset_t* ruleset) {
  */
 menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
     char* gametypepath = NULL;
+    menulist_t* list = NULL;
+    char** gametypes = NULL;
+
     int ok = asprintf(&gametypepath, "gametype/%s", ruleset->name);
     if (ok < 0) {
         // Allocation error
         goto fail;
     }
 
-    menulist_t* list = menulist_new();
+    list = menulist_new();
     if (list == NULL) {
         // Allocation error
         goto fail;
     }
 
     // Iterate over all of the ruleset gametype directories
-    char** gametypes = PHYSFS_enumerateFiles(gametypepath);
+    gametypes = PHYSFS_enumerateFiles(gametypepath);
     free(gametypepath);
     gametypepath = NULL;
     if (gametypes == NULL) {

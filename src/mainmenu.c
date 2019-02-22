@@ -145,7 +145,7 @@ screen_config_t mainmenu_screen = {
 /**
  * Allocate main menu screen
  */
-screen_t mainmenu_new(void) {
+screen_t mainmenu_new(lua_State* L) {
     screen_t screen;
     screen.config.type = SCREEN_NONE;
 
@@ -154,7 +154,7 @@ screen_t mainmenu_new(void) {
         return screen;
     }
 
-    ruleset_t* ruleset = ruleset_new("default");
+    ruleset_t* ruleset = ruleset_new(L, "default");
     if (ruleset == NULL) {
         free(menu);
         menu = NULL;
