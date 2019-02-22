@@ -1,8 +1,3 @@
-find_package(cmocka REQUIRED)
-get_filename_component(CMOCKA_LIBDIR "${CMOCKA_LIBRARY}" DIRECTORY)
-set(CMOCKA_LIBRARY_STATIC "${CMOCKA_LIBDIR}/libcmocka-static.a")
-
 add_executable(test_platform_unix test_platform_unix.c)
-target_include_directories(test_platform_unix PRIVATE ${CMOCKA_INCLUDE_DIR})
-target_link_libraries(test_platform_unix portmino-core ${CMOCKA_LIBRARY_STATIC})
+target_link_libraries(test_platform_unix portmino-core cmocka-x)
 add_test(test_platform_unix test_platform_unix)
