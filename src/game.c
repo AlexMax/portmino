@@ -17,10 +17,12 @@
 
 #include "game.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "audio.h"
+#include "error.h"
 #include "frontend.h"
 #include "mainmenu.h"
 #include "render.h"
@@ -114,6 +116,12 @@ void game_deinit(void) {
 void game_frame(const gameevents_t* events) {
     // Pass our events to the screen that needs it.
     screens_frame(&g_screens, events);
+
+    // Display all non-fatal errors.
+    char* err;
+    while ((err = error_pop()) != NULL) {
+        fprintf(stderr, "frame error: %s\n", err);
+    }
 }
 
 /**
@@ -122,6 +130,12 @@ void game_frame(const gameevents_t* events) {
 void* game_draw(void) {
     // Render the proper screen.
     screens_render(&g_screens, g_render);
+
+    // Display all non-fatal errors.
+    char* err;
+    while ((err = error_pop()) != NULL) {
+        fprintf(stderr, "draw error: %s\n", err);
+    }
 
     // Return the context.
     return g_render->context();

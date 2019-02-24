@@ -17,23 +17,14 @@
 
 #pragma once
 
-#include "lua.h"
-
 #include "event.h"
-#include "next.h"
-#include "piece.h"
 
-typedef struct board_s board_t;
-typedef struct menulist_s menulist_t;
+// Forward declarations.
+typedef struct lua_State lua_State;
+typedef struct ruleset_s ruleset_t;
 typedef struct state_s state_t;
 
-typedef enum {
-    RULESET_RESULT_OK,
-    RULESET_RESULT_ERROR,
-    RULESET_RESULT_TOPOUT,
-} ruleset_result_t;
-
-typedef struct ruleset_s {
+typedef struct gametype_s {
     /**
      * Lua interpreter state
      * 
@@ -42,37 +33,20 @@ typedef struct ruleset_s {
     lua_State* lua;
 
     /**
-     * Name of the ruleset
+     * Name of the gametype
      */
     char* name;
 
     /**
-     * Reference to environment.
+     * State functions reference.
      */
-    int env_ref;
+    int state_functions_ref;
 
     /**
-     * Reference to state_frame function inside Lua.
+     * Draw reference.
      */
-    int state_frame_ref;
+    int draw_ref;
+} gametype_t;
 
-    /**
-     * Reference to state function inside Lua.
-     */
-    int state_ref;
-
-    /**
-     * Pieces loaded from Lua.
-     */
-    piece_configs_t* pieces;
-
-    /**
-     * Reference to next piece function inside Lua.
-     */
-    int next_piece_ref;
-} ruleset_t;
-
-ruleset_t* ruleset_new(lua_State* L, const char* name);
-void ruleset_delete(ruleset_t* ruleset);
-menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* next);
+gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name);
+void gametype_delete(gametype_t* gametype);

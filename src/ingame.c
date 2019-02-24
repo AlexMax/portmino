@@ -20,14 +20,24 @@
 #include <stdlib.h>
 
 #include "audio.h"
+#include "error.h"
+#include "gametype.h"
 #include "ruleset.h"
 #include "state.h"
 
 typedef struct ingame_s {
     /**
-     * The current in-use ruleset.
+     * The current in-use gametype.
      * 
      * This is not an owning reference.  Do not free it.
+     */
+    gametype_t* gametype;
+
+    /**
+     * The current in-use ruleset.
+     * 
+     * This _is_ an owning reference, even though it's passed to the allocation
+     * function, and must be freed.
      */
     ruleset_t* ruleset;
 
@@ -45,8 +55,41 @@ static int ingame_frame(screen_t* screen, const gameevents_t* events) {
     if (state_frame(ingame->state) == false) {
         return RULESET_RESULT_ERROR;
     }
-    ruleset_result_t res = ruleset_frame(ingame->ruleset, ingame->state, &events->game);
-    return res;
+
+    lua_State* L = ingame->ruleset->lua;
+
+    // Push our context into the registry so we can get at them from C
+    // functions called from inside Lua.
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);
+    lua_setfield(L, LUA_REGISTRYINDEX, "env");
+    lua_pushlightuserdata(L, ingame->ruleset);
+    lua_setfield(L, LUA_REGISTRYINDEX, "ruleset");
+    lua_pushlightuserdata(L, ingame->gametype);
+    lua_setfield(L, LUA_REGISTRYINDEX, "gametype");
+    lua_pushlightuserdata(L, ingame->state);
+    lua_setfield(L, LUA_REGISTRYINDEX, "state");
+    lua_pushlightuserdata(L, (void*)(&events->game));
+    lua_setfield(L, LUA_REGISTRYINDEX, "playerevents");
+
+    // Use our references to grab the state_frame function and its environment
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->state_frame_ref);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);
+
+    // Setup the environment
+    lua_setupvalue(L, -2, 1);
+
+    // Run the state_frame function.
+    if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
+        const char* err = lua_tostring(L, -1);
+        error_push("lua error: %s", err);
+        return RULESET_RESULT_ERROR;
+    }
+
+    // Handle our result
+    ruleset_result_t result = lua_tointeger(L, -1);
+    lua_pop(L, 1); // pop result
+
+    return result;
 }
 
 /**
@@ -80,11 +123,10 @@ static void ingame_render(screen_t* screen, render_module_t* render) {
  */
 static void ingame_delete(screen_t* screen) {
     if (screen->screen.ingame != NULL) {
-        if (screen->screen.ingame->state != NULL) {
-            state_delete(screen->screen.ingame->state);
-            screen->screen.ingame->state = NULL;
-        }
-
+        gametype_delete(screen->screen.ingame->gametype);
+        screen->screen.ingame->gametype = NULL;
+        state_delete(screen->screen.ingame->state);
+        screen->screen.ingame->state = NULL;
         free(screen->screen.ingame);
         screen->screen.ingame = NULL;
     }
@@ -101,7 +143,7 @@ screen_config_t ingame_screen = {
 /**
  * Allocate ingame screen
  */
-screen_t ingame_new(ruleset_t* ruleset) {
+screen_t ingame_new(ruleset_t* ruleset, gametype_t* gametype) {
     screen_t screen;
     screen.config.type = SCREEN_NONE;
 
@@ -120,6 +162,7 @@ screen_t ingame_new(ruleset_t* ruleset) {
 
     ingame->state = state;
     ingame->ruleset = ruleset;
+    ingame->gametype = gametype;
 
     screen.config = ingame_screen;
     screen.screen.ingame = ingame;

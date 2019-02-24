@@ -108,7 +108,7 @@ local function board_next_piece(board, tic)
 end
 
 local function state_frame()
-    local gametic = mino_ruleset.get_gametic()
+    local gametic = mino_state.get_gametic()
     local board = mino_board.get(1)
 
     -- Get the next piece if we don't have one at this point.
@@ -422,7 +422,13 @@ local function state_frame()
     mino_piece.set_pos(ghost, ghost_pos)
     mino_piece.set_rot(ghost, piece_rot)
 
-    -- We're done with all processing for this tic.
+    -- Our gametype might want to end the game, so check it first.
+    local after_frame_result = mino_ruleset.gametype_call("after_frame")
+    if after_frame_result ~= nil then
+        return after_frame_result
+    end
+
+    -- We're done with this tic.
     return STATE_RESULT_OK
 end
 

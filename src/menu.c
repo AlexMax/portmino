@@ -133,7 +133,7 @@ size_t menulist_count(menulist_t* menulist) {
 }
 
 /**
- * Get the menu item at the given index.
+ * Get the menu item at the given 0-indexed index
  */
 const menuitem_t* menulist_get(menulist_t* menulist, size_t index) {
     if (index >= menulist->count) {

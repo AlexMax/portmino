@@ -53,7 +53,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
         goto fail;
     }
 
-    // Load our file into the newly-created Lua state.
+    // Load our file into the Lua state.
     if (luaL_loadbufferx(L, (char*)file->data, file->size, filename, "t") != LUA_OK) {
         error_push("%s", lua_tostring(L, -1));
         goto fail;
@@ -78,7 +78,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     // Set up links to the proper modules and globals.
     const char* modules[] = {
         "mino_ruleset", "mino_board", "mino_piece", "mino_audio", "mino_random",
-        "mino_next", "mino_event"
+        "mino_next", "mino_event", "mino_state"
     };
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
@@ -120,8 +120,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
 
     // Check for a table key that contains the state_frame function.
-    lua_pushstring(L, "state_frame");
-    int type = lua_gettable(L, -2);
+    int type = lua_getfield(L, -1, "state_frame");
     if (type == LUA_TNIL) {
         error_push("Could not find function \"state_frame\" in module table in ruleset %s.", name);
         goto fail;
@@ -238,10 +237,11 @@ void ruleset_delete(ruleset_t* ruleset) {
     }
 
     free(ruleset->name);
-    ruleset->name = NULL;
-
+    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
+    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_frame_ref);
+    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_ref);
     piece_configs_delete(ruleset->pieces);
-    ruleset->pieces = NULL;
+    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->next_piece_ref);
 
     free(ruleset);
 }
@@ -258,13 +258,13 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
 
     int ok = asprintf(&gametypepath, "gametype/%s", ruleset->name);
     if (ok < 0) {
-        // Allocation error
+        error_push_allocerr();
         goto fail;
     }
 
     list = menulist_new();
     if (list == NULL) {
-        // Allocation error
+        error_push_allocerr();
         goto fail;
     }
 
@@ -343,40 +343,6 @@ fail:
     return NULL;
 }
 
-ruleset_result_t ruleset_frame(ruleset_t* ruleset, state_t* state,
-                               const playerevents_t* playerevents) {
-    // Push our context into the registry so we can get at them from C
-    // functions called from inside Lua.
-    lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
-    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "env");
-    lua_pushlightuserdata(ruleset->lua, ruleset);
-    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "ruleset");
-    lua_pushlightuserdata(ruleset->lua, state);
-    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "state");
-    lua_pushlightuserdata(ruleset->lua, (void*)playerevents);
-    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "playerevents");
-
-    // Use our references to grab the state_frame function and its environment
-    lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_frame_ref);
-    lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
-
-    // Setup the environment
-    lua_setupvalue(ruleset->lua, -2, 1);
-
-    // Run the state_frame function.
-    if (lua_pcall(ruleset->lua, 0, 1, 0) != LUA_OK) {
-        const char* err = lua_tostring(ruleset->lua, -1);
-        frontend_fatalerror("lua error: %s", err);
-        return RULESET_RESULT_ERROR;
-    }
-
-    // Handle our result
-    ruleset_result_t result = lua_tointeger(ruleset->lua, -1);
-    lua_pop(ruleset->lua, 1); // pop result
-
-    return result;
-}
-
 /**
  * Return a "next" piece by calling into our Lua function to get it
  */
@@ -395,7 +361,7 @@ const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* next) {
     // Call it, friendo
     if (lua_pcall(ruleset->lua, 1, 1, 0) != LUA_OK) {
         const char* err = lua_tostring(ruleset->lua, -1);
-        frontend_fatalerror("lua error: %s", err);
+        error_push("lua error: %s", err);
         return NULL;
     }
 

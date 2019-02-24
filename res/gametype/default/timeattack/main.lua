@@ -21,12 +21,14 @@ local function after_frame(state)
 
 end
 
-local function draw_hud(state)
+local function draw(state)
 
 end
 
 return {
     init = init,
-    after_frame = after_frame,
-    draw_hud = draw_hud,
+    state_functions = {
+        after_frame = after_frame,
+    },
+    draw = draw,
 }

@@ -17,18 +17,7 @@
 
 #pragma once
 
-#include "define.h"
+// Forward declarations.
+typedef struct lua_State lua_State;
 
-/**
- * Push a generic memory allocation error
- * 
- * These are needed in a number of spots, to the point where we need some
- * way to disambiguate them.
- */
-#define error_push_allocerr() \
-    error_push("%s:%d Memory allocation error.", __FILE__, __LINE__)
-
-ATTRIB_PRINTF(1, 2)
-void error_push(const char* fmt, ...);
-char* error_pop(void);
-size_t error_count(void);
+int statescript_openlib(lua_State* L);

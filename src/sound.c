@@ -73,7 +73,7 @@ sound_t* sound_new(const char* path) {
 
     buffer_delete(file);
     if (data == NULL) {
-        frontend_fatalerror("Could not load sound %s", path);
+        error_push("Could not load sound %s.", path);
         return NULL;
     }
 

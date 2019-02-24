@@ -20,63 +20,51 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "gametype.h"
 #include "ruleset.h"
+#include "script.h"
 #include "state.h"
 
 /**
- * Lua: Get the current gametic of the state
+ * Lua: Call a gametype function from the ruleset
  */
-static int ruleset_get_gametic(lua_State* L) {
-    lua_pushstring(L, "state");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const state_t* state = lua_touserdata(L, -1);
-    if (state == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_gametic is missing internal state");
+static int rulesetscript_gametype_call(lua_State* L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "gametype");
+    const gametype_t* gametype = lua_touserdata(L, -1);
+    if (gametype == NULL) {
+        luaL_error(L, "rulesetscript_gametype_call is missing internal state");
+        return 0;
     }
 
-    lua_pushnumber(L, state->tic);
-    return 1;
-}
+    // Parameter 1: Function name
+    const char* func = luaL_checkstring(L, 1);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, gametype->state_functions_ref);
+    int type = lua_getfield(L, -1, func);
 
-/**
- * Lua: Grabs player events for a specific player
- */
-static int ruleset_get_player_events(lua_State* L) {
-    // Parameter 1: Player number, 1-indexed
-    lua_Integer player = luaL_checkinteger(L, 1);
-    if (player <= 0 || player >= MINO_MAX_PLAYERS) {
-         // never returns
-         luaL_argerror(L, 1, "invalid player id");
-    }
-    player -= 1;
+    script_debug_stack(L);
 
-    lua_pushstring(L, "playerevents");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    const playerevents_t* playerevents = lua_touserdata(L, -1);
-    if (playerevents == NULL) {
-        // never returns
-        luaL_error(L, "ruleset_get_player_events is missing internal state");
+    int stack = lua_gettop(L);
+    if (type == LUA_TFUNCTION) {
+        // TOOD: Call the gametype state function.
+        return 0;
+    } else if (type == LUA_TNIL) {
+        lua_pushnil(L);
+        return 1;
     }
 
-    // Result: Player events bitfield.
-    lua_pushinteger(L, playerevents->events[player]);
-    return 1;
+    luaL_error(L, "Gametype state function \"%s\" is not function or nil.");
+    return 0;
 }
 
 /**
  * Lua: Return a list of piece configs attached to the state.
  */
-static int ruleset_get_piece_configs(lua_State* L) {
-    lua_pushstring(L, "ruleset");
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
+static int rulesetscript_get_piece_configs(lua_State* L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "ruleset");
     const ruleset_t* ruleset = lua_touserdata(L, -1);
     if (ruleset == NULL) {
-        // never returns
         luaL_error(L, "ruleset_get_piece_configs is missing internal state");
+        return 0;
     }
 
     // Fetch the pieces and return an array of configs as a table.
@@ -95,9 +83,8 @@ static int ruleset_get_piece_configs(lua_State* L) {
  */
 int rulesetscript_openlib(lua_State* L) {
     static const luaL_Reg rulesetlib[] = {
-        { "get_gametic", ruleset_get_gametic },
-        { "get_player_events", ruleset_get_player_events },
-        { "get_piece_configs", ruleset_get_piece_configs },
+        { "gametype_call", rulesetscript_gametype_call },
+        { "get_piece_configs", rulesetscript_get_piece_configs },
         { NULL, NULL }
     };
 

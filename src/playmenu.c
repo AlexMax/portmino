@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 
+#include "gametype.h"
 #include "ingame.h"
 #include "menu.h"
 #include "ruleset.h"
@@ -29,7 +30,7 @@ typedef struct ruleset_s ruleset_t;
 
 typedef enum {
     PLAYMENU_RESULT_BACK = -1,
-} gametype_result_t;
+} playmenu_result_t;
 
 typedef struct playmenu_s {
     /**
@@ -90,8 +91,20 @@ static void playmenu_navigate(screens_t* screens, int result) {
         return;
     }
 
-    // Always go ingame...we'll figure out which gametype they selected later
-    screen_t ingame = ingame_new(menu->ruleset);
+    // Which menu item did we select?
+    const menuitem_t* item = menulist_get(menu->list, menu->selected);
+    if (item == NULL) {
+        return;
+    }
+
+    // To go ingame, the gametype must be initialized.
+    gametype_t* gametype = gametype_new(menu->ruleset->lua, menu->ruleset, item->value);
+    if (gametype == NULL) {
+        return;
+    }
+
+    // We are passing ownership of gametype to the ingame struct (for now).
+    screen_t ingame = ingame_new(menu->ruleset, gametype);
     if (ingame.config.type == SCREEN_NONE) {
         return;
     }

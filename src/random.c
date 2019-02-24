@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 
+#include "error.h"
 #include "frontend.h"
 #include "platform.h"
 #include "random.h"
@@ -64,7 +65,7 @@ void random_init(random_t* random, uint32_t* seed) {
     random->state[1] = 0x12EBE5E;
     if (seed == NULL) {
         if (!platform()->random_get_seed(&(random->state[0]))) {
-            frontend_fatalerror("Unable to obtain a random seed.");
+            error_push("Unable to obtain a random seed.");
             return;
         }
     } else {

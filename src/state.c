@@ -70,6 +70,10 @@ state_t* state_new(ruleset_t* ruleset) {
  * @param state The gamestate to delete.
  */
 void state_delete(state_t* state) {
+    if (state == NULL) {
+        return;
+    }
+
     if (state->background != NULL) {
         free(state->background);
         state->background = NULL;

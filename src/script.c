@@ -28,10 +28,11 @@
 #include "error.h"
 #include "eventscript.h"
 #include "globalscript.h"
+#include "nextscript.h"
 #include "piecescript.h"
 #include "randomscript.h"
 #include "rulesetscript.h"
-#include "nextscript.h"
+#include "statescript.h"
 
 /**
  * Create a lua state that contains all of our libraries
@@ -54,6 +55,7 @@ lua_State* script_newstate(void) {
         { "mino_piece", piecescript_openlib },
         { "mino_random", randomscript_openlib },
         { "mino_ruleset", rulesetscript_openlib },
+        { "mino_state", statescript_openlib },
         { NULL, NULL }
     };
 
