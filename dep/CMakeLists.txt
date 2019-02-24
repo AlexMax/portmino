@@ -44,7 +44,11 @@ set_target_properties(lua-x PROPERTIES
     IMPORTED_LOCATION ${LUA_LIBRARY})
 
 ## PhysicsFS
-set(PHYSFS_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/local/lib/${CMAKE_STATIC_LIBRARY_PREFIX}physfs${CMAKE_STATIC_LIBRARY_SUFFIX}")
+if(MSVC)
+    set(PHYSFS_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/local/lib/${CMAKE_STATIC_LIBRARY_PREFIX}physfs-static${CMAKE_STATIC_LIBRARY_SUFFIX}")
+else()
+    set(PHYSFS_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/local/lib/${CMAKE_STATIC_LIBRARY_PREFIX}physfs${CMAKE_STATIC_LIBRARY_SUFFIX}")
+endif()
 ExternalProject_Add(physfs
     URL "https://hg.icculus.org/icculus/physfs/archive/5ebf7cddf502.tar.gz"
     URL_HASH "SHA256=0e3704646e58913980b632ec0d771a8ceafa331b014eb36c6bfb09d5c7bca437"
