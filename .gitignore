@@ -1,2 +1,4 @@
+*.swp
 /.vscode
+/_vimrc_local.vim
 /build*

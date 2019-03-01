@@ -28,16 +28,16 @@
 #include "vfs.h"
 
 /**
- * Allocate a new gametype
+ * Return a buffer containing a script for a gametype of a specific name
+ *
+ * The buffer must be freed by the caller.
  */
-gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name) {
+buffer_t* gametype_find_script(const char* ruleset_name, const char* name) {
     char* filename = NULL;
     buffer_t* file = NULL;
-    int state_functions_ref = LUA_NOREF;
-    int draw_ref = LUA_NOREF;
-    gametype_t* gametype = NULL;
 
-    int ok = asprintf(&filename, "gametype/%s/%s/main.lua", ruleset->name, name);
+    // Construct a path to the gametype.
+    int ok = asprintf(&filename, "gametype/%s/%s/main.lua", ruleset_name, name);
     if (ok < 0) {
         error_push_allocerr();
         goto fail;
@@ -49,17 +49,29 @@ gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name) {
         goto fail;
     }
 
+    free(filename);
+    return file;
+
+fail:
+    free(filename);
+    buffer_delete(file);
+    return NULL;
+}
+
+/**
+ * Allocate a new gametype
+ */
+gametype_t* gametype_new(lua_State* L, buffer_t* file, const char* name) {
+    int init_ref = LUA_NOREF;
+    int state_functions_ref = LUA_NOREF;
+    int draw_ref = LUA_NOREF;
+    gametype_t* gametype = NULL;
+
     // Load our file into the Lua state.
-    if (luaL_loadbufferx(L, (char*)file->data, file->size, filename, "t") != LUA_OK) {
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, name, "t") != LUA_OK) {
         error_push("%s", lua_tostring(L, -1));
         goto fail;
     }
-
-    // Free resources that we don't need anymore.
-    free(filename);
-    filename = NULL;
-    buffer_delete(file);
-    file = NULL;
 
     // We now have the gametype on the top of the stack.  Call it!
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
@@ -74,18 +86,42 @@ gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name) {
         goto fail;
     }
 
+    // Do we have an init function?
+    int type = lua_getfield(L, -1, "init");
+    if (type != LUA_TFUNCTION && type != LUA_TNIL) {
+        error_push("\"init\" in module table must be function or nil in gametype %s.", name);
+        goto fail;
+    }
+
+    if (type != LUA_TNIL) {
+        // Create a reference to init function.
+        init_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+        if (init_ref == LUA_REFNIL) {
+            error_push_allocerr();
+            goto fail;
+        }
+    } else {
+        // Pop the useless nil.
+        lua_pop(L, 1);
+    }
+
     // Do we have a table of state functions?
-    int type = lua_getfield(L, -1, "state_functions");
+    type = lua_getfield(L, -1, "state_functions");
     if (type != LUA_TTABLE && type != LUA_TNIL) {
         error_push("\"state_functions\" in module table must be table or nil in gametype %s.", name);
         goto fail;
     }
 
-    // Create a reference to the table of functions.
-    state_functions_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    if (state_functions_ref == LUA_REFNIL) {
-        error_push_allocerr();
-        goto fail;
+    if (type != LUA_TNIL) {
+        // Create a reference to the table of functions.
+        state_functions_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+        if (state_functions_ref == LUA_REFNIL) {
+            error_push_allocerr();
+            goto fail;
+        }
+    } else {
+        // Pop the useless nil.
+        lua_pop(L, 1);
     }
 
     // Do we have a draw function?
@@ -95,12 +131,25 @@ gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name) {
         goto fail;
     }
 
-    // Create a reference to the draw function.
-    draw_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    if (draw_ref == LUA_REFNIL) {
-        error_push_allocerr();
+    if (type != LUA_TNIL) {
+        // Create a reference to the draw function.
+        draw_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+        if (draw_ref == LUA_REFNIL) {
+            error_push_allocerr();
+            goto fail;
+        }
+    } else {
+        // Pop the useless nil.
+        lua_pop(L, 1);
+    }
+
+    // We should only have the gametype on the stack.  Always finish your
+    // Lua meddling with a clean stack.
+    if (lua_gettop(L) != 1) {
+        error_push("Lua stack not cleaned up.");
         goto fail;
     }
+    lua_pop(L, 1);
 
     // Allocate the gametype.
     if ((gametype = calloc(1, sizeof(gametype_t))) == NULL) {
@@ -115,14 +164,14 @@ gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name) {
     }
 
     gametype->lua = L;
+    gametype->init_ref = init_ref;
     gametype->state_functions_ref = state_functions_ref;
     gametype->draw_ref = draw_ref;
 
     return gametype;
 
 fail:
-    free(filename);
-    buffer_delete(file);
+    luaL_unref(L, LUA_REGISTRYINDEX, init_ref);
     luaL_unref(L, LUA_REGISTRYINDEX, state_functions_ref);
     luaL_unref(L, LUA_REGISTRYINDEX, draw_ref);
     gametype_delete(gametype);

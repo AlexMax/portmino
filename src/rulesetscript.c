@@ -29,6 +29,13 @@
  * Lua: Call a gametype function from the ruleset
  */
 static int rulesetscript_gametype_call(lua_State* L) {
+    // Parameter 1: Function name
+    const char* func = luaL_checkstring(L, 1);
+
+    // Subsequent parameters are parameters to pass to the function
+    int params = lua_gettop(L) - 1;
+
+    // Grab our gametype pointer out of the registry
     lua_getfield(L, LUA_REGISTRYINDEX, "gametype");
     const gametype_t* gametype = lua_touserdata(L, -1);
     if (gametype == NULL) {
@@ -36,17 +43,18 @@ static int rulesetscript_gametype_call(lua_State* L) {
         return 0;
     }
 
-    // Parameter 1: Function name
-    const char* func = luaL_checkstring(L, 1);
+    // Grab a reference to our state function table
     lua_rawgeti(L, LUA_REGISTRYINDEX, gametype->state_functions_ref);
+
+    // Grab our state function with the given name
     int type = lua_getfield(L, -1, func);
 
-    script_debug_stack(L);
-
-    int stack = lua_gettop(L);
     if (type == LUA_TFUNCTION) {
-        // TOOD: Call the gametype state function.
-        return 0;
+        // Call the gametype state function, and return all params.
+        lua_replace(L, 1);
+        lua_settop(L, params + 1);
+        lua_pcall(L, params, LUA_MULTRET, 0);
+        return lua_gettop(L);
     } else if (type == LUA_TNIL) {
         lua_pushnil(L);
         return 1;

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "event.h"
+#include "define.h"
 
 // Forward declarations.
 typedef struct lua_State lua_State;
@@ -38,6 +38,11 @@ typedef struct gametype_s {
     char* name;
 
     /**
+     * Init function reference.
+     */
+    int init_ref;
+
+    /**
      * State functions reference.
      */
     int state_functions_ref;
@@ -48,5 +53,6 @@ typedef struct gametype_s {
     int draw_ref;
 } gametype_t;
 
-gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name);
+buffer_t* gametype_find_script(const char* ruleset_name, const char* name);
+gametype_t* gametype_new(lua_State* L, buffer_t* file, const char* name);
 void gametype_delete(gametype_t* gametype);

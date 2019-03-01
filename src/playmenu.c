@@ -97,8 +97,15 @@ static void playmenu_navigate(screens_t* screens, int result) {
         return;
     }
 
+    // Find our gametype.
+    buffer_t* script = gametype_find_script(menu->ruleset->name, item->value);
+    if (script == NULL) {
+        return;
+    }
+
     // To go ingame, the gametype must be initialized.
-    gametype_t* gametype = gametype_new(menu->ruleset->lua, menu->ruleset, item->value);
+    gametype_t* gametype = gametype_new(menu->ruleset->lua, script, item->value);
+    buffer_delete(script);
     if (gametype == NULL) {
         return;
     }
