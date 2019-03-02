@@ -37,11 +37,6 @@
 static screens_t g_screens;
 
 /**
- * The current in-use renderer.
- */
-static render_module_t* g_render;
-
-/**
  * Our global Lua interpreter state that we use for everything.
  */
 static lua_State* g_lua;
@@ -65,7 +60,7 @@ bool game_init(int argc, char** argv) {
         return false;
     }
 
-    if ((g_render = render_init()) == NULL) {
+    if (render_init(RENDERER_SOFTWARE) == false) {
         return false;
     }
 
@@ -103,10 +98,7 @@ void game_deinit(void) {
     }
 
     audio_deinit();
-    if (g_render != NULL) {
-        render_deinit(g_render);
-        g_render = NULL;
-    }
+    render_deinit();
     vfs_deinit();
 }
 
@@ -129,7 +121,7 @@ void game_frame(const gameevents_t* events) {
  */
 void* game_draw(void) {
     // Render the proper screen.
-    screens_render(&g_screens, g_render);
+    screens_render(&g_screens);
 
     // Display all non-fatal errors.
     char* err;
@@ -138,5 +130,5 @@ void* game_draw(void) {
     }
 
     // Return the context.
-    return g_render->context();
+    return render()->context();
 }

@@ -33,4 +33,4 @@ typedef struct {
     picture_t buffer;
 } softrender_context_t;
 
-extern render_module_t soft_render_module;
+extern render_module_t softrender_module;

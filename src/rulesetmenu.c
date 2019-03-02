@@ -115,12 +115,12 @@ static pageinfo_t paginator(size_t pagesize, size_t index, size_t total) {
     return info;
 }
 
-static void rulesetmenu_render(screen_t* screen, render_module_t* render) {
+static void rulesetmenu_render(screen_t* screen) {
     rulesetmenu_t* menu = screen->screen.rulesetmenu;
 
-    render->draw_mainmenu_bg();
+    render()->draw_mainmenu_bg();
 
-    render->draw_font(vec2i(100, 4), "Rulesets");
+    render()->draw_font(vec2i(100, 4), "Rulesets");
 
     // Paginate our ruleset.
     char pagedesc[32] = { 0 };
@@ -128,14 +128,14 @@ static void rulesetmenu_render(screen_t* screen, render_module_t* render) {
     snprintf(pagedesc, sizeof(pagedesc), "Page: %zu/%zu", pageinfo.currentpage, pageinfo.pages);
 
     // Draw the paginator.
-    render->draw_font(vec2i(50, 228), pagedesc);
+    render()->draw_font(vec2i(50, 228), pagedesc);
 
     // Draw our rules.
     for (size_t i = pageinfo.startindex;i <= pageinfo.endindex;i++) {
         size_t y = 16 + (i * 8);
-        render->draw_font(vec2i(50, y), menu->rulesets[i]);
+        render()->draw_font(vec2i(50, y), menu->rulesets[i]);
         if (menu->selected == i) {
-            render->draw_font(vec2i(42, y), ">");
+            render()->draw_font(vec2i(42, y), ">");
         }
     }
 }

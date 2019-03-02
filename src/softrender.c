@@ -275,7 +275,7 @@ static void softrender_draw_state(const state_t* state) {
     }
 }
 
-render_module_t soft_render_module = {
+render_module_t softrender_module = {
     RENDERER_SOFTWARE,
     softrender_init,
     softrender_deinit,
@@ -283,5 +283,5 @@ render_module_t soft_render_module = {
     softrender_clear,
     softrender_draw_mainmenu_bg,
     softrender_draw_font,
-    softrender_draw_state
+    softrender_draw_state,
 };

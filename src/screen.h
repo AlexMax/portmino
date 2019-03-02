@@ -67,7 +67,7 @@ typedef struct {
      * 
      * Just what it says on the tin.  Call your draw functions here.
      */
-    void (*render)(screen_t* screen, render_module_t* render);
+    void (*render)(screen_t* screen);
 
     /**
      * Screen destructor
@@ -120,4 +120,4 @@ screen_t* screens_top(screens_t* screens);
 bool screens_push(screens_t* screens, screen_t screen);
 bool screens_pop(screens_t* screens);
 void screens_frame(screens_t* screens, const gameevents_t* events);
-void screens_render(screens_t* screens, render_module_t* render);
+void screens_render(screens_t* screens);

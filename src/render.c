@@ -23,21 +23,31 @@
 #include "error.h"
 #include "softrender.h"
 
+static render_module_t g_render_module;
+
 /**
- * Initialize a renderer and return the function pointers for that renderer.
+ * Initialize the renderer.
  */
-render_module_t* render_init(void) {
-    // TODO: Figure out what kind of renderer that we want to use here.
-    if (!soft_render_module.init()) {
-        return NULL;
+bool render_init(renderer_type_t renderer) {
+    switch (renderer) {
+    case RENDERER_SOFTWARE:
+        memcpy(&g_render_module, &softrender_module, sizeof(render_module_t));
+        break;
     }
-    return &soft_render_module;
+
+    return g_render_module.init();
 }
 
 /**
- * Destroy anything attached to the currently initialized renderer.
+ * Destroy the active renderer.
  */
-void render_deinit(render_module_t* module) {
-    (void)module;
-    soft_render_module.deinit();
+void render_deinit(void) {
+   g_render_module.deinit();
+}
+
+/**
+ * Return a pointer to the current render module.
+ */
+render_module_t* render(void) {
+    return &g_render_module;
 }

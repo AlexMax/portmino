@@ -113,9 +113,9 @@ static void ingame_navigate(screens_t* screens, int result) {
 /**
  * Render the ingame screen
  */
-static void ingame_render(screen_t* screen, render_module_t* render) {
+static void ingame_render(screen_t* screen) {
     ingame_t* ingame = screen->screen.ingame;
-    render->draw_state(ingame->state);
+    render()->draw_state(ingame->state);
 }
 
 /**

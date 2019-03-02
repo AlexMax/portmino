@@ -121,12 +121,12 @@ static void playmenu_navigate(screens_t* screens, int result) {
 /**
  * Render the main menu
  */
-static void playmenu_render(screen_t* screen, render_module_t* render) {
+static void playmenu_render(screen_t* screen) {
     playmenu_t* menu = screen->screen.playmenu;
 
-    render->draw_mainmenu_bg();
+    render()->draw_mainmenu_bg();
 
-    render->draw_font(vec2i(100, 4), "Select Gamemode");
+    render()->draw_font(vec2i(100, 4), "Select Gamemode");
 
     // Draw our game modes
     size_t count = menulist_count(menu->list);
@@ -134,14 +134,14 @@ static void playmenu_render(screen_t* screen, render_module_t* render) {
         size_t y = 16 + (i * 8);
         const menuitem_t* item = menulist_get(menu->list, i);
         if (item->label != NULL) {
-            render->draw_font(vec2i(50, y), item->label);
+            render()->draw_font(vec2i(50, y), item->label);
         } else {
-            render->draw_font(vec2i(50, y), item->value);
+            render()->draw_font(vec2i(50, y), item->value);
         }
         if (menu->selected == i) {
-            render->draw_font(vec2i(42, y), ">");
+            render()->draw_font(vec2i(42, y), ">");
             if (item->help != NULL) {
-                render->draw_font(vec2i(4, 228), item->help);
+                render()->draw_font(vec2i(4, 228), item->help);
             }
         }
     }

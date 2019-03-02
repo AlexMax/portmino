@@ -22,15 +22,9 @@
 // Forward declarations
 typedef struct state_s state_t;
 
-/*
- * Here we define the width and height of the smallest unit of addressable
- * screen real-estate.  This has little to do with the actual resolution of
- * the rendered screen, aside from serving as a lower bound.
- */
-
-enum {
+typedef enum {
     RENDERER_SOFTWARE
-};
+} renderer_type_t;
 
 typedef struct {
     /**
@@ -74,5 +68,6 @@ typedef struct {
     void (*draw_state)(const state_t* state);
 } render_module_t;
 
-render_module_t* render_init(void);
-void render_deinit(render_module_t* module);
+bool render_init(renderer_type_t renderer);
+void render_deinit(void);
+render_module_t* render(void);

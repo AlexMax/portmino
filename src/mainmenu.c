@@ -102,21 +102,21 @@ static void mainmenu_navigate(screens_t* screens, int result) {
 /**
  * Render the main menu
  */
-static void mainmenu_render(screen_t* screen, render_module_t* render) {
+static void mainmenu_render(screen_t* screen) {
     mainmenu_t* menu = screen->screen.mainmenu;
 
-    render->draw_mainmenu_bg();
+    render()->draw_mainmenu_bg();
 
-    render->draw_font(vec2i(100, 50), "Portmino v0.1");
+    render()->draw_font(vec2i(100, 50), "Portmino v0.1");
 
-    render->draw_font(vec2i(100, 100), "Play");
-    render->draw_font(vec2i(100, 110), "Records");
-    render->draw_font(vec2i(100, 120), "Ruleset");
-    render->draw_font(vec2i(100, 130), "Options");
-    render->draw_font(vec2i(100, 140), "Quit");
+    render()->draw_font(vec2i(100, 100), "Play");
+    render()->draw_font(vec2i(100, 110), "Records");
+    render()->draw_font(vec2i(100, 120), "Ruleset");
+    render()->draw_font(vec2i(100, 130), "Options");
+    render()->draw_font(vec2i(100, 140), "Quit");
 
     int y = 100 + (10 * menu->selected);
-    render->draw_font(vec2i(92, y), ">");
+    render()->draw_font(vec2i(92, y), ">");
 }
 
 /**

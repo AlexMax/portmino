@@ -109,7 +109,7 @@ void screens_frame(screens_t* screens, const gameevents_t* events) {
 /**
  * Draw the screen that has priority
  */
-void screens_render(screens_t* screens, render_module_t* render) {
+void screens_render(screens_t* screens) {
     screen_t* screen = screens_top(screens);
     if (screen == NULL) {
         // Do nothing.
@@ -117,5 +117,5 @@ void screens_render(screens_t* screens, render_module_t* render) {
     }
 
     // Run the frame for the given stack entry.
-    screen->config.render(screen, render);
+    screen->config.render(screen);
 }
