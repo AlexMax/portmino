@@ -13,6 +13,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
+-- Interface constants
+local BOARD_X = 18
+local BOARD_Y = 42
+
+local NEXT_X_START = 18
+local NEXT_Y = (BOARD_Y - 20)
+
 local function init(state)
     return true
 end
@@ -22,7 +29,14 @@ local function after_frame(state)
 end
 
 local function draw(state)
+    local board = mino_board.get(1)
+    local next = mino_next.get(1)
 
+    mino_render.draw_background()
+    mino_render.draw_board({x = BOARD_X, y = BOARD_Y}, board)
+
+    local piece = mino_next.get_next_config(next)
+    mino_render.draw_piece({x = NEXT_X_START, y = NEXT_Y}, piece)
 end
 
 return {

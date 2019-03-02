@@ -31,13 +31,6 @@
 #include "state.h"
 #include "vfs.h"
 
-// Interface constants
-#define BOARD_X 18
-#define BOARD_Y 42
-
-#define NEXT_X_START 18
-#define NEXT_Y (BOARD_Y - 20)
-
 // Forward declarations
 static void softrender_deinit(void);
 
@@ -124,7 +117,91 @@ static void softrender_clear(void) {
 }
 
 /**
- * Draw a cool background image
+ * Draw the background picture
+ */
+static void softrender_draw_background(void) {
+    // Draw the background.
+    picture_copy(&g_render_ctx.buffer, vec2i_zero(), g_back, vec2i_zero());
+}
+
+/**
+ * Draw a board and any attached pieces on the screen using the software renderer
+ */
+static void softrender_draw_board(vec2i_t pos, const board_t* board) {
+    picture_blit(&g_render_ctx.buffer, vec2i(pos.x, pos.y), g_board, vec2i_zero());
+
+    // The presumed size of a single empty cell in the board.  I feel
+    // precalculating these sizes has a better failure mode than relying
+    // on each and every block size to be correct.
+    int blockx = g_board->width / board->config.width;
+    int blocky = g_board->height / board->config.visible_height;
+
+    // What index of the board do we start at?
+    int start = (board->config.height - board->config.visible_height) * board->config.width;
+
+    // Draw the blocks on the board.
+    for (size_t i = start;i < board->data.size;i++) {
+        // What type of block are we rendering?
+        uint8_t btype = board->data.data[i];
+        if (!btype) {
+            continue;
+        }
+        picture_t* bpic = softblock_get(g_block, --btype);
+
+        // What is the actual (x, y) coordinate of the block?
+        int ix = i % board->config.width;
+        int iy = (i / board->config.width) - (board->config.height - board->config.visible_height);
+
+        // Draw a block.
+        picture_blit(&g_render_ctx.buffer,
+            vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
+            bpic, vec2i_zero());
+    }
+
+    // Draw pieces, if any.  The normal piece is drawn after the ghost piece
+    // so it gets drawn over top of the ghost in case of overlap.
+    for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
+        if (board->pieces[i] != NULL) {
+            const piece_t* piece = board->pieces[i];
+
+            size_t i = piece->rot * piece->config->data_size;
+            size_t end = i + piece->config->data_size;
+            for (int j = 0;i < end;i++, j++) {
+                // What type of block are we rendering?
+                uint8_t btype = piece->config->datas[i];
+                if (!btype) {
+                    continue;
+                }
+                picture_t* bpic = softblock_get(g_block, --btype);
+
+                // What is the actual (x, y) coordinate of the block?
+                int ix = piece->pos.x + (j % piece->config->width);
+                int iy = piece->pos.y + (j / piece->config->width);
+                iy -= board->config.height - board->config.visible_height;
+
+                if (iy < 0) {
+                    // Don't draw a block above the visible height.
+                    continue;
+                }
+
+                // Draw a block.
+                picture_blit(&g_render_ctx.buffer,
+                    vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
+                    bpic, vec2i_zero());
+            }
+        }
+    }
+}
+
+/**
+ * Draw text using the software renderer
+ */
+static void softrender_draw_font(vec2i_t pos, const char* text) {
+    softfont_render(g_font, &g_render_ctx.buffer, pos, text);
+}
+
+/**
+ * Draw a cool background image for the main menu
  */
 static void softrender_draw_mainmenu_bg(void) {
     static uint8_t mainmenu[MINO_SOFTRENDER_WIDTH * MINO_SOFTRENDER_HEIGHT];
@@ -157,7 +234,7 @@ static void softrender_draw_mainmenu_bg(void) {
     }
 
     // Draw using our current colors.
-    for (size_t i = 0,j = 0;i < sizeof(mainmenu);i++,j += MINO_SOFTRENDER_BPP) {
+    for (size_t i = 0, j = 0;i < sizeof(mainmenu);i++, j += MINO_SOFTRENDER_BPP) {
         size_t color = mainmenu[i];
         size_t colorindex = color * 3;
         g_render_ctx.buffer.data[j] = mmpalette[colorindex];
@@ -171,107 +248,31 @@ static void softrender_draw_mainmenu_bg(void) {
 }
 
 /**
- * Draw text using the software renderer
+ * Draw a piece at an arbitrary location
  */
-static void softrender_draw_font(vec2i_t pos, const char* text) {
-    softfont_render(g_font, &g_render_ctx.buffer, pos, text);
-}
+static void softrender_draw_piece(vec2i_t pos, const piece_config_t* piece) {
+    // We have no board, so...hardcode this?
+    int blockx = 8;
+    int blocky = 8;
 
-/**
- * Draw the game using the software renderer
- */
-static void softrender_draw_state(const state_t* state) {
-    // Draw the background.
-    picture_copy(&g_render_ctx.buffer, vec2i_zero(), g_back, vec2i_zero());
-    picture_blit(&g_render_ctx.buffer, vec2i(BOARD_X, BOARD_Y), g_board, vec2i_zero());
-
-    // Get our board to draw.
-    board_t* board = state->boards[0];
-
-    // The presumed size of a single empty cell in the board.  I feel
-    // precalculating these sizes has a better failure mode than relying
-    // on each and every block size to be correct.
-    int blockx = g_board->width / board->config.width;
-    int blocky = g_board->height / board->config.visible_height;
-
-    // What index of the board do we start at?
-    int start = (board->config.height - board->config.visible_height) * board->config.width;
-
-    // Draw the blocks on the board.
-    for (size_t i = start;i < board->data.size;i++) {
+    size_t i = piece->spawn_rot * piece->data_size;
+    size_t end = i + piece->data_size;
+    for (int j = 0;i < end;i++, j++) {
         // What type of block are we rendering?
-        uint8_t btype = board->data.data[i];
+        uint8_t btype = piece->datas[i];
         if (!btype) {
             continue;
         }
         picture_t* bpic = softblock_get(g_block, --btype);
 
         // What is the actual (x, y) coordinate of the block?
-        int ix = i % board->config.width;
-        int iy = (i / board->config.width) - (board->config.height - board->config.visible_height);
+        int ix = piece->spawn_pos.x + (j % piece->width);
+        int iy = 0 + (j / piece->width);
 
-        // Draw a block.
+        // Draw a block of the next piece.
         picture_blit(&g_render_ctx.buffer,
-            vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
+            vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
             bpic, vec2i_zero());
-    }
-
-    // Draw pieces, if any.  The normal piece is drawn after the ghost piece
-    // so it gets drawn over top of the ghost in case of overlap.
-    for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
-        if (board->pieces[i] != NULL) {
-            const piece_t* piece = board->pieces[i];
-
-            size_t i = piece->rot * piece->config->data_size;
-            size_t end = i + piece->config->data_size;
-            for (int j = 0;i < end;i++,j++) {
-                // What type of block are we rendering?
-                uint8_t btype = piece->config->datas[i];
-                if (!btype) {
-                    continue;
-                }
-                picture_t* bpic = softblock_get(g_block, --btype);
-
-                // What is the actual (x, y) coordinate of the block?
-                int ix = piece->pos.x + (j % piece->config->width);
-                int iy = piece->pos.y + (j / piece->config->width);
-                iy -= board->config.height - board->config.visible_height;
-
-                if (iy < 0) {
-                    // Don't draw a block above the visible height.
-                    continue;
-                }
-
-                // Draw a block.
-                picture_blit(&g_render_ctx.buffer,
-                    vec2i(BOARD_X + (blockx * ix), BOARD_Y + (blocky * iy)),
-                    bpic, vec2i_zero());
-            }
-        }
-    }
-
-    // Draw the next piece.
-    const piece_config_t* next = next_get_next_piece(state->nexts[0], 0);
-    if (next != NULL) {
-        size_t i = next->spawn_rot * next->data_size;
-        size_t end = i + next->data_size;
-        for (int j = 0;i < end;i++,j++) {
-            // What type of block are we rendering?
-            uint8_t btype = next->datas[i];
-            if (!btype) {
-                continue;
-            }
-            picture_t* bpic = softblock_get(g_block, --btype);
-
-            // What is the actual (x, y) coordinate of the block?
-            int ix = next->spawn_pos.x + (j % next->width);
-            int iy = 0 + (j / next->width);
-
-            // Draw a block of the next piece.
-            picture_blit(&g_render_ctx.buffer,
-                vec2i(NEXT_X_START + (blockx * ix), NEXT_Y + (blocky * iy)),
-                bpic, vec2i_zero());
-        }
     }
 }
 
@@ -281,7 +282,9 @@ render_module_t softrender_module = {
     softrender_deinit,
     softrender_context,
     softrender_clear,
-    softrender_draw_mainmenu_bg,
+    softrender_draw_background,
+    softrender_draw_board,
     softrender_draw_font,
-    softrender_draw_state,
+    softrender_draw_mainmenu_bg,
+    softrender_draw_piece,
 };

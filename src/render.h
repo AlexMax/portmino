@@ -20,7 +20,8 @@
 #include "define.h"
 
 // Forward declarations
-typedef struct state_s state_t;
+typedef struct board_s board_t;
+typedef struct piece_config_s piece_config_t;
 
 typedef enum {
     RENDERER_SOFTWARE
@@ -53,19 +54,29 @@ typedef struct {
     void (*clear)(void);
 
     /**
-     * Draw the main menu background image.
+     * Draw a background image.
      */
-    void (*draw_mainmenu_bg)(void);
+    void(*draw_background)(void);
 
     /**
-     * This function draws text on the screen.
+     * Draw a board and any attached pieces to the screen.
+     */
+    void (*draw_board)(vec2i_t pos, const board_t* board);
+
+    /**
+     * Draw text on the screen.
      */
     void (*draw_font)(vec2i_t pos, const char* text);
 
     /**
-     * This function is run once pre frame to actually do the drawing.
+     * Draw the main menu background image.
      */
-    void (*draw_state)(const state_t* state);
+    void(*draw_mainmenu_bg)(void);
+
+    /**
+     * Draw a freestanding piece.
+     */
+    void (*draw_piece)(vec2i_t pos, const piece_config_t* piece);
 } render_module_t;
 
 bool render_init(renderer_type_t renderer);

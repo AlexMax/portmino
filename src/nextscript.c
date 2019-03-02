@@ -24,21 +24,21 @@ static int nextscript_get(lua_State* L) {
     // Parameter 1: Board number, 1-indexed
     lua_Integer next = luaL_checkinteger(L, 1);
     if (next <= 0) {
-         // never returns
          luaL_argerror(L, 1, "invalid board id");
+         return 0;
     }
     next -= 1;
 
     lua_pushstring(L, "state");
     if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        // never returns
         luaL_argerror(L, 1, "nextscript_get is missing internal state");
+        return 0;
     }
     state_t* state = lua_touserdata(L, -1);
 
     if ((size_t)next >= state->next_count) {
-        // never returns
         luaL_argerror(L, 1, "invalid next id");
+        return 0;
     }
 
     // Return the board
@@ -56,8 +56,8 @@ static int nextscript_get_next_config(lua_State* L) {
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid next handle");
     next_t* next = lua_touserdata(L, 1);
     if (next == NULL) {
-        // never returns
         luaL_argerror(L, 1, "nil next handle");
+        return 0;
     }
 
     // Fetch the next piece and return a handle to its config
@@ -76,14 +76,14 @@ static int nextscript_consume_next(lua_State* L) {
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid next handle");
     next_t* next = lua_touserdata(L, 1);
     if (next == NULL) {
-        // never returns
         luaL_argerror(L, 1, "nil next handle");
+        return 0;
     }
 
     lua_pushstring(L, "ruleset");
     if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        // never returns
         luaL_argerror(L, 1, "nextscript_consume_next is missing internal state");
+        return 0;
     }
     ruleset_t* ruleset = lua_touserdata(L, -1);
 

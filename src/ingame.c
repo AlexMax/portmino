@@ -115,7 +115,16 @@ static void ingame_navigate(screens_t* screens, int result) {
  */
 static void ingame_render(screen_t* screen) {
     ingame_t* ingame = screen->screen.ingame;
-    render()->draw_state(ingame->state);
+    lua_State* L = ingame->ruleset->lua;
+
+    // Use our references to grab the draw function
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->gametype->draw_ref);
+
+    // Run the draw function.
+    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(L, -1);
+        error_push("lua error: %s", err);
+    }
 }
 
 /**

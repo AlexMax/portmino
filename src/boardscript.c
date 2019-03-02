@@ -60,8 +60,8 @@ static int boardscript_set_piece(lua_State* L) {
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
     board_t* board = lua_touserdata(L, 1);
     if (board == NULL) {
-        // never returns
         luaL_argerror(L, 1, "nil board handle");
+        return 0;
     }
 
     // Parameter 2: Piece index

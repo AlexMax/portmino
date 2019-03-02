@@ -52,6 +52,7 @@ set(GAME_SOURCES
     random.c            random.h
     randomscript.c      randomscript.h
     render.c            render.h
+    renderscript.c      renderscript.h
     ruleset.c           ruleset.h
     rulesetmenu.c       rulesetmenu.h
     rulesetscript.c     rulesetscript.h

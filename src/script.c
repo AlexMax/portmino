@@ -31,6 +31,7 @@
 #include "nextscript.h"
 #include "piecescript.h"
 #include "randomscript.h"
+#include "renderscript.h"
 #include "rulesetscript.h"
 #include "statescript.h"
 
@@ -54,6 +55,7 @@ lua_State* script_newstate(void) {
         { "mino_next", nextscript_openlib },
         { "mino_piece", piecescript_openlib },
         { "mino_random", randomscript_openlib },
+        { "mino_render", renderscript_openlib },
         { "mino_ruleset", rulesetscript_openlib },
         { "mino_state", statescript_openlib },
         { NULL, NULL }
