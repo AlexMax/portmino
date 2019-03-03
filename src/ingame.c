@@ -162,10 +162,16 @@ screen_t ingame_new(ruleset_t* ruleset, gametype_t* gametype) {
     }
 
     // Create our gamestate
-    state_t* state = state_new(ruleset);
+    state_t* state = state_new(ruleset, gametype);
     if (state == NULL) {
         free(ingame);
-        ingame = NULL;
+        return screen;
+    }
+
+    // Because we're about to be ingame, actually initialize the game
+    if (state_initgame(state) == false) {
+        state_delete(state);
+        free(ingame);
         return screen;
     }
 

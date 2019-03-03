@@ -16,25 +16,61 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
+#include <lua.h>
+
+#include "error.h"
 #include "ruleset.h"
 
 /**
- * Allocate a new next piece buffer.
+ * Actually call the next piece function
+ *
+ * Returns a piece configuration
  */
-next_t* next_new(ruleset_t* ruleset, size_t id) {
-    next_t* next = calloc(1, sizeof(next_t));
-    if (next == NULL) {
+static piece_config_t* next_next_piece(next_t* next) {
+    // Find our next_piece function.
+    int type = lua_rawgeti(next->lua, LUA_REGISTRYINDEX, next->next_piece_ref);
+    if (type != LUA_TFUNCTION) {
+        error_push("Unable to find next_piece function.");
         return NULL;
     }
 
-    next->id = id;
+    // Call it.
+    if (lua_pcall(next->lua, 0, 1, 0) != LUA_OK) {
+        error_push("Unable to call next_piece function.");
+        return NULL;
+    }
+
+    // We expect to get a light userdata out of it.  Complain if we don't.
+    if (lua_type(next->lua, -1) != LUA_TLIGHTUSERDATA) {
+        error_push("Unknown return value of next_piece function.");
+        return NULL;
+    }
+
+    // Return the piece.
+    piece_config_t* piece = lua_touserdata(next->lua, -1);
+    return piece;
+}
+
+/**
+ * Allocate a new next piece buffer.
+ *
+ * The next struct takes ownership of the "next piece" function reference.
+ * The caller is not expected to unref it.
+ */
+bool next_init(next_t* next, lua_State* L, int next_piece_ref) {
+    memset(next, 0x00, sizeof(next_t));
+
+    next->lua = L;
+    next->next_piece_ref = next_piece_ref;
     next->next_index = 0;
 
     for (size_t i = 0;i < MAX_NEXTS;i++) {
-        next->nexts[i] = ruleset_next_piece(ruleset, next);
+        next->nexts[i] = next_next_piece(next);
         if (next->nexts[i] == NULL) {
-            next_delete(next);
+            error_push("Cannot set a next piece.");
+            next_deinit(next);
             return NULL;
         }
     }
@@ -45,11 +81,16 @@ next_t* next_new(ruleset_t* ruleset, size_t id) {
 /**
  * Delete the next piece buffer.
  */
-void next_delete(next_t* next) {
+void next_deinit(next_t* next) {
+    if (next == NULL) {
+        return;
+    }
+
     for (size_t i = 0;i < MAX_NEXTS;i++) {
         next->nexts[i] = NULL;
     }
-    free(next);
+
+    memset(next, 0x00, sizeof(next_t));
 }
 
 /**
@@ -66,7 +107,7 @@ const piece_config_t* next_get_next_piece(const next_t* next, size_t index) {
  * Advances the next-piece index, wrapping around if necessary, and generates
  * a new next piece at the end.
  */
-void next_consume_next_piece(next_t* next, ruleset_t* ruleset) {
-    next->nexts[next->next_index] = ruleset_next_piece(ruleset, next);
+void next_consume_next_piece(next_t* next) {
+    next->nexts[next->next_index] = next_next_piece(next);
     next->next_index = (next->next_index + 1) % MAX_NEXTS;
 }

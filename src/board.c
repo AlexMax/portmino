@@ -26,16 +26,10 @@
 /**
  * Create a new board structure.
  */
-board_t* board_new(ruleset_t* ruleset, size_t board_id) {
-    (void)ruleset; // We might use the ruleset in the future.
-
-    board_t* board = calloc(1, sizeof(board_t));
-    if (board == NULL) {
-        return NULL;
-    }
+bool board_init(board_t* board) {
+    memset(board, 0x00, sizeof(board_t));
 
     // Define our configuration
-    board->id = board_id;
     board->config.width = 10;
     board->config.height = 22;
     board->config.visible_height = 20;
@@ -45,22 +39,28 @@ board_t* board_new(ruleset_t* ruleset, size_t board_id) {
     size_t size = board->config.width * board->config.height;
     board->data.size = size;
     board->data.data = calloc(size, sizeof(uint8_t));
+    if (board->data.data == NULL) {
+        return false;
+    }
 
-    // We have no active pieces, so no need to do anything else here.
-    return board;
+    return true;
 }
 
 /**
  * Delete a board structure.
  */
-void board_delete(board_t* board) {
+void board_deinit(board_t* board) {
+    if (board == NULL) {
+        return;
+    }
+
     for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
         piece_delete(board->pieces[i]);
         board->pieces[i] = NULL;
     }
 
     free(board->data.data);
-    free(board);
+    board->data.data = NULL;
 }
 
 /**

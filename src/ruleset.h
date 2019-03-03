@@ -57,22 +57,17 @@ typedef struct ruleset_s {
     int state_frame_ref;
 
     /**
-     * Reference to state function inside Lua.
+     * Reference to init function inside Lua.
      */
-    int state_ref;
+    int init_ref;
 
     /**
      * Pieces loaded from Lua.
      */
     piece_configs_t* pieces;
-
-    /**
-     * Reference to next piece function inside Lua.
-     */
-    int next_piece_ref;
 } ruleset_t;
 
 ruleset_t* ruleset_new(lua_State* L, const char* name);
 void ruleset_delete(ruleset_t* ruleset);
 menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* next);
+bool ruleset_initialize(ruleset_t* ruleset, state_t* state);

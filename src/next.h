@@ -20,18 +20,13 @@
 #include "define.h"
 
 // Forward declarations
+typedef struct lua_State lua_State;
 typedef struct piece_config_s piece_config_t;
-typedef struct ruleset_s ruleset_t;
 
 // Right now we only support a maximum of 8 next pieces.
 #define MAX_NEXTS 8
 
 typedef struct next_s {
-    /**
-     * Id of the next buffer.
-     */
-    size_t id;
-
     /**
      * Next pieces circular buffer.
      * 
@@ -43,9 +38,21 @@ typedef struct next_s {
      * Current next piece.
      */
     uint8_t next_index;
+
+    /**
+     * Lua state
+     *
+     * This is a non-owning pointer.  Do not free it.
+     */
+    lua_State* lua;
+
+    /**
+     * A reference to the next piece function used to populate the buffer.
+     */
+    int next_piece_ref;
 } next_t;
 
-next_t* next_new(ruleset_t* ruleset, size_t id);
-void next_delete(next_t* next);
+bool next_init(next_t* next, lua_State* L, int next_piece_ref);
+void next_deinit(next_t* next);
 const piece_config_t* next_get_next_piece(const next_t* next, size_t index);
-void next_consume_next_piece(next_t* next, ruleset_t* ruleset);
+void next_consume_next_piece(next_t* next);

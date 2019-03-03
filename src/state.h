@@ -20,7 +20,8 @@
 #include "define.h"
 
 // Forward declarations.
-typedef struct board_s board_t;
+typedef struct gametype_s gametype_t;
+typedef struct lua_State lua_State;
 typedef struct next_s next_t;
 typedef struct playerevents_s playerevents_t;
 typedef struct ruleset_s ruleset_t;
@@ -35,36 +36,43 @@ typedef struct state_s {
     uint32_t tic;
 
     /**
+     * State table reference.
+     */
+    int state_table_ref;
+
+    /**
+     * Lua state.
+     * 
+     * This is not an owning reference.  Do not free it.
+     */
+    lua_State* lua;
+
+    /**
      * Current background picture.
      */
     char* background;
 
     /**
-     * Boards.
-     */
-    board_t* boards[MAX_BOARDS];
-
-    /**
-     * In-use board count.
-     */
-    size_t board_count;
-
-    /**
-     * Next piece buffers.
-     */
-    next_t** nexts;
-
-    /**
-     * Next piece buffer count.
-     */
-    size_t next_count;
-
-    /**
      * In-use player count.
      */
     size_t player_count;
+
+    /**
+     * Ruleset used by state.
+     *
+     * This is not an owning reference.  Do not free it.
+     */
+    ruleset_t* ruleset;
+
+    /**
+     * Gametype used by state.
+     *
+     * This is not an owning reference.  Do not free it.
+     */
+    gametype_t* gametype;
 } state_t;
 
-state_t* state_new(ruleset_t* ruleset);
+state_t* state_new(ruleset_t* ruleset, gametype_t* gametype);
 void state_delete(state_t* state);
+bool state_initgame(state_t* state);
 bool state_frame(state_t* state);

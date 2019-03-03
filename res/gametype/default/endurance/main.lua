@@ -17,26 +17,50 @@
 local BOARD_X = 18
 local BOARD_Y = 42
 
+local TEXT_X = 160
+local TEXT_Y = BOARD_Y
+
 local NEXT_X_START = 18
 local NEXT_Y = (BOARD_Y - 20)
 
-local function init(state)
-    return true
-end
-
-local function after_frame(state)
+local function init()
 
 end
 
-local function draw(state)
+local function after_frame()
+
+end
+
+local function draw()
     local board = mino_board.get(1)
     local next = mino_next.get(1)
 
+    -- Draw the actual game
     mino_render.draw_background()
     mino_render.draw_board({x = BOARD_X, y = BOARD_Y}, board)
 
     local piece = mino_next.get_next_config(next)
     mino_render.draw_piece({x = NEXT_X_START, y = NEXT_Y}, piece)
+
+    -- Draw the HUD
+    local state = mino_state.get()
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y}, "Marathon")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 1)}, "(150 Line Game)")
+
+    local score = string.format("%d", state.player[1].score)
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 3)}, "Score")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 4)}, score)
+
+    local line = string.format("%d", state.player[1].line)
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 6)}, "Line")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 7)}, line)
+
+    local level = string.format("%d", state.player[1].level)
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 9)}, "Level")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 10)}, level)
+
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 12)}, "Time")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 13)}, "00:00.00")
 end
 
 return {

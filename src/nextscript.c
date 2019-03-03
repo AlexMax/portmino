@@ -18,32 +18,31 @@
 #include "lauxlib.h"
 
 #include "next.h"
-#include "state.h"
 
-static int nextscript_get(lua_State* L) {
-    // Parameter 1: Board number, 1-indexed
-    lua_Integer next = luaL_checkinteger(L, 1);
-    if (next <= 0) {
-         luaL_argerror(L, 1, "invalid board id");
-         return 0;
-    }
-    next -= 1;
+/**
+ * Lua: Initialize new next state.
+ */
+static int nextscript_new(lua_State* L) {
+    // Parameter 1: Our "next piece" function
+    luaL_checktype(L, 1, LUA_TFUNCTION);
 
-    lua_pushstring(L, "state");
-    if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        luaL_argerror(L, 1, "nextscript_get is missing internal state");
-        return 0;
-    }
-    state_t* state = lua_touserdata(L, -1);
-
-    if ((size_t)next >= state->next_count) {
-        luaL_argerror(L, 1, "invalid next id");
+    // Create a ref from our function
+    int next_ref = luaL_ref(L, 1);
+    if (next_ref == LUA_NOREF) {
+        luaL_error(L, "Could not allocate reference to next piece function.");
         return 0;
     }
 
-    // Return the board
-    next_t* next_ptr = state->nexts[next];
-    lua_pushlightuserdata(L, next_ptr);
+    // Initialize (and return) next state
+    next_t* next = lua_newuserdata(L, sizeof(next_t));
+    if (next_init(next, L, next_ref) == false) {
+        luaL_error(L, "Could not allocate new next.");
+        return 0;
+    }
+
+    // Apply methods to the userdata
+    luaL_setmetatable(L, "next_t");
+
     return 1;
 }
 
@@ -51,14 +50,8 @@ static int nextscript_get(lua_State* L) {
  * Lua: Get the next piece config handle for the given next handle
  */
 static int nextscript_get_next_config(lua_State* L) {
-    // Parameter 1: Next handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid next handle");
-    next_t* next = lua_touserdata(L, 1);
-    if (next == NULL) {
-        luaL_argerror(L, 1, "nil next handle");
-        return 0;
-    }
+    // Parameter 1: Our userdata
+    next_t* next = luaL_checkudata(L, 1, "next_t");
 
     // Fetch the next piece and return a handle to its config
     const piece_config_t* config = next_get_next_piece(next, 0);
@@ -71,34 +64,32 @@ static int nextscript_get_next_config(lua_State* L) {
  * _next_ next piece and generating a new next piece.
  */
 static int nextscript_consume_next(lua_State* L) {
-    // Parameter 1: Next handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid next handle");
-    next_t* next = lua_touserdata(L, 1);
-    if (next == NULL) {
-        luaL_argerror(L, 1, "nil next handle");
-        return 0;
-    }
+    // Parameter 1: Our userdata
+    next_t* next = luaL_checkudata(L, 1, "next_t");
 
-    lua_pushstring(L, "ruleset");
-    if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        luaL_argerror(L, 1, "nextscript_consume_next is missing internal state");
-        return 0;
-    }
-    ruleset_t* ruleset = lua_touserdata(L, -1);
-
-    next_consume_next_piece(next, ruleset);
+    next_consume_next_piece(next);
     return 0;
 }
 
 int nextscript_openlib(lua_State* L) {
     static const luaL_Reg nextlib[] = {
-        { "get", nextscript_get },
+        { "new", nextscript_new },
+        { NULL, NULL }
+    };
+
+    luaL_newlib(L, nextlib);
+
+    // Create the next_t type
+    static const luaL_Reg nexttype[] = {
         { "get_next_config", nextscript_get_next_config },
         { "consume_next", nextscript_consume_next },
         { NULL, NULL }
     };
 
-    luaL_newlib(L, nextlib);
+    luaL_newmetatable(L, "next_t");
+    luaL_newlib(L, nexttype);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
     return 1;
 }

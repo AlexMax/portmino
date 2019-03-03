@@ -56,3 +56,4 @@ typedef struct gametype_s {
 buffer_t* gametype_find_script(const char* ruleset_name, const char* name);
 gametype_t* gametype_new(lua_State* L, buffer_t* file, const char* name);
 void gametype_delete(gametype_t* gametype);
+bool gametype_initialize(gametype_t* gametype, state_t* state);

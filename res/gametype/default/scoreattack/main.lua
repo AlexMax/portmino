@@ -13,15 +13,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
-local function init(state)
-    return true
-end
-
-local function after_frame(state)
+local function init()
 
 end
 
-local function draw(state)
+local function after_frame()
+
+end
+
+local function draw()
 
 end
 

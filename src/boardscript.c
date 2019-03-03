@@ -19,35 +19,21 @@
 
 #include "board.h"
 #include "script.h"
-#include "state.h"
 
-/**
- * Lua: Get a board handle by board ID
- */
-static int boardscript_get(lua_State* L) {
-    // Parameter 1: Board number, 1-indexed
-    lua_Integer board = luaL_checkinteger(L, 1);
-    if (board <= 0) {
-         // never returns
-         luaL_argerror(L, 1, "invalid board id");
-    }
-    board -= 1;
-
-    lua_pushstring(L, "state");
-    if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        // never returns
-        luaL_argerror(L, 1, "ruleset_get_board is missing internal state");
-    }
-    state_t* state = lua_touserdata(L, -1);
-
-    if ((size_t)board >= state->board_count) {
-        // never returns
-        luaL_argerror(L, 1, "invalid board id");
+ /**
+  * Lua: Initialize new board state.
+  */
+static int boardscript_new(lua_State* L) {
+    // Initialize (and return) board state
+    board_t* board = lua_newuserdata(L, sizeof(board_t));
+    if (board_init(board, L) == false) {
+        luaL_error(L, "Could not allocate new board.");
+        return 0;
     }
 
-    // Return the board
-    board_t* board_ptr = state->boards[board];
-    lua_pushlightuserdata(L, board_ptr);
+    // Apply methods to the userdata
+    luaL_setmetatable(L, "board_t");
+
     return 1;
 }
 
@@ -55,30 +41,24 @@ static int boardscript_get(lua_State* L) {
  * Lua: Set a new piece for the board.
  */
 static int boardscript_set_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        luaL_argerror(L, 1, "nil board handle");
-        return 0;
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
     if (index <= 0) {
-        // never returns
         luaL_argerror(L, 1, "invalid piece id");
+        return 0;
     }
     index -= 1;
 
     // Parameter 2: Piece configuration handle
-    type = lua_type(L, 3);
+    int type = lua_type(L, 3);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 3, "invalid piece configuration handle");
     const piece_config_t* config = lua_touserdata(L, 3);
     if (config == NULL) {
-        // never returns
         luaL_argerror(L, 3, "nil piece configuration handle");
+        return 0;
     }
 
     // Fetch the piece and return a handle to it
@@ -96,20 +76,14 @@ static int boardscript_set_piece(lua_State* L) {
  * Lua: Unset the piece on the board given by the index
  */
 static int boardscript_unset_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
     if (index <= 0) {
-        // never returns
         luaL_argerror(L, 1, "invalid piece id");
+        return 0;
     }
     index -= 1;
 
@@ -122,20 +96,14 @@ static int boardscript_unset_piece(lua_State* L) {
  * Lua: Get a board piece handle by index
  */
 static int boardscript_get_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
     if (index <= 0) {
-        // never returns
         luaL_argerror(L, 1, "invalid piece id");
+        return 0;
     }
     index -= 1;
 
@@ -154,22 +122,16 @@ static int boardscript_get_piece(lua_State* L) {
  * Lua: Test to see if a piece collides with a specific spot on the board.
  */
 static int boardscript_test_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Parameter 2: Piece configuration handle
-    type = lua_type(L, 2);
+    int type = lua_type(L, 2);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
     const piece_config_t* config = lua_touserdata(L, 2);
     if (config == NULL) {
-        // never returns
         luaL_argerror(L, 2, "nil piece configuration handle");
+        return 0;
     }
 
     // Parameter 3: Position table
@@ -191,22 +153,16 @@ static int boardscript_test_piece(lua_State* L) {
  *      the last location where the piece was successfully placed.
  */
 static int boardscript_test_piece_between(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Parameter 2: Piece configuration handle
-    type = lua_type(L, 2);
+    int type = lua_type(L, 2);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
     const piece_config_t* config = lua_touserdata(L, 2);
     if (config == NULL) {
-        // never returns
         luaL_argerror(L, 2, "nil piece configuration handle");
+        return 0;
     }
 
     // Parameter 3: Source position
@@ -232,22 +188,16 @@ static int boardscript_test_piece_between(lua_State* L) {
  * Lua: Test to see if a piece collides with a specific spot on the board.
  */
 static int boardscript_lock_piece(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Parameter 2: Piece configuration handle
-    type = lua_type(L, 2);
+    int type = lua_type(L, 2);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
     const piece_config_t* config = lua_touserdata(L, 2);
     if (config == NULL) {
-        // never returns
         luaL_argerror(L, 2, "nil piece configuration handle");
+        return 0;
     }
 
     // Parameter 3: Position table
@@ -264,17 +214,11 @@ static int boardscript_lock_piece(lua_State* L) {
 }
 
 /**
- * Lua: Test to see if a piece collides with a specific spot on the board.
+ * Lua: Clear filled lines on the board.
  */
 static int boardscript_clear_lines(lua_State* L) {
-    // Parameter 1: Board handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid board handle");
-    board_t* board = lua_touserdata(L, 1);
-    if (board == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil board handle");
-    }
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
 
     // Clear lines and return the number of lines cleared.
     uint8_t lines = board_clear_lines(board);
@@ -284,7 +228,13 @@ static int boardscript_clear_lines(lua_State* L) {
 
 int boardscript_openlib(lua_State* L) {
     static const luaL_Reg boardlib[] = {
-        { "get", boardscript_get },
+        { "new", boardscript_new },
+    };
+
+    luaL_newlib(L, boardlib);
+
+    // Create the board_t type
+    static const luaL_Reg boardtype[] = {
         { "set_piece", boardscript_set_piece },
         { "unset_piece", boardscript_unset_piece },
         { "get_piece", boardscript_get_piece },
@@ -295,6 +245,10 @@ int boardscript_openlib(lua_State* L) {
         { NULL, NULL }
     };
 
-    luaL_newlib(L, boardlib);
+    luaL_newmetatable(L, "board_t");
+    luaL_newlib(L, boardtype);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
     return 1;
 }

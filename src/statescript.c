@@ -15,10 +15,27 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "state.h"
-
 #include "lua.h"
 #include "lauxlib.h"
+
+#include "state.h"
+
+/**
+ * Lua: Get the canonical state table
+ */
+static int statescript_get(lua_State* L) {
+    lua_pushstring(L, "state");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+
+    const state_t* state = lua_touserdata(L, -1);
+    if (state == NULL) {
+        // never returns
+        luaL_error(L, "statescript_get is missing internal state");
+    }
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, state->state_table_ref);
+    return 1;
+}
 
 /**
  * Lua: Get the current gametic of the state
@@ -42,6 +59,7 @@ static int statescript_get_gametic(lua_State* L) {
  */
 int statescript_openlib(lua_State* L) {
     static const luaL_Reg statelib[] = {
+        { "get", statescript_get },
         { "get_gametic", statescript_get_gametic },
         { NULL, NULL }
     };

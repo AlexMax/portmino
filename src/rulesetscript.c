@@ -15,8 +15,6 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "rulesetscript.h"
-
 #include "lua.h"
 #include "lauxlib.h"
 

@@ -38,13 +38,24 @@
 ruleset_t* ruleset_new(lua_State* L, const char* name) {
     char* filename = NULL;
     buffer_t* file = NULL;
-    piece_configs_t* piece_configs = NULL;
     ruleset_t* ruleset = NULL;
+
+    // Create the structure to actually hold our ruleset.
+    if ((ruleset = calloc(1, sizeof(ruleset_t))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    // Make sure our Lua state is set, so cleanup works properly.
+    ruleset->lua = L;
+    ruleset->state_frame_ref = LUA_NOREF;
+    ruleset->init_ref = LUA_NOREF;
+    ruleset->env_ref = LUA_NOREF;
 
     int ok = asprintf(&filename, "ruleset/%s/main.lua", name);
     if (ok < 0) {
         error_push_allocerr();
-        return NULL;
+        goto fail;
     }
 
     // Load the file with our ruleset in it.
@@ -69,8 +80,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     // the registry.
     lua_createtable(L, 0, 0);
     lua_pushvalue(L, -1);
-    int env_ref = luaL_ref(L, LUA_REGISTRYINDEX); // pop env table dupe
-    if (env_ref == LUA_REFNIL) {
+    if ((ruleset->env_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop env table dupe
         error_push_allocerr();
         goto fail;
     }
@@ -130,26 +140,23 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
 
     // Create a reference to the state_frame function.
-    int state_frame_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    if (state_frame_ref == LUA_REFNIL) {
+    if ((ruleset->state_frame_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) {
         error_push_allocerr();
         goto fail;
     }
 
-    // Check for a table key that contains the state table.
-    lua_pushstring(L, "state");
-    type = lua_gettable(L, -2);
+    // Check for a table key that contains the initialization function.
+    type = lua_getfield(L, -1, "init");
     if (type == LUA_TNIL) {
-        error_push("Could not find table \"state\" in module table in ruleset %s.", name);
+        error_push("Could not find table \"init\" in module table in ruleset %s.", name);
         goto fail;
-    } else if (type != LUA_TTABLE) {
-        error_push("\"state\" is not a table in ruleset %s.", name);
+    } else if (type != LUA_TFUNCTION) {
+        error_push("\"init\" is not a function in ruleset %s.", name);
         goto fail;
     }
 
     // Create a reference to the state table.
-    int state_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    if (state_ref == LUA_REFNIL) {
+    if ((ruleset->init_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) {
         error_push_allocerr();
         goto fail;
     }
@@ -166,26 +173,8 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
 
     // Iterate through the piece array.
-    if ((piece_configs = piece_configs_new(L)) == NULL) {
+    if ((ruleset->pieces = piece_configs_new(L)) == NULL) {
         error_push("Error parsing pieces in ruleset %s: %s", name, lua_tostring(L, -1));
-        goto fail;
-    }
-
-    // Check for a table key that contains the next_piece function.
-    lua_pushstring(L, "next_piece");
-    type = lua_gettable(L, -2);
-    if (type == LUA_TNIL) {
-        error_push("Could not find function \"next_piece\" in module table in ruleset %s.", name);
-        goto fail;
-    } else if (type != LUA_TFUNCTION) {
-        error_push("\"next_piece\" is not a function in ruleset %s.", name);
-        goto fail;
-    }
-
-    // Create a reference to the next_piece function.
-    int next_piece_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    if (next_piece_ref == LUA_REFNIL) {
-        error_push_allocerr();
         goto fail;
     }
 
@@ -197,12 +186,6 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
     lua_pop(L, 1);
 
-    // We're all set!  Create the structure to actually hold our ruleset.
-    if ((ruleset = calloc(1, sizeof(ruleset_t))) == NULL) {
-        error_push_allocerr();
-        goto fail;
-    }
-
     // Copy our ruleset name - has the potential to fail.
     ruleset->name = strdup(name);
     if (ruleset->name == NULL) {
@@ -210,19 +193,11 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
         goto fail;
     }
 
-    ruleset->lua = L;
-    ruleset->state_frame_ref = state_frame_ref;
-    ruleset->state_ref = state_ref;
-    ruleset->pieces = piece_configs;
-    ruleset->next_piece_ref = next_piece_ref;
-    ruleset->env_ref = env_ref;
-
     return ruleset;
 
 fail:
     free(filename);
     buffer_delete(file);
-    piece_configs_delete(piece_configs);
     ruleset_delete(ruleset);
 
     return NULL;
@@ -239,9 +214,8 @@ void ruleset_delete(ruleset_t* ruleset) {
     free(ruleset->name);
     luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
     luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_frame_ref);
-    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_ref);
+    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->init_ref);
     piece_configs_delete(ruleset->pieces);
-    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->next_piece_ref);
 
     free(ruleset);
 }
@@ -344,27 +318,30 @@ fail:
 }
 
 /**
- * Return a "next" piece by calling into our Lua function to get it
+ * Run our initialization functions for a new game
  */
-const piece_config_t* ruleset_next_piece(ruleset_t* ruleset, next_t* next) {
-    // Use our reference to grab the next_piece function.
-    lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->next_piece_ref);
+bool ruleset_initialize(ruleset_t* ruleset, state_t* state) {
+    // Ensure our state is in the registry
+    lua_pushlightuserdata(ruleset->lua, state);
+    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "state");
 
-    lua_pushstring(ruleset->lua, "ruleset");
-    lua_pushlightuserdata(ruleset->lua, (void*)ruleset);
-    lua_settable(ruleset->lua, LUA_REGISTRYINDEX);
-
-    // Pass a 1-indexed board ID to the next piece function, so we know which
-    // board we're spawning the piece on.
-    lua_pushinteger(ruleset->lua, next->id + 1);
-
-    // Call it, friendo
-    if (lua_pcall(ruleset->lua, 1, 1, 0) != LUA_OK) {
-        const char* err = lua_tostring(ruleset->lua, -1);
-        error_push("lua error: %s", err);
-        return NULL;
+    // Get our initialization function out of the registry
+    int type = lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->init_ref);
+    if (type == LUA_TNIL) {
+        // No initilization function, we're fine.
+        return true;
+    } else if (type == LUA_TFUNCTION) {
+        // Call the function.
+        if (lua_pcall(ruleset->lua, 0, 0, 0) != LUA_OK) {
+            const char* err = lua_tostring(ruleset->lua, -1);
+            error_push("lua error: %s", err);
+            return false;
+        }
+        return true;
     }
 
-    // Return either our config pointer or NULL
-    return lua_touserdata(ruleset->lua, -1);
+    // What do we even have?
+    error_push("Ruleset initialization is not a function or nil.");
+    lua_pop(ruleset->lua, 1);
+    return false;
 }

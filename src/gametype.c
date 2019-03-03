@@ -187,7 +187,37 @@ void gametype_delete(gametype_t* gametype) {
     }
 
     free(gametype->name);
+    luaL_unref(gametype->lua, LUA_REGISTRYINDEX, gametype->init_ref);
     luaL_unref(gametype->lua, LUA_REGISTRYINDEX, gametype->state_functions_ref);
     luaL_unref(gametype->lua, LUA_REGISTRYINDEX, gametype->draw_ref);
     free(gametype);
+}
+
+/**
+ * Run our initialization functions for a new game
+ */
+bool gametype_initialize(gametype_t* gametype, state_t* state) {
+    // Ensure our state is in the registry
+    lua_pushlightuserdata(gametype->lua, state);
+    lua_setfield(gametype->lua, LUA_REGISTRYINDEX, "state");
+
+    // Get our initialization function out of the registry
+    int type = lua_rawgeti(gametype->lua, LUA_REGISTRYINDEX, gametype->init_ref);
+    if (type == LUA_TNIL) {
+        // No initilization function, we're fine.
+        return true;
+    } else if (type == LUA_TFUNCTION) {
+        // Call the function.
+        if (lua_pcall(gametype->lua, 0, 0, 0) != LUA_OK) {
+            const char* err = lua_tostring(gametype->lua, -1);
+            error_push("lua error: %s", err);
+            return false;
+        }
+        return true;
+    }
+
+    // What do we even have?
+    error_push("Gametype initialization is not a function or nil.");
+    lua_pop(gametype->lua, 1);
+    return false;
 }

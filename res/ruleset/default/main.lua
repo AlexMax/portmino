@@ -31,10 +31,52 @@ local ROT_L = 3
 local BOARD_PIECE = 1
 local BOARD_GHOST = 2
 
+-- Bag randomizer
+local function next_piece_func(board_id)
+    -- Return a function that uses the state of a specific board
+    return function()
+        local state = mino_state.get()
+        local board = state.board[board_id]
+
+        -- If our bag is empty, fill it back up.
+        if board.bag_size == 0 then
+            board.bag = mino_ruleset.get_piece_configs()
+            board.bag_size = #board.bag
+        end
+
+        -- Pick a random piece from the bag.
+        local index = board.random:number(board.bag_size) + 1
+
+        -- Iterate that random number of times through the bag.
+        local key = nil
+        local piece = nil
+        for i = 1, index do
+            key, piece = next(board.bag, key)
+        end
+
+        -- Remove the piece from the bag and return it.
+        board.bag[key] = nil
+        board.bag_size = board.bag_size - 1
+        return piece
+    end
+end
+
 -- Contains any important state that we need to keep track of.
-local state = {
-    player = {
+local function init()
+    local state = mino_state.get()
+
+    -- Player state
+    state.player = {
         {
+            -- Current score of the player.
+            score = 0,
+
+            -- Number of lines that have cleared.
+            lines = 0,
+
+            -- How many lines have been cleared in a row.
+            combo = 0,
+
             -- Tic that EVENT_LEFT began on.  Set to 0 if released.
             left_tic = 0,
 
@@ -53,9 +95,17 @@ local state = {
             -- Have we processed an EVENT_CW last tic?
             cw_already = false,
         }
-    },
-    board = {
+    }
+
+    -- Board state
+    state.board = {
         {
+            -- The actual board.
+            board = mino_board.new(),
+
+            -- The "next piece" buffer.
+            next = mino_next.new(next_piece_func(1)),
+
             -- Tic that the current piece spawned on.
             spawn_tic = 0,
 
@@ -69,9 +119,10 @@ local state = {
             bag_size = 0,
         }
     }
-}
+end
 
 local function board_next_piece(board, tic)
+    local state = mino_state.get()
     local next = mino_next.get(1)
 
     if mino_board.get_piece(board, BOARD_PIECE) ~= nil then
@@ -108,6 +159,7 @@ local function board_next_piece(board, tic)
 end
 
 local function state_frame()
+    local state = mino_state.get()
     local gametic = mino_state.get_gametic()
     local board = mino_board.get(1)
 
@@ -432,35 +484,8 @@ local function state_frame()
     return STATE_RESULT_OK
 end
 
--- Bag randomizer
-local function next_piece(next_id)
-    local board = state.board[1]
-
-    -- If our bag is empty, fill it back up.
-    if board.bag_size == 0 then
-        board.bag = mino_ruleset.get_piece_configs()
-        board.bag_size = #board.bag
-    end
-
-    -- Pick a random piece from the bag.
-    local index = board.random:number(board.bag_size) + 1
-
-    -- Iterate that random number of times through the bag.
-    local key = nil
-    local piece = nil
-    for i = 1, index do
-        key, piece = next(board.bag, key)
-    end
-
-    -- Remove the piece from the bag and return it.
-    board.bag[key] = nil
-    board.bag_size = board.bag_size - 1
-    return piece
-end
-
 return {
-    state = state,
+    init = init,
     state_frame = state_frame,
     pieces = require('pieces'),
-    next_piece = next_piece,
 }
