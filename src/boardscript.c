@@ -26,7 +26,7 @@
 static int boardscript_new(lua_State* L) {
     // Initialize (and return) board state
     board_t* board = lua_newuserdata(L, sizeof(board_t));
-    if (board_init(board, L) == false) {
+    if (board_init(board) == false) {
         luaL_error(L, "Could not allocate new board.");
         return 0;
     }

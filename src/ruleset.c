@@ -118,7 +118,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
 
     // We now have the ruleset on the top of the stack.  Call it!
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
-        error_push("%s", lua_tostring(L, -1));
+        error_push("lua error: %s", lua_tostring(L, -1));
         goto fail;
     }
 

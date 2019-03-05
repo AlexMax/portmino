@@ -38,7 +38,8 @@ static piece_config_t* next_next_piece(next_t* next) {
 
     // Call it.
     if (lua_pcall(next->lua, 0, 1, 0) != LUA_OK) {
-        error_push("Unable to call next_piece function.");
+        const char* err = lua_tostring(next->lua, -1);
+        error_push("lua error: %s", err);
         return NULL;
     }
 

@@ -27,7 +27,7 @@ static int nextscript_new(lua_State* L) {
     luaL_checktype(L, 1, LUA_TFUNCTION);
 
     // Create a ref from our function
-    int next_ref = luaL_ref(L, 1);
+    int next_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     if (next_ref == LUA_NOREF) {
         luaL_error(L, "Could not allocate reference to next piece function.");
         return 0;

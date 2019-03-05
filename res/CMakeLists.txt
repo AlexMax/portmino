@@ -12,8 +12,11 @@ set(RESOURCE_SOURCES
     gametype/default/versus/manifest.cfg
     interface/default/board.png
     interface/default/font.png
+    ruleset/default/init.lua
     ruleset/default/main.lua
+    ruleset/default/next_piece.lua
     ruleset/default/pieces.lua
+    ruleset/default/state_frame.lua
     sfx/default/cursor.wav
     sfx/default/gameover.wav
     sfx/default/lock.wav

@@ -13,6 +13,7 @@ ExternalProject_Add(cmocka
     URL "https://cmocka.org/files/1.1/cmocka-1.1.3.tar.xz"
     URL_HASH "SHA256=43eabcf72a9c80e3d03f7c8a1c04e408c18d2db5121eb058a3ef732a9dfabfaf"
     CMAKE_ARGS
+        "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
         "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
         "-DWITH_STATIC_LIB=ON"
     BUILD_BYPRODUCTS ${CMOCKA_LIBRARY}
@@ -29,7 +30,9 @@ set(LUA_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/local/lib/${CMAKE_STATIC_LIBRARY_PR
 ExternalProject_Add(lua
     URL "http://www.lua.org/ftp/lua-5.3.5.tar.gz"
     URL_HASH "SHA256=0c2eed3f960446e1a3e4b9a1ca2f3ff893b6ce41942cf54d5dd59ab4b3b058ac"
-    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
+    CMAKE_ARGS
+        "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+        "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
     BUILD_BYPRODUCTS ${LUA_LIBRARY}
     EXCLUDE_FROM_ALL ON)
 ExternalProject_Add_Step(lua copy-cmake
@@ -53,6 +56,7 @@ ExternalProject_Add(physfs
     URL "https://hg.icculus.org/icculus/physfs/archive/5ebf7cddf502.tar.gz"
     URL_HASH "SHA256=0e3704646e58913980b632ec0d771a8ceafa331b014eb36c6bfb09d5c7bca437"
     CMAKE_ARGS
+        "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
         "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
         "-DPHYSFS_ARCHIVE_7Z=OFF"
         "-DPHYSFS_ARCHIVE_GRP=OFF"

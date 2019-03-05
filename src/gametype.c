@@ -75,7 +75,7 @@ gametype_t* gametype_new(lua_State* L, buffer_t* file, const char* name) {
 
     // We now have the gametype on the top of the stack.  Call it!
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
-        error_push("%s", lua_tostring(L, -1));
+        error_push("lua_error: %s", lua_tostring(L, -1));
         goto fail;
     }
 

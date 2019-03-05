@@ -27,6 +27,8 @@
  * Lua: Draw background
  */
 static int renderscript_draw_background(lua_State* L) {
+    (void)L;
+
     render()->draw_background();
     return 0;
 }
@@ -63,7 +65,7 @@ static int renderscript_draw_font(lua_State* L) {
     luaL_argcheck(L, ok, 1, "invalid position");
 
     // Parameter 2: Text to render
-    char* text = luaL_checkstring(L, 2);
+    const char* text = luaL_checkstring(L, 2);
 
     render()->draw_font(pos, text);
     return 0;

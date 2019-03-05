@@ -87,6 +87,8 @@ bool state_initgame(state_t* state) {
     if (gametype_initialize(state->gametype, state) == false) {
         return false;
     }
+
+    return true;
 }
 
 /**
