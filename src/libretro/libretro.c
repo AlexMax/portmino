@@ -24,7 +24,7 @@
 
 #include "audio.h"
 #include "basemino.h"
-#include "event.h"
+#include "input.h"
 #include "frontend.h"
 #include "game.h"
 #include "platform.h"
@@ -65,25 +65,25 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
     va_end(va);
 }
 
-static events_t retro_input_to_event(unsigned port) {
-    event_t ret = 0;
+static inputs_t retro_input_to_input(unsigned port) {
+    input_t ret = 0;
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)) {
-        ret |= EVENT_LEFT;
+        ret |= INPUT_LEFT;
     }
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) {
-        ret |= EVENT_RIGHT;
+        ret |= INPUT_RIGHT;
     }
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN)) {
-        ret |= EVENT_SOFTDROP;
+        ret |= INPUT_SOFTDROP;
     }
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)) {
-        ret |= EVENT_HARDDROP;
+        ret |= INPUT_HARDDROP;
     }
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)) {
-        ret |= EVENT_CCW;
+        ret |= INPUT_CCW;
     }
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
-        ret |= EVENT_CW;
+        ret |= INPUT_CW;
     }
     return ret;
 }
@@ -177,13 +177,13 @@ RETRO_API void retro_reset(void) {
 RETRO_API void retro_run(void) {
     input_poll_cb();
 
-    gameevents_t events = { 0 };
-    events.game.events[0] = retro_input_to_event(0);
-    events.interface.events[0] = 0;
-    events.menu.events[0] = 0;
+    gameinputs_t inputs = { 0 };
+    inputs.game.inputs[0] = retro_input_to_input(0);
+    inputs.interface.inputs[0] = 0;
+    inputs.menu.inputs[0] = 0;
 
     // Run the game simulation.
-    game_frame(&events);
+    game_frame(&inputs);
 
     // Render the screen.
     softrender_context_t* render_ctx = game_draw();

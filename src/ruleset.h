@@ -19,7 +19,7 @@
 
 #include "lua.h"
 
-#include "event.h"
+#include "input.h"
 #include "next.h"
 #include "piece.h"
 

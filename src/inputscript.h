@@ -19,7 +19,7 @@
 
 // Forward declarations.
 typedef struct lua_State lua_State;
-typedef struct playerevents_s playerevents_t;
+typedef struct playerinputs_s playerinputs_t;
 
-void eventscript_push_playerevents(lua_State* L, const playerevents_t* playerevents);
-int eventscript_openlib(lua_State* L);
+void inputscript_push_playerinputs(lua_State* L, const playerinputs_t* playerinputs);
+int inputscript_openlib(lua_State* L);

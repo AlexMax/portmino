@@ -55,22 +55,22 @@ typedef struct rulesetmenu_s {
 } rulesetmenu_t;
 
 /**
- * Process events on the ruleset menu
+ * Process inputs on the ruleset menu
  */
-static int rulesetmenu_frame(screen_t* screen, const gameevents_t* events) {
+static int rulesetmenu_frame(screen_t* screen, const gameinputs_t* inputs) {
     rulesetmenu_t* menu = screen->screen.rulesetmenu;
-    playerevents_t mevents = event_menu_filter(&menu->holds, events);
+    playerinputs_t minputs = input_menu_filter(&menu->holds, inputs);
 
-    if (mevents.events[0] & MEVENT_UP) {
+    if (minputs.inputs[0] & MINPUT_UP) {
         menu->selected = (menu->selected + menu->ruleset_count - 1) % menu->ruleset_count;
     }
-    if (mevents.events[0] & MEVENT_DOWN) {
+    if (minputs.inputs[0] & MINPUT_DOWN) {
         menu->selected = (menu->selected + 1) % menu->ruleset_count;
     }
-    if (mevents.events[0] & MEVENT_OK) {
+    if (minputs.inputs[0] & MINPUT_OK) {
         return menu->selected + 1;
     }
-    if (mevents.events[0] & MEVENT_CANCEL) {
+    if (minputs.inputs[0] & MINPUT_CANCEL) {
         return RULESETMENU_RESULT_BACK;
     }
 
@@ -218,7 +218,7 @@ screen_t rulesetmenu_new(void) {
     PHYSFS_freeList(files);
 
     menu->selected = 0;
-    event_holds_init(&menu->holds);
+    input_holds_init(&menu->holds);
 
     screen.config = ruleset_screen;
     screen.screen.rulesetmenu = menu;

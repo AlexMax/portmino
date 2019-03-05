@@ -105,9 +105,9 @@ void game_deinit(void) {
 /**
  * Run a single fame of the game
  */
-void game_frame(const gameevents_t* events) {
-    // Pass our events to the screen that needs it.
-    screens_frame(&g_screens, events);
+void game_frame(const gameinputs_t* inputs) {
+    // Pass our inputs to the screen that needs it.
+    screens_frame(&g_screens, inputs);
 
     // Display all non-fatal errors.
     char* err;

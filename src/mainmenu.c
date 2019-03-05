@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include "audio.h"
-#include "event.h"
+#include "input.h"
 #include "playmenu.h"
 #include "render.h"
 #include "ruleset.h"
@@ -53,21 +53,21 @@ typedef struct mainmenu_s {
 } mainmenu_t;
 
 /**
- * Process events on the main menu
+ * Process inputs on the main menu
  */
-static int mainmenu_frame(screen_t* screen, const gameevents_t* events) {
+static int mainmenu_frame(screen_t* screen, const gameinputs_t* inputs) {
     mainmenu_t* menu = screen->screen.mainmenu;
-    playerevents_t mevents = event_menu_filter(&menu->holds, events);
+    playerinputs_t minputs = input_menu_filter(&menu->holds, inputs);
 
-    if (mevents.events[0] & MEVENT_UP) {
+    if (minputs.inputs[0] & MINPUT_UP) {
         menu->selected = (menu->selected + 4) % 5;
         audio_playsound(g_sound_cursor);
     }
-    if (mevents.events[0] & MEVENT_DOWN) {
+    if (minputs.inputs[0] & MINPUT_DOWN) {
         menu->selected = (menu->selected + 1) % 5;
         audio_playsound(g_sound_cursor);
     }
-    if (mevents.events[0] & MEVENT_OK) {
+    if (minputs.inputs[0] & MINPUT_OK) {
         return menu->selected + 1;
     }
 
@@ -163,7 +163,7 @@ screen_t mainmenu_new(lua_State* L) {
 
     menu->ruleset = ruleset;
     menu->selected = 0;
-    event_holds_init(&menu->holds);
+    input_holds_init(&menu->holds);
 
     screen.config = mainmenu_screen;
     screen.screen.mainmenu = menu;

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "event.h"
+#include "input.h"
 #include "render.h"
 
 /**
@@ -52,7 +52,7 @@ typedef struct {
      * 
      * Return an integer >0 to be routed to the navigation function below.
      */
-    int (*frame)(screen_t* screen, const gameevents_t* events);
+    int (*frame)(screen_t* screen, const gameinputs_t* inputs);
 
     /**
      * Navigate to the proper screen
@@ -119,5 +119,5 @@ void screens_deinit(screens_t* screens);
 screen_t* screens_top(screens_t* screens);
 bool screens_push(screens_t* screens, screen_t screen);
 bool screens_pop(screens_t* screens);
-void screens_frame(screens_t* screens, const gameevents_t* events);
+void screens_frame(screens_t* screens, const gameinputs_t* inputs);
 void screens_render(screens_t* screens);

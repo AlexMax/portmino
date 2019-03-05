@@ -88,7 +88,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     // Set up links to the proper modules and globals.
     const char* modules[] = {
         "mino_ruleset", "mino_board", "mino_piece", "mino_audio", "mino_random",
-        "mino_next", "mino_event", "mino_state"
+        "mino_next", "mino_input", "mino_state"
     };
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     for (size_t i = 0;i < ARRAY_LEN(modules);i++) {

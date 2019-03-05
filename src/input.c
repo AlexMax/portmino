@@ -15,7 +15,7 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event.h"
+#include "input.h"
 
 #include <string.h>
 
@@ -25,43 +25,43 @@
  * We initialize everything to being set, because we don't want to count
  * any keys held before initialization as being set.
  */
-void event_holds_init(gameholds_t* holds) {
+void input_holds_init(gameholds_t* holds) {
     memset(holds, 0xFF, sizeof(*holds));
 }
 
 /**
- * A sensible delayed auto interface event filter
+ * A sensible delayed auto interface input filter
  */
-playerevents_t event_interface_filter(gameholds_t* holds, const gameevents_t* events) {
-    playerevents_t res = { 0 };
+playerinputs_t input_interface_filter(gameholds_t* holds, const gameinputs_t* inputs) {
+    playerinputs_t res = { 0 };
 
     for (size_t i = 0;i < MINO_MAX_PLAYERS;i++) {
-        events_t current = events->interface.events[i];
-        events_t last = holds->holds[i].interface.last;
+        inputs_t current = inputs->interface.inputs[i];
+        inputs_t last = holds->holds[i].interface.last;
         holds->holds[i].interface.last = current;
 
         // XOR only sets changed bits, AND ensures we only set bits that
         // were newly set and not newly unset.
-        res.events[i] = (last ^ current) & current;
+        res.inputs[i] = (last ^ current) & current;
     }
 
     return res;
 }
 
 /**
- * A sensible delayed auto menu event filter
+ * A sensible delayed auto menu input filter
  */
-playerevents_t event_menu_filter(gameholds_t* holds, const gameevents_t* events) {
-    playerevents_t res = { 0 };
+playerinputs_t input_menu_filter(gameholds_t* holds, const gameinputs_t* inputs) {
+    playerinputs_t res = { 0 };
 
     for (size_t i = 0;i < MINO_MAX_PLAYERS;i++) {
-        events_t current = events->menu.events[i];
-        events_t last = holds->holds[i].menu.last;
+        inputs_t current = inputs->menu.inputs[i];
+        inputs_t last = holds->holds[i].menu.last;
         holds->holds[i].menu.last = current;
 
         // XOR only sets changed bits, AND ensures we only set bits that
         // were newly set and not newly unset.
-        res.events[i] = (last ^ current) & current;
+        res.inputs[i] = (last ^ current) & current;
     }
 
     return res;

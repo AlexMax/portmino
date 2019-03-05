@@ -32,14 +32,14 @@ set(GAME_SOURCES
     boardscript.c       boardscript.h
     define.c            define.h
     error.c             error.h
-    event.c             event.h
-    eventscript.c       eventscript.h
     frontend.c          frontend.h
     gametype.c          gametype.h
     globalscript.c      globalscript.h
     hmap.c              hmap.h
     game.c              game.h
     ingame.c            ingame.h
+    input.c             input.h
+    inputscript.c       inputscript.h
     mainmenu.c          mainmenu.h
     menu.c              menu.h
     next.c              next.h

@@ -91,7 +91,7 @@ bool screens_pop(screens_t* screens) {
 /**
  * Run a single frame of the screen with priority
  */
-void screens_frame(screens_t* screens, const gameevents_t* events) {
+void screens_frame(screens_t* screens, const gameinputs_t* inputs) {
     screen_t* screen = screens_top(screens);
     if (screen == NULL) {
         // Do nothing.
@@ -99,7 +99,7 @@ void screens_frame(screens_t* screens, const gameevents_t* events) {
     }
 
     // Run the frame for the given stack entry.
-    int result = screen->config.frame(screen, events);
+    int result = screen->config.frame(screen, inputs);
     if (result != 0) {
         // We want to navigate away from the screen.  Obey our wishes.
         screen->config.navigate(screens, result);

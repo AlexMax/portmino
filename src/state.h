@@ -23,7 +23,7 @@
 typedef struct gametype_s gametype_t;
 typedef struct lua_State lua_State;
 typedef struct next_s next_t;
-typedef struct playerevents_s playerevents_t;
+typedef struct playerinputs_s playerinputs_t;
 typedef struct ruleset_s ruleset_t;
 
 // Right now we only support two boards.

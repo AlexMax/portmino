@@ -48,9 +48,9 @@ typedef struct ingame_s {
 } ingame_t;
 
 /**
- * Process ingame events
+ * Process ingame inputs
  */
-static int ingame_frame(screen_t* screen, const gameevents_t* events) {
+static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
     ingame_t* ingame = screen->screen.ingame;
     if (state_frame(ingame->state) == false) {
         return RULESET_RESULT_ERROR;
@@ -68,8 +68,8 @@ static int ingame_frame(screen_t* screen, const gameevents_t* events) {
     lua_setfield(L, LUA_REGISTRYINDEX, "gametype");
     lua_pushlightuserdata(L, ingame->state);
     lua_setfield(L, LUA_REGISTRYINDEX, "state");
-    lua_pushlightuserdata(L, (void*)(&events->game));
-    lua_setfield(L, LUA_REGISTRYINDEX, "playerevents");
+    lua_pushlightuserdata(L, (void*)(&inputs->game));
+    lua_setfield(L, LUA_REGISTRYINDEX, "playerinputs");
 
     // Use our references to grab the state_frame function and its environment
     lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->state_frame_ref);

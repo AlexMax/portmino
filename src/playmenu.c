@@ -57,23 +57,23 @@ typedef struct playmenu_s {
 } playmenu_t;
 
 /**
- * Process events on the main menu
+ * Process inputs on the main menu
  */
-static int playmenu_frame(screen_t* screen, const gameevents_t* events) {
+static int playmenu_frame(screen_t* screen, const gameinputs_t* inputs) {
     playmenu_t* menu = screen->screen.playmenu;
-    playerevents_t mevents = event_menu_filter(&menu->holds, events);
+    playerinputs_t minputs = input_menu_filter(&menu->holds, inputs);
 
     size_t gametype_count = menulist_count(menu->list);
-    if (mevents.events[0] & MEVENT_UP) {
+    if (minputs.inputs[0] & MINPUT_UP) {
         menu->selected = (menu->selected + gametype_count - 1) % gametype_count;
     }
-    if (mevents.events[0] & MEVENT_DOWN) {
+    if (minputs.inputs[0] & MINPUT_DOWN) {
         menu->selected = (menu->selected + 1) % gametype_count;
     }
-    if (mevents.events[0] & MEVENT_OK) {
+    if (minputs.inputs[0] & MINPUT_OK) {
         return menu->selected + 1;
     }
-    if (mevents.events[0] & MEVENT_CANCEL) {
+    if (minputs.inputs[0] & MINPUT_CANCEL) {
         return PLAYMENU_RESULT_BACK;
     }
 
@@ -181,7 +181,7 @@ screen_t playmenu_new(ruleset_t* ruleset) {
     if (menu == NULL) {
         return screen;
     }
-    event_holds_init(&menu->holds);
+    input_holds_init(&menu->holds);
 
     // Get a list of gametypes for this ruleset.
     menulist_t* menulist = ruleset_get_gametypes(ruleset);

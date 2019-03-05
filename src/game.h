@@ -20,9 +20,9 @@
 #include "define.h"
 
 // Forward declarations.
-typedef struct gameevents_s gameevents_t;
+typedef struct gameinputs_s gameinputs_t;
 
 bool game_init(int argc, char** argv);
 void game_deinit(void);
-void game_frame(const gameevents_t* events);
+void game_frame(const gameinputs_t* inputs);
 void* game_draw(void);

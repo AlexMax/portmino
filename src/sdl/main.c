@@ -27,7 +27,7 @@
 
 #include "audio.h"
 #include "error.h"
-#include "event.h"
+#include "input.h"
 #include "frontend.h"
 #include "game.h"
 #include "platform.h"
@@ -91,37 +91,37 @@ static void sdl_fatalerror(const char *fmt, va_list va) {
     exit(1);
 }
 
-static event_t sdl_scancode_to_event(int code) {
+static input_t sdl_scancode_to_input(int code) {
     switch (code) {
-    case SDL_SCANCODE_LEFT: return EVENT_LEFT;
-    case SDL_SCANCODE_RIGHT: return EVENT_RIGHT;
-    case SDL_SCANCODE_DOWN: return EVENT_SOFTDROP;
-    case SDL_SCANCODE_UP: return EVENT_HARDDROP;
-    case SDL_SCANCODE_Z: return EVENT_CCW;
-    case SDL_SCANCODE_X: return EVENT_CW;
-    default: return EVENT_NONE;
+    case SDL_SCANCODE_LEFT: return INPUT_LEFT;
+    case SDL_SCANCODE_RIGHT: return INPUT_RIGHT;
+    case SDL_SCANCODE_DOWN: return INPUT_SOFTDROP;
+    case SDL_SCANCODE_UP: return INPUT_HARDDROP;
+    case SDL_SCANCODE_Z: return INPUT_CCW;
+    case SDL_SCANCODE_X: return INPUT_CW;
+    default: return INPUT_NONE;
     }
 }
 
-static ievent_t sdl_scancode_to_ievent(int code) {
+static iinput_t sdl_scancode_to_iinput(int code) {
     switch (code) {
-    case SDL_SCANCODE_ESCAPE: return IEVENT_PAUSE;
-    case SDL_SCANCODE_F10: return IEVENT_RESTART;
-    case SDL_SCANCODE_F11: return IEVENT_MAINMENU;
-    case SDL_SCANCODE_F12: return IEVENT_QUIT;
-    default: return IEVENT_NONE;
+    case SDL_SCANCODE_ESCAPE: return IINPUT_PAUSE;
+    case SDL_SCANCODE_F10: return IINPUT_RESTART;
+    case SDL_SCANCODE_F11: return IINPUT_MAINMENU;
+    case SDL_SCANCODE_F12: return IINPUT_QUIT;
+    default: return IINPUT_NONE;
     }
 }
 
-static mevent_t sdl_scancode_to_mevent(int code) {
+static minput_t sdl_scancode_to_minput(int code) {
     switch (code) {
-    case SDL_SCANCODE_UP: return MEVENT_UP;
-    case SDL_SCANCODE_DOWN: return MEVENT_DOWN;
-    case SDL_SCANCODE_LEFT: return MEVENT_LEFT;
-    case SDL_SCANCODE_RIGHT: return MEVENT_RIGHT;
-    case SDL_SCANCODE_RETURN: return MEVENT_OK;
-    case SDL_SCANCODE_BACKSPACE: return MEVENT_CANCEL;
-    default: return MEVENT_NONE;
+    case SDL_SCANCODE_UP: return MINPUT_UP;
+    case SDL_SCANCODE_DOWN: return MINPUT_DOWN;
+    case SDL_SCANCODE_LEFT: return MINPUT_LEFT;
+    case SDL_SCANCODE_RIGHT: return MINPUT_RIGHT;
+    case SDL_SCANCODE_RETURN: return MINPUT_OK;
+    case SDL_SCANCODE_BACKSPACE: return MINPUT_CANCEL;
+    default: return MINPUT_NONE;
     }
 }
 
@@ -132,27 +132,27 @@ static void sdl_run(void) {
     // Performance counter
     uint64_t pcount;
 
-    // Assemble our game events from polled events.
-    SDL_Event event;
-    static gameevents_t events = { 0 }; // keep the inputs around
+    // Assemble our game inputs from polled inputs.
+    SDL_Event input;
+    static gameinputs_t inputs = { 0 }; // keep the inputs around
 
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
+    while (SDL_PollEvent(&input)) {
+        switch (input.type) {
         case SDL_KEYDOWN:
-            if (event.key.repeat != 0) {
+            if (input.key.repeat != 0) {
                 break;
             }
-            events.game.events[0] |= sdl_scancode_to_event(event.key.keysym.scancode);
-            events.interface.events[0] |= sdl_scancode_to_ievent(event.key.keysym.scancode);
-            events.menu.events[0] |= sdl_scancode_to_mevent(event.key.keysym.scancode);
+            inputs.game.inputs[0] |= sdl_scancode_to_input(input.key.keysym.scancode);
+            inputs.interface.inputs[0] |= sdl_scancode_to_iinput(input.key.keysym.scancode);
+            inputs.menu.inputs[0] |= sdl_scancode_to_minput(input.key.keysym.scancode);
             break;
         case SDL_KEYUP:
-            if (event.key.repeat != 0) {
+            if (input.key.repeat != 0) {
                 break;
             }
-            events.game.events[0] &= ~(sdl_scancode_to_event(event.key.keysym.scancode));
-            events.interface.events[0] &= ~(sdl_scancode_to_ievent(event.key.keysym.scancode));
-            events.menu.events[0] &= ~(sdl_scancode_to_mevent(event.key.keysym.scancode));
+            inputs.game.inputs[0] &= ~(sdl_scancode_to_input(input.key.keysym.scancode));
+            inputs.interface.inputs[0] &= ~(sdl_scancode_to_iinput(input.key.keysym.scancode));
+            inputs.menu.inputs[0] &= ~(sdl_scancode_to_minput(input.key.keysym.scancode));
             break;
         case SDL_QUIT:
             exit(0);
@@ -162,7 +162,7 @@ static void sdl_run(void) {
 
     // Run the game simulation.
     pcount = SDL_GetPerformanceCounter();
-    game_frame(&events);
+    game_frame(&inputs);
     double game_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
     // Render the screen.
