@@ -45,22 +45,6 @@ static size_t g_error_front = 0;
  */
 static size_t g_error_back = 0;
 
-/*
- * Debug the error queue
- */
-static void error_debug(void) {
-    fprintf(stderr, "-- front: %zu, back: %zu, count: %zu --\n", g_error_front,
-            g_error_back, g_error_count);
-    for (size_t i = 0;i < MINO_MAX_ERRORS;i++) {
-        if (g_error_front == i) {
-            fprintf(stderr, ">");
-        } else {
-            fprintf(stderr, " ");
-        }
-        fprintf(stderr, " queue[%zu]: %s\n", i, &g_errors[i][0]);
-    }
-}
-
 /**
  * Push an error message
  */
@@ -110,4 +94,20 @@ char* error_pop(void) {
  */
 size_t error_count(void) {
     return g_error_count;
+}
+
+/*
+ * Debug the error queue
+ */
+void error_debug(void) {
+    fprintf(stderr, "-- front: %zu, back: %zu, count: %zu --\n", g_error_front,
+            g_error_back, g_error_count);
+    for (size_t i = 0;i < MINO_MAX_ERRORS;i++) {
+        if (g_error_front == i) {
+            fprintf(stderr, ">");
+        } else {
+            fprintf(stderr, " ");
+        }
+        fprintf(stderr, " queue[%zu]: %s\n", i, &g_errors[i][0]);
+    }
 }

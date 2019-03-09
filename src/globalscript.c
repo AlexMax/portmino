@@ -21,9 +21,11 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "lauxlib.h"
 
+#include "error.h"
 #include "vfs.h"
 
 /**
@@ -132,6 +134,7 @@ static int globalscript_require_error(lua_State *L) {
  * contains the module itself as opposed to simply being a reference to it.
  */
 static int globalscript_require(lua_State* L) {
+    char* paths = NULL;
     char* filename = NULL;
     buffer_t* file = NULL;
 
@@ -141,7 +144,7 @@ static int globalscript_require(lua_State* L) {
     // Get the current environment
     int type = lua_getfield(L, LUA_REGISTRYINDEX, "env");
     if (type != LUA_TTABLE) {
-        luaL_argerror(L, 1, "require is missing internal state");
+        luaL_error(L, "require is missing internal state");
         return 0;
     }
 
@@ -162,6 +165,19 @@ static int globalscript_require(lua_State* L) {
         return 1;
     }
     lua_pop(L, 1); // pop the nil
+
+    // Get the list of package paths
+    type = lua_getfield(L, LUA_REGISTRYINDEX, "package_path");
+    if (type != LUA_TSTRING) {
+        luaL_error(L, "require is missing internal state");
+        return 0;
+    }
+
+    paths = strdup(lua_tostring(L, -1));
+    if (paths == NULL) {
+        luaL_error(L, "require is missing internal state");
+        return 0;
+    }
 
     // Construct a filename to load from the virtual filesystem.
     // NOTE: This path construction is safe - PhysFS has no concept of ".."

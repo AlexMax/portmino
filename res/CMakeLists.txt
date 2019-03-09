@@ -2,21 +2,19 @@
 set(RESOURCE_SOURCES
     background/default/1.png
     block/default/8px.png
-    gametype/default/endurance/main.lua
-    gametype/default/endurance/manifest.cfg
-    gametype/default/scoreattack/main.lua
-    gametype/default/scoreattack/manifest.cfg
-    gametype/default/timeattack/main.lua
-    gametype/default/timeattack/manifest.cfg
-    gametype/default/versus/main.lua
-    gametype/default/versus/manifest.cfg
+    gametype/stdmino/endurance/gametype.lua
+    gametype/stdmino/endurance/gametype.cfg
+    gametype/stdmino/scoreattack/gametype.lua
+    gametype/stdmino/scoreattack/gametype.cfg
+    gametype/stdmino/timeattack/gametype.lua
+    gametype/stdmino/timeattack/gametype.cfg
+    gametype/stdmino/versus/gametype.lua
+    gametype/stdmino/versus/gametype.cfg
     interface/default/board.png
     interface/default/font.png
-    ruleset/default/init.lua
-    ruleset/default/main.lua
-    ruleset/default/next_piece.lua
-    ruleset/default/pieces.lua
-    ruleset/default/state_frame.lua
+    ruleset/stdmino/ruleset.lua
+    ruleset/stdmino/pieces.cfg
+    script/next.lua
     sfx/default/cursor.wav
     sfx/default/gameover.wav
     sfx/default/lock.wav

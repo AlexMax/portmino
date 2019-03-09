@@ -27,8 +27,6 @@ end
 
 return {
     init = init,
-    state_functions = {
-        after_frame = after_frame,
-    },
+    after_frame = after_frame,
     draw = draw,
 }

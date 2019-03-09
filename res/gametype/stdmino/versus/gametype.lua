@@ -13,9 +13,20 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
+local function init()
+
+end
+
+local function after_frame()
+
+end
+
+local function draw()
+
+end
+
 return {
-    init = require('init'),
-    state_frame = require('state_frame'),
-    pieces = require('pieces'),
-    next_piece = require('next_piece'),
+    init = init,
+    after_frame = after_frame,
+    draw = draw,
 }

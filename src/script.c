@@ -134,6 +134,33 @@ bool script_load_config(lua_State* L, buffer_t* file, const char* name) {
 }
 
 /**
+ * Set our package search paths based on our current ruleset and gametype
+ * 
+ * Note that gametype can be NULL, and both gametype and ruleset can be NULL.
+ */
+void script_set_paths(lua_State* L, const char* ruleset, const char* gametype) {
+    if (gametype != NULL) {
+        // Our search path contains gametype and ruleset
+        lua_pushfstring(L, 
+            "gametype/%s/?.lua;" "gametype/%s/?/init.lua;" \
+            "ruleset/%s/?.lua;" "ruleset/%s/?/init.lua;" \
+            "script/?.lua;" "script/?/init.lua",
+            gametype, gametype, ruleset, ruleset);
+    } else if (ruleset != NULL) {
+        // Our search path contains ruleset
+        lua_pushfstring(L, 
+            "ruleset/%s/?.lua;" "ruleset/%s/?/init.lua;" \
+            "script/?.lua;" "script/?/init.lua",
+            ruleset, ruleset);
+    } else {
+        // Our search path just has script information
+        lua_pushstring(L, "script/?.lua;" "script/?/init.lua");
+    }
+
+    lua_setfield(L, LUA_REGISTRYINDEX, "package_path"); // pops paths
+}
+
+/**
  * Dump the contents of a specific stack index
  */
 void script_debug(lua_State* L, int index) {
