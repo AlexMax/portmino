@@ -138,7 +138,7 @@ bool script_load_config(lua_State* L, buffer_t* file, const char* name) {
  * 
  * Note that gametype can be NULL, and both gametype and ruleset can be NULL.
  */
-void script_set_paths(lua_State* L, const char* ruleset, const char* gametype) {
+void script_push_paths(lua_State* L, const char* ruleset, const char* gametype) {
     if (gametype != NULL) {
         // Our search path contains gametype and ruleset
         lua_pushfstring(L, 
@@ -156,8 +156,6 @@ void script_set_paths(lua_State* L, const char* ruleset, const char* gametype) {
         // Our search path just has script information
         lua_pushstring(L, "script/?.lua;" "script/?/init.lua");
     }
-
-    lua_setfield(L, LUA_REGISTRYINDEX, "package_path"); // pops paths
 }
 
 /**
@@ -205,6 +203,11 @@ void script_debug_stack(lua_State* L) {
  * Dump the contents of a table at a specific index
  */
 void script_debug_table(lua_State* L, int index) {
+    if (index < 0) {
+        // First translate into absolute index
+        index = lua_gettop(L) - index + 1;
+    }
+
     if (lua_type(L, index) != LUA_TTABLE) {
         fputs("not a table\n", stderr);
         return;

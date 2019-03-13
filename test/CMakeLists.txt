@@ -1,6 +1,9 @@
 set(TESTS
-    test_platform_unix
-    test_rulesetscript)
+    test_rulesetscript
+    test_scriptenv)
+if(UNIX)
+    list(APPEND TESTS test_platform_unix)
+endif()
 
 foreach(TEST ${TESTS})
     add_executable(${TEST} "${TEST}.c")

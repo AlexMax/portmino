@@ -58,6 +58,7 @@ set(GAME_SOURCES
     rulesetscript.c     rulesetscript.h
     screen.c            screen.h
     script.c            script.h
+    scriptenv.c         scriptenv.h
     softblock.c         softblock.h
     softfont.c          softfont.h
     softrender.c        softrender.h
