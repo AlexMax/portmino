@@ -64,10 +64,10 @@ picture_t* picture_new(int width, int height) {
  * Create a new picture from a virtual file path.
  */
 picture_t* picture_new_vfs(const char* path) {
-    buffer_t* file = NULL;
+    vfile_t* file = NULL;
     picture_t* pic = NULL;
 
-    if ((file = vfs_file(path)) == NULL) {
+    if ((file = vfs_vfile_new(path)) == NULL) {
         error_push("Could not find picture %s.", path);
         goto fail;
     }
@@ -84,7 +84,7 @@ picture_t* picture_new_vfs(const char* path) {
         error_push("Could not load picture %s", path);
         goto fail;
     }
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     file = NULL;
 
     if (x > UINT16_MAX || y > UINT16_MAX) {
@@ -108,7 +108,7 @@ picture_t* picture_new_vfs(const char* path) {
     return pic;
 
 fail:
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     picture_delete(pic);
     return NULL;
 }

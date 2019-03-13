@@ -58,7 +58,7 @@ sound_t* sound_new(const char* path) {
     unsigned int samplerate;
     uint64_t framecount;
 
-    buffer_t* file = vfs_file(path);
+    vfile_t* file = vfs_vfile_new(path);
     if (file == NULL) {
         error_push("Could not find sound %s.", path);
         return NULL;
@@ -71,7 +71,7 @@ sound_t* sound_new(const char* path) {
         printf("Loading %s: size %zu, channels %u, samplerate %u, framecount %lu\n", path, file->size, channels, samplerate, framecount);
     }
 
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     if (data == NULL) {
         error_push("Could not load sound %s.", path);
         return NULL;

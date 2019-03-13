@@ -37,7 +37,7 @@
  */
 ruleset_t* ruleset_new(lua_State* L, const char* name) {
     char* filename = NULL;
-    buffer_t* file = NULL;
+    vfile_t* file = NULL;
     ruleset_t* ruleset = NULL;
 
     // Create the structure to actually hold our ruleset.
@@ -59,7 +59,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
 
     // Load the file with our ruleset in it.
-    if ((file = vfs_file(filename)) == NULL) {
+    if ((file = vfs_vfile_new(filename)) == NULL) {
         error_push("Could not find ruleset %s.", name);
         goto fail;
     }
@@ -73,7 +73,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     // Free resources that we don't need anymore.
     free(filename);
     filename = NULL;
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     file = NULL;
 
     // Create a restricted ruleset environment and push a ref to it into
@@ -197,7 +197,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
 
 fail:
     free(filename);
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     ruleset_delete(ruleset);
 
     return NULL;
@@ -259,7 +259,7 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
             goto fail;
         }
 
-        buffer_t* file = vfs_file(mainpath);
+        vfile_t* file = vfs_vfile_new(mainpath);
         free(mainpath);
         if (file == NULL) {
             // TODO: A warning message would be nice.
@@ -269,13 +269,13 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
         int top = lua_gettop(ruleset->lua);
 
         // Load the config file - pushes the data or an error to the stack.
-        if (!script_load_config(ruleset->lua, file, *i)) {
+        if (!script_load_config(ruleset->lua, file)) {
             error_push("%s", lua_tostring(ruleset->lua, -1));
-            buffer_delete(file);
+            vfs_vfile_delete(file);
             lua_settop(ruleset->lua, top);
             continue;
         }
-        buffer_delete(file);
+        vfs_vfile_delete(file);
 
         // Set our menu parameters using values from Lua.
         menulist_params_t params;

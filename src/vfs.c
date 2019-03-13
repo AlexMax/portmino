@@ -97,13 +97,13 @@ void vfs_deinit(void) {
 }
 
 /**
- * Obtain file data by virtual filename.
+ * Obtain file data by virtual filename
  * 
- * The returned buffer must be freed by the caller.
+ * The returned file struct must be freed by the caller.
  */
-buffer_t* vfs_file(const char* filename) {
+vfile_t* vfs_vfile_new(const char* filename) {
     PHYSFS_File* fh = NULL;
-    buffer_t* filedata = NULL;
+    vfile_t* filedata = NULL;
 
     // Check in the VFS for the given file.
     if ((fh = PHYSFS_openRead(filename)) == NULL) {
@@ -118,6 +118,11 @@ buffer_t* vfs_file(const char* filename) {
         goto fail;
     }
 
+    filedata->filename = strdup(filename);
+    if (filedata->filename == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
     filedata->size = PHYSFS_fileLength(fh);
     filedata->data = malloc(filedata->size);
     if (filedata->data == NULL) {
@@ -132,8 +137,24 @@ buffer_t* vfs_file(const char* filename) {
 
 fail:
     PHYSFS_close(fh);
-    buffer_delete(filedata);
+    vfs_vfile_delete(filedata);
     return NULL;
+}
+
+/**
+ * Delete a file struct
+ */
+void vfs_vfile_delete(vfile_t* file) {
+    if (file == NULL) {
+        return;
+    }
+
+    free(file->filename);
+    file->filename = NULL;
+    free(file->data);
+    file->data = NULL;
+
+    free(file);
 }
 
 /**

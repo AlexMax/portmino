@@ -23,6 +23,7 @@
 typedef struct lua_State lua_State;
 typedef struct ruleset_s ruleset_t;
 typedef struct state_s state_t;
+typedef struct vfile_s vfile_t;
 
 typedef struct gametype_s {
     /**
@@ -53,7 +54,7 @@ typedef struct gametype_s {
     int draw_ref;
 } gametype_t;
 
-buffer_t* gametype_find_script(const char* ruleset_name, const char* name);
+vfile_t* gametype_find_script(const char* ruleset_name, const char* name);
 gametype_t* gametype_new(lua_State* L, buffer_t* file, const char* name);
 void gametype_delete(gametype_t* gametype);
 bool gametype_initialize(gametype_t* gametype, state_t* state);

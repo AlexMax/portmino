@@ -19,7 +19,28 @@
 
 #include "define.h"
 
+/**
+ * A file obtained from the virtual filesystem
+ */
+typedef struct vfile_s {
+    /**
+     * The original filename of the file.
+     */
+    char* filename;
+
+    /**
+     * Raw binary data of the file.
+     */
+    uint8_t* data;
+
+    /**
+     * Size of the data member in bytes.
+     */
+    size_t size;
+} vfile_t;
+
 bool vfs_init(const char* argv0);
 void vfs_deinit(void);
-buffer_t* vfs_file(const char* filename);
+vfile_t* vfs_vfile_new(const char* filename);
+void vfs_vfile_delete(vfile_t* file);
 char* vfs_path_join(const char* base, const char* append, char sep);

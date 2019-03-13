@@ -30,11 +30,11 @@
 /**
  * Return a buffer containing a script for a gametype of a specific name
  *
- * The buffer must be freed by the caller.
+ * The file must be freed by the caller.
  */
-buffer_t* gametype_find_script(const char* ruleset_name, const char* name) {
+vfile_t* gametype_find_script(const char* ruleset_name, const char* name) {
     char* filename = NULL;
-    buffer_t* file = NULL;
+    vfile_t* file = NULL;
 
     // Construct a path to the gametype.
     int ok = asprintf(&filename, "gametype/%s/%s/main.lua", ruleset_name, name);
@@ -44,7 +44,7 @@ buffer_t* gametype_find_script(const char* ruleset_name, const char* name) {
     }
 
     // Load the file with our gametype in it.
-    if ((file = vfs_file(filename)) == NULL) {
+    if ((file = vfs_vfile_new(filename)) == NULL) {
         error_push("Could not find gametype %s.", name);
         goto fail;
     }
@@ -54,7 +54,7 @@ buffer_t* gametype_find_script(const char* ruleset_name, const char* name) {
 
 fail:
     free(filename);
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     return NULL;
 }
 

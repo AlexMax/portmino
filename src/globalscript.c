@@ -143,7 +143,7 @@ static const char* pushnexttemplate(lua_State* L, const char* path) {
     return l;
 }
 
-static buffer_t* searchpath(lua_State* L, const char* name, const char* path) {
+static vfile_t* searchpath(lua_State* L, const char* name, const char* path) {
     luaL_Buffer msg;
     luaL_buffinit(L, &msg);
 
@@ -152,7 +152,7 @@ static buffer_t* searchpath(lua_State* L, const char* name, const char* path) {
                                          LUA_PATH_MARK, name);
         lua_remove(L, -2);  // pop path template
 
-        buffer_t* file = vfs_file(filename);
+        vfile_t* file = vfs_vfile_new(filename);
         if (file != NULL) {
             lua_pop(L, 1); // pop filename
             return file;
@@ -177,7 +177,7 @@ static buffer_t* searchpath(lua_State* L, const char* name, const char* path) {
  * search paths are stored in the second.
  */
 static int globalscript_require(lua_State* L) {
-    buffer_t* file = NULL;
+    vfile_t* file = NULL;
 
     // Parameter 1: Name of the package.
     const char* name = luaL_checkstring(L, 1);
@@ -227,7 +227,7 @@ static int globalscript_require(lua_State* L) {
     }
 
     // We don't need the file anymore.
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     file = NULL;
 
     // Call it.  Result is on the stack.  Errors are propagated back through Lua.
@@ -247,7 +247,7 @@ static int globalscript_require(lua_State* L) {
     return 1;
 
 fail:
-    buffer_delete(file);
+    vfs_vfile_delete(file);
     globalscript_require_error(L); // never returns
     return 0;
 }

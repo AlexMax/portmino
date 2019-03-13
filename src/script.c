@@ -34,6 +34,7 @@
 #include "renderscript.h"
 #include "rulesetscript.h"
 #include "statescript.h"
+#include "vfs.h"
 
 /**
  * Create a lua state that contains all of our libraries
@@ -107,9 +108,9 @@ void script_push_vector(lua_State* L, const vec2i_t* vec) {
  * Configuration files are just Lua scripts run in the context of an empty
  * environment.
  */
-bool script_load_config(lua_State* L, buffer_t* file, const char* name) {
+bool script_load_config(lua_State* L, vfile_t* file) {
     // Load the file into Lua as a chunk.
-    if (luaL_loadbufferx(L, (char*)file->data, file->size, name, "t") != LUA_OK) {
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, file->filename, "t") != LUA_OK) {
         // We have an error on the stack, just return it.
         return false;
     }
