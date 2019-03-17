@@ -1,6 +1,7 @@
 set(TESTS
     test_rulesetscript
-    test_scriptenv)
+    test_scriptenv
+    test_vfs)
 if(UNIX)
     list(APPEND TESTS test_platform_unix)
 endif()

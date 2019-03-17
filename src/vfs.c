@@ -113,7 +113,7 @@ vfile_t* vfs_vfile_new(const char* filename) {
     }
 
     // Read the entire contents of the file into a buffer.
-    if ((filedata = calloc(1, sizeof(buffer_t))) == NULL) {
+    if ((filedata = calloc(1, sizeof(*filedata))) == NULL) {
         error_push_allocerr();
         goto fail;
     }

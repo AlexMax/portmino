@@ -15,6 +15,8 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+
 #include "lauxlib.h"
 
 #include "random.h"
@@ -40,6 +42,19 @@ static int randomscript_new(lua_State* L) {
     luaL_setmetatable(L, "random_t");
 
     return 1;
+}
+
+/**
+ * Lua: random_t finalizer
+ */
+static int randomscript_delete(lua_State* L) {
+    // Parameter 1: Our userdata
+    random_t* random = luaL_checkudata(L, 1, "random_t");
+
+    free(random);
+    random = NULL;
+
+    return 0;
 }
 
 /**
@@ -71,6 +86,7 @@ int randomscript_openlib(lua_State* L) {
 
     // Create the random_t type
     static const luaL_Reg randomtype[] = {
+        { "__gc", randomscript_delete },
         { "number", randomscript_number },
         { NULL, NULL }
     };

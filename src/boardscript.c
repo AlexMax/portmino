@@ -15,6 +15,8 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+
 #include "lauxlib.h"
 
 #include "board.h"
@@ -35,6 +37,19 @@ static int boardscript_new(lua_State* L) {
     luaL_setmetatable(L, "board_t");
 
     return 1;
+}
+
+/**
+ * Lua: board_t finalizer.
+ */
+static int boardscript_delete(lua_State* L) {
+    // Parameter 1: Our userdata
+    board_t* board = luaL_checkudata(L, 1, "board_t");
+
+    free(board);
+    board = NULL;
+
+    return 0;
 }
 
 /**
@@ -229,12 +244,14 @@ static int boardscript_clear_lines(lua_State* L) {
 int boardscript_openlib(lua_State* L) {
     static const luaL_Reg boardlib[] = {
         { "new", boardscript_new },
+        { NULL, NULL }
     };
 
     luaL_newlib(L, boardlib);
 
     // Create the board_t type
     static const luaL_Reg boardtype[] = {
+        { "__gc", boardscript_delete },
         { "set_piece", boardscript_set_piece },
         { "unset_piece", boardscript_unset_piece },
         { "get_piece", boardscript_get_piece },
