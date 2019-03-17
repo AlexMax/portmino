@@ -41,6 +41,7 @@ scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gamety
     env->lua = L;
     env->env_ref = LUA_NOREF;
     env->ruleset_ref = LUA_NOREF;
+    env->pieces = NULL;
 
     // Create a restricted ruleset environment and push a ref to it into
     // the registry.
@@ -101,9 +102,6 @@ scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gamety
         error_push("lua stack not clear");
         goto fail;
     }
-
-    // Load our piece configs in the context of our environment.
-    env->pieces = piece_configs_new(L);
 
     return env;
 

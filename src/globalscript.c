@@ -26,7 +26,97 @@
 #include "lauxlib.h"
 
 #include "error.h"
+#include "script.h"
 #include "vfs.h"
+
+ /**
+  * Find the next search path
+  */
+static const char* pushnexttemplate(lua_State* L, const char* path) {
+    while (*path == *LUA_PATH_SEP) {
+        path++;  /* skip separators */
+    }
+    if (*path == '\0') {
+        return NULL;  /* no more templates */
+    }
+    const char* l = strchr(path, *LUA_PATH_SEP);  /* find next separator */
+    if (l == NULL) {
+        l = path + strlen(path);
+    }
+    lua_pushlstring(L, path, l - path);  /* template */
+    return l;
+}
+
+/**
+ * Check to see if a file exists anywhere in the given search path
+ */
+static vfile_t* searchpath(lua_State* L, const char* name, const char* path) {
+    luaL_Buffer msg;
+    luaL_buffinit(L, &msg);
+
+    while ((path = pushnexttemplate(L, path)) != NULL) {
+        const char* filename = luaL_gsub(L, lua_tostring(L, -1),
+            LUA_PATH_MARK, name);
+        lua_remove(L, -2);  // pop path template
+
+        vfile_t* file = vfs_vfile_new(filename);
+        if (file != NULL) {
+            lua_pop(L, 1); // pop filename
+            return file;
+        }
+
+        // Append to our error message
+        lua_pushfstring(L, "\n\tno file '%s'", filename);
+        lua_remove(L, -2);  // pop filename
+        luaL_addvalue(&msg);
+    }
+
+    // Push our error message
+    luaL_pushresult(&msg);
+    return NULL;
+}
+
+/**
+ * Lua: Load a configuration file, execute it, and return any globals
+ *      that a config sets in its environment
+ */
+static int globalscript_doconfig(lua_State* L) {
+    vfile_t* file = NULL;
+
+    // Parameter 1: Name of the package.
+    const char* name = luaL_checkstring(L, 1);
+
+    // Upvalue 1: Search paths
+    lua_pushvalue(L, lua_upvalueindex(1));
+    if (lua_type(L, -1) != LUA_TSTRING) {
+        luaL_error(L, "require is missing internal state");
+        return 0;
+    }
+
+    // Load our search paths
+    const char* paths = lua_tostring(L, -1);
+
+    // Try and load the Lua file from our search paths
+    if ((file = searchpath(L, name, paths)) == NULL) {
+        // searchpath pushes error string on failure
+        goto fail;
+    }
+
+    // Load the file as a configuration file
+    if (script_load_config(L, file) == false) {
+        // pushes error string on failure
+        goto fail;
+    };
+
+    vfs_vfile_delete(file);
+    return 1;
+
+fail:
+    vfs_vfile_delete(file);
+    luaL_error(L, "config '%s' not found:\n\t%s",
+        lua_tostring(L, 1), lua_tostring(L, -1));
+    return 0;
+}
 
 /**
  * ipairs traversal function
@@ -116,65 +206,12 @@ static int globalscript_print(lua_State *L) {
 }
 
 /**
- * "require" error checking function
- * 
- * Assumes the module is in stack slot 1 and that the error message and file
- * name are the at the top of the stack.
- */
-static int globalscript_require_error(lua_State *L) {
-    return luaL_error(L, "error loading module '%s' from file '%s':\n\t%s",
-                      lua_tostring(L, 1), lua_tostring(L, -1), lua_tostring(L, -2));
-}
-
-#include "script.h"
-
-static const char* pushnexttemplate(lua_State* L, const char* path) {
-    while (*path == *LUA_PATH_SEP) {
-        path++;  /* skip separators */
-    }
-    if (*path == '\0') {
-        return NULL;  /* no more templates */
-    }
-    const char* l = strchr(path, *LUA_PATH_SEP);  /* find next separator */
-    if (l == NULL) {
-        l = path + strlen(path);
-    }
-    lua_pushlstring(L, path, l - path);  /* template */
-    return l;
-}
-
-static vfile_t* searchpath(lua_State* L, const char* name, const char* path) {
-    luaL_Buffer msg;
-    luaL_buffinit(L, &msg);
-
-    while ((path = pushnexttemplate(L, path)) != NULL) {
-        const char* filename = luaL_gsub(L, lua_tostring(L, -1),
-                                         LUA_PATH_MARK, name);
-        lua_remove(L, -2);  // pop path template
-
-        vfile_t* file = vfs_vfile_new(filename);
-        if (file != NULL) {
-            lua_pop(L, 1); // pop filename
-            return file;
-        }
-
-        // Append to our error message
-        lua_pushfstring(L, "\n\tno file '%s'", filename);
-        lua_remove(L, -2);  // pop filename
-        luaL_addvalue(&msg);
-    }
-
-    // Push our error message
-    luaL_pushresult(&msg);
-    return NULL;
-}
-
-/**
  * Lua: "require" function.
  * 
  * This is actually a super-stripped down version of "require" that is missing
- * many features.  Loaded packages are stored in the first upvalue, and package
- * search paths are stored in the second.
+ * many features.  The environment to load the module against is stored in
+ * the first upvalue, loaded packages are stored in the second upvalue, and
+ * package search paths are stored in the third.
  */
 static int globalscript_require(lua_State* L) {
     vfile_t* file = NULL;
@@ -196,7 +233,7 @@ static int globalscript_require(lua_State* L) {
         return 0;
     }
 
-    // Upvalue 3: Paths
+    // Upvalue 3: Search paths
     lua_pushvalue(L, lua_upvalueindex(3));
     if (lua_type(L, -1) != LUA_TSTRING) {
         luaL_error(L, "require is missing internal state");
@@ -248,7 +285,8 @@ static int globalscript_require(lua_State* L) {
 
 fail:
     vfs_vfile_delete(file);
-    globalscript_require_error(L); // never returns
+    luaL_error(L, "module '%s' not found:\n\t%s",
+        lua_tostring(L, 1), lua_tostring(L, -1));
     return 0;
 }
 
@@ -266,6 +304,7 @@ static int globalscript_tostring(lua_State *L) {
  */
 int globalscript_openlib(lua_State* L) {
     static const luaL_Reg globallib[] = {
+        { "doconfig", globalscript_doconfig },
         { "ipairs", globalscript_ipairs },
         { "next", globalscript_next },
         { "pairs", globalscript_pairs },
