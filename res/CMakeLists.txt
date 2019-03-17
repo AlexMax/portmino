@@ -12,8 +12,10 @@ set(RESOURCE_SOURCES
     gametype/stdmino/versus/gametype.cfg
     interface/default/board.png
     interface/default/font.png
-    ruleset/stdmino/ruleset.lua
+    ruleset/stdmino/next_piece.lua
     ruleset/stdmino/pieces.cfg
+    ruleset/stdmino/ruleset.cfg
+    ruleset/stdmino/ruleset.lua
     script/next.lua
     sfx/default/cursor.wav
     sfx/default/gameover.wav

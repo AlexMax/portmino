@@ -60,7 +60,7 @@ static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
 
     // Push our context into the registry so we can get at them from C
     // functions called from inside Lua.
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);
+    /*lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);
     lua_setfield(L, LUA_REGISTRYINDEX, "env");
     lua_pushlightuserdata(L, ingame->ruleset);
     lua_setfield(L, LUA_REGISTRYINDEX, "ruleset");
@@ -73,7 +73,7 @@ static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
 
     // Use our references to grab the state_frame function and its environment
     lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->state_frame_ref);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);*/
 
     // Setup the environment
     lua_setupvalue(L, -2, 1);

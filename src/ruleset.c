@@ -36,23 +36,23 @@
  * Allocate a new ruleset.
  */
 ruleset_t* ruleset_new(lua_State* L, const char* name) {
+    int top = lua_gettop(L);
+
     char* filename = NULL;
     vfile_t* file = NULL;
     ruleset_t* ruleset = NULL;
 
     // Create the structure to actually hold our ruleset.
-    if ((ruleset = calloc(1, sizeof(ruleset_t))) == NULL) {
+    if ((ruleset = calloc(1, sizeof(*ruleset))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
 
     // Make sure our Lua state is set, so cleanup works properly.
     ruleset->lua = L;
-    ruleset->state_frame_ref = LUA_NOREF;
-    ruleset->init_ref = LUA_NOREF;
-    ruleset->env_ref = LUA_NOREF;
 
-    int ok = asprintf(&filename, "ruleset/%s/main.lua", name);
+    // Construct path to ruleset configuration.
+    int ok = asprintf(&filename, "ruleset/%s/ruleset.cfg", name);
     if (ok < 0) {
         error_push_allocerr();
         goto fail;
@@ -65,10 +65,36 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
 
     // Load our file into the Lua state.
-    if (luaL_loadbufferx(L, (char*)file->data, file->size, filename, "t") != LUA_OK) {
+    if (script_load_config(L, file) == false) {
         error_push("%s", lua_tostring(L, -1));
         goto fail;
     }
+
+    // Do we have a label in our manifest?
+    if (lua_getfield(L, -1, "label") != LUA_TSTRING) {
+        error_push("Ruleset (%s) label is not string.", name);
+        goto fail;
+    }
+
+    // Convert our label to a string.
+    if ((ruleset->label = strdup(lua_tostring(L, -1))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+    lua_pop(L, 1); // pop label
+
+    // Do we have a help string in our manifest?
+    if (lua_getfield(L, -1, "help") != LUA_TSTRING) {
+        error_push("Ruleset (%s) help is not string.", name);
+        goto fail;
+    }
+
+    // Convert our help string to a string.
+    if ((ruleset->help = strdup(lua_tostring(L, -1))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+    lua_pop(L, 1); // pop help string
 
     // Free resources that we don't need anymore.
     free(filename);
@@ -76,117 +102,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     vfs_vfile_delete(file);
     file = NULL;
 
-    // Create a restricted ruleset environment and push a ref to it into
-    // the registry.
-    lua_createtable(L, 0, 0);
-    lua_pushvalue(L, -1);
-    if ((ruleset->env_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop env table dupe
-        error_push_allocerr();
-        goto fail;
-    }
-
-    // Set up links to the proper modules and globals.
-    const char* modules[] = {
-        "mino_ruleset", "mino_board", "mino_piece", "mino_audio", "mino_random",
-        "mino_next", "mino_input", "mino_state"
-    };
-    lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
-    for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
-        lua_getfield(L, -1, modules[i]);
-        lua_setfield(L, -3, modules[i]);
-    }
-    lua_pop(L, 1);
-
-    const char* globals[] = {
-        "ipairs", "next", "pairs", "print", "require", "tostring", "_VERSION"
-    };
-    for (size_t i = 0;i < ARRAY_LEN(globals);i++) {
-        lua_getglobal(L, globals[i]);
-        lua_setfield(L, -2, globals[i]);
-    }
-
-    // Setup the global "package.loaded" table we use for packages.
-    lua_createtable(L, 0, 1); // package table
-    lua_createtable(L, 0, 0); // loaded table
-    lua_setfield(L, -2, "loaded"); // pops loaded table
-    lua_setfield(L, -2, "package"); // pops package table
-
-    // Set our environment context, both in the registry and as our _ENV.
-    lua_pushvalue(L, -1);
-    lua_setfield(L, LUA_REGISTRYINDEX, "env"); // pop env copy
-    lua_setupvalue(L, -2, 1); // pop env
-
-    // We now have the ruleset on the top of the stack.  Call it!
-    if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
-        error_push("lua error: %s", lua_tostring(L, -1));
-        goto fail;
-    }
-
-    // We should have a table at the top of the stack that contains the
-    // functions that implement the ruleset.
-    if (lua_type(L, -1) != LUA_TTABLE) {
-        error_push("Could not find module table in ruleset %s.", name);
-        goto fail;
-    }
-
-    // Check for a table key that contains the state_frame function.
-    int type = lua_getfield(L, -1, "state_frame");
-    if (type == LUA_TNIL) {
-        error_push("Could not find function \"state_frame\" in module table in ruleset %s.", name);
-        goto fail;
-    } else if (type != LUA_TFUNCTION) {
-        error_push("\"state_frame\" is not a function in ruleset %s.", name);
-        goto fail;
-    }
-
-    // Create a reference to the state_frame function.
-    if ((ruleset->state_frame_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) {
-        error_push_allocerr();
-        goto fail;
-    }
-
-    // Check for a table key that contains the initialization function.
-    type = lua_getfield(L, -1, "init");
-    if (type == LUA_TNIL) {
-        error_push("Could not find table \"init\" in module table in ruleset %s.", name);
-        goto fail;
-    } else if (type != LUA_TFUNCTION) {
-        error_push("\"init\" is not a function in ruleset %s.", name);
-        goto fail;
-    }
-
-    // Create a reference to the state table.
-    if ((ruleset->init_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) {
-        error_push_allocerr();
-        goto fail;
-    }
-
-    // Load our pieces.
-    lua_pushstring(L, "pieces");
-    type = lua_gettable(L, -2);
-    if (type == LUA_TNIL) {
-        error_push("Could not find table \"pieces\" in module table in ruleset %s.", name);
-        goto fail;
-    } else if (type != LUA_TTABLE) {
-        error_push("\"pieces\" is not a table in ruleset %s.", name);
-        goto fail;
-    }
-
-    // Iterate through the piece array.
-    if ((ruleset->pieces = piece_configs_new(L)) == NULL) {
-        error_push("Error parsing pieces in ruleset %s: %s", name, lua_tostring(L, -1));
-        goto fail;
-    }
-
-    // We should only have the ruleset on the stack.  Always finish your
-    // Lua meddling with a clean stack.
-    if (lua_gettop(L) != 1) {
-        error_push("Lua stack not cleaned up.");
-        goto fail;
-    }
-    lua_pop(L, 1);
-
-    // Copy our ruleset name - has the potential to fail.
+    // Copy our ruleset name
     ruleset->name = strdup(name);
     if (ruleset->name == NULL) {
         error_push_allocerr();
@@ -199,6 +115,7 @@ fail:
     free(filename);
     vfs_vfile_delete(file);
     ruleset_delete(ruleset);
+    lua_settop(L, top);
 
     return NULL;
 }
@@ -212,10 +129,11 @@ void ruleset_delete(ruleset_t* ruleset) {
     }
 
     free(ruleset->name);
-    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->env_ref);
-    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->state_frame_ref);
-    luaL_unref(ruleset->lua, LUA_REGISTRYINDEX, ruleset->init_ref);
-    piece_configs_delete(ruleset->pieces);
+    ruleset->name = NULL;
+    free(ruleset->label);
+    ruleset->label = NULL;
+    free(ruleset->help);
+    ruleset->help = NULL;
 
     free(ruleset);
 }
@@ -326,7 +244,7 @@ bool ruleset_initialize(ruleset_t* ruleset, state_t* state) {
     lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "state");
 
     // Get our initialization function out of the registry
-    int type = lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, ruleset->init_ref);
+    int type = lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, 0 /*ruleset->init_ref*/);
     if (type == LUA_TNIL) {
         // No initilization function, we're fine.
         return true;

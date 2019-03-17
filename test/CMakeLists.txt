@@ -1,4 +1,5 @@
 set(TESTS
+    test_ruleset
     test_rulesetscript
     test_scriptenv
     test_vfs)

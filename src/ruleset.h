@@ -47,24 +47,14 @@ typedef struct ruleset_s {
     char* name;
 
     /**
-     * Reference to environment.
+     * Ruleset label (from config)
      */
-    int env_ref;
+    char* label;
 
     /**
-     * Reference to state_frame function inside Lua.
+     * Ruleset help (from config)
      */
-    int state_frame_ref;
-
-    /**
-     * Reference to init function inside Lua.
-     */
-    int init_ref;
-
-    /**
-     * Pieces loaded from Lua.
-     */
-    piece_configs_t* pieces;
+    char* help;
 } ruleset_t;
 
 ruleset_t* ruleset_new(lua_State* L, const char* name);

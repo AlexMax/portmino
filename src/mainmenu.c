@@ -154,7 +154,7 @@ screen_t mainmenu_new(lua_State* L) {
         return screen;
     }
 
-    ruleset_t* ruleset = ruleset_new(L, "default");
+    ruleset_t* ruleset = ruleset_new(L, "stdmino");
     if (ruleset == NULL) {
         free(menu);
         menu = NULL;

@@ -63,34 +63,11 @@ static int rulesetscript_gametype_call(lua_State* L) {
 }
 
 /**
- * Lua: Return a list of piece configs attached to the state.
- */
-static int rulesetscript_get_piece_configs(lua_State* L) {
-    lua_getfield(L, LUA_REGISTRYINDEX, "ruleset");
-    const ruleset_t* ruleset = lua_touserdata(L, -1);
-    if (ruleset == NULL) {
-        luaL_error(L, "ruleset_get_piece_configs is missing internal state");
-        return 0;
-    }
-
-    // Fetch the pieces and return an array of configs as a table.
-    lua_createtable(L, ruleset->pieces->size, 0);
-    for (size_t i = 1;i <= ruleset->pieces->size;i++) {
-        // Lua is 1-indexed, but C is 0.
-        lua_pushlightuserdata(L, ruleset->pieces->configs[i - 1]);
-        lua_rawseti(L, -2, i);
-    }
-
-    return 1;
-}
-
-/**
  * Push library functions into the state.
  */
 int rulesetscript_openlib(lua_State* L) {
     static const luaL_Reg rulesetlib[] = {
         { "gametype_call", rulesetscript_gametype_call },
-        { "get_piece_configs", rulesetscript_get_piece_configs },
         { NULL, NULL }
     };
 
