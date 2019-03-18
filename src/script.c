@@ -160,6 +160,28 @@ void script_push_paths(lua_State* L, const char* ruleset, const char* gametype) 
 }
 
 /**
+ * Set our config (not C library) search paths based on our current
+ * ruleset and gametype
+ * 
+ * Note that gametype can be NULL, and both gametype and ruleset can be NULL.
+ */
+void script_push_cpaths(lua_State* L, const char* ruleset, const char* gametype) {
+    if (gametype != NULL) {
+        // Our search path contains gametype and ruleset
+        lua_pushfstring(L,
+            "gametype/%s/?.cfg;" "ruleset/%s/?.cfg;" "script/?.cfg;",
+            gametype, ruleset);
+    } else if (ruleset != NULL) {
+        // Our search path contains ruleset
+        lua_pushfstring(L,
+            "ruleset/%s/?.cfg;" "script/?.cfg", ruleset);
+    } else {
+        // Our search path just has script information
+        lua_pushstring(L, "script/?.cfg");
+    }
+}
+
+/**
  * Dump the contents of a specific stack index
  */
 void script_debug(lua_State* L, int index) {
@@ -206,7 +228,7 @@ void script_debug_stack(lua_State* L) {
 void script_debug_table(lua_State* L, int index) {
     if (index < 0) {
         // First translate into absolute index
-        index = lua_gettop(L) - index + 1;
+        index = lua_gettop(L) + index + 1;
     }
 
     if (lua_type(L, index) != LUA_TTABLE) {

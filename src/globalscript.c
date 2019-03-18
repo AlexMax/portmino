@@ -89,7 +89,7 @@ static int globalscript_doconfig(lua_State* L) {
     // Upvalue 1: Search paths
     lua_pushvalue(L, lua_upvalueindex(1));
     if (lua_type(L, -1) != LUA_TSTRING) {
-        luaL_error(L, "require is missing internal state");
+        luaL_error(L, "missing internal state");
         return 0;
     }
 
@@ -222,21 +222,21 @@ static int globalscript_require(lua_State* L) {
     // Upvalue 1: _ENV
     lua_pushvalue(L, lua_upvalueindex(1));
     if (lua_type(L, -1) != LUA_TTABLE) {
-        luaL_error(L, "require is missing internal state");
+        luaL_error(L, "missing internal state");
         return 0;
     }
 
     // Upvalue 2: Loaded modules
     lua_pushvalue(L, lua_upvalueindex(2));
     if (lua_type(L, -1) != LUA_TTABLE) {
-        luaL_error(L, "require is missing internal state");
+        luaL_error(L, "missing internal state");
         return 0;
     }
 
     // Upvalue 3: Search paths
     lua_pushvalue(L, lua_upvalueindex(3));
     if (lua_type(L, -1) != LUA_TSTRING) {
-        luaL_error(L, "require is missing internal state");
+        luaL_error(L, "missing internal state");
         return 0;
     }
 

@@ -1,4 +1,5 @@
 set(TESTS
+    test_globalscript
     test_ruleset
     test_rulesetscript
     test_scriptenv

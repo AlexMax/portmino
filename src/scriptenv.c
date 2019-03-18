@@ -72,9 +72,17 @@ scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gamety
         lua_setfield(L, -2, globals[i]);
     }
 
+    // "doconfig" uses upvalue for state
+    lua_getglobal(L, "doconfig");
+    lua_CFunction func = lua_tocfunction(L, -1);
+    lua_pop(L, 1); // pop doconfig function
+    script_push_cpaths(L, ruleset, gametype); // path
+    lua_pushcclosure(L, func, 1); // pop upvalue, push closure
+    lua_setfield(L, -2, "doconfig"); // pop closure
+
     // "require" uses upvalues for state
     lua_getglobal(L, "require");
-    lua_CFunction func = lua_tocfunction(L, -1);
+    func = lua_tocfunction(L, -1);
     lua_pop(L, 1); // pop require function
     lua_pushvalue(L, -1); // _ENV
     lua_newtable(L); // loaded
