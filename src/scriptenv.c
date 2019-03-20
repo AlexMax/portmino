@@ -131,3 +131,53 @@ void scriptenv_delete(scriptenv_t* env) {
 
     free(env);
 }
+
+/**
+ * Initialize our script environment for a new game
+ */
+bool scriptenv_start(scriptenv_t* env) {
+    int top = lua_gettop(env->lua);
+
+    // Try and call a function called "start" to initialize the game.
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref) != LUA_TTABLE) {
+        error_push("Ruleset module reference has gone stale.");
+        goto fail;
+    }
+
+    if (lua_getfield(env->lua, -1, "start") != LUA_TFUNCTION) {
+        error_push("Ruleset module has no start function.");
+        goto fail;
+    }
+
+    // Grab our environment and apply it to our init function.
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->env_ref) != LUA_TTABLE) {
+        error_push("Environment reference has gone stale.");
+        goto fail;
+    }
+
+    lua_setupvalue(env->lua, -2, 1);
+    if (lua_pcall(env->lua, 0, 1, 0) != LUA_OK) {
+        error_push("lua_error: %s", lua_tostring(env->lua, -1));
+        goto fail;
+    }
+
+    return true;
+
+fail:
+    lua_settop(env->lua, top);
+    return false;
+}
+
+/**
+ * Rewind the environment to a specific past frame
+ */
+bool scriptenv_rewind(scriptenv_t* env, uint32_t frame) {
+
+}
+
+/**
+ * Run one frame worth of game logic
+ */
+bool scriptenv_frame(scriptenv_t* env) {
+
+}

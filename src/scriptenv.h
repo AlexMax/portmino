@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "define.h"
+
 // Forward declarations.
 typedef struct lua_State lua_State;
 typedef struct piece_configs_s piece_configs_t;
@@ -47,3 +49,4 @@ typedef struct scriptenv_s {
 
 scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gametype);
 void scriptenv_delete(scriptenv_t* env);
+bool scriptenv_start(scriptenv_t* env);

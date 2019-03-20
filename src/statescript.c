@@ -24,8 +24,7 @@
  * Lua: Get the canonical state table
  */
 static int statescript_get(lua_State* L) {
-    lua_pushstring(L, "state");
-    lua_gettable(L, LUA_REGISTRYINDEX);
+    lua_getfield(L, LUA_REGISTRYINDEX, "state");
 
     const state_t* state = lua_touserdata(L, -1);
     if (state == NULL) {
@@ -41,8 +40,7 @@ static int statescript_get(lua_State* L) {
  * Lua: Get the current gametic of the state
  */
 static int statescript_get_gametic(lua_State* L) {
-    lua_pushstring(L, "state");
-    lua_gettable(L, LUA_REGISTRYINDEX);
+    lua_getfield(L, LUA_REGISTRYINDEX, "state");
 
     const state_t* state = lua_touserdata(L, -1);
     if (state == NULL) {

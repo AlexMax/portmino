@@ -457,6 +457,6 @@ local function frame()
 end
 
 return {
-    init = init,
+    start = start,
     frame = frame,
 }
