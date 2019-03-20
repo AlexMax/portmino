@@ -31,6 +31,7 @@ set(GAME_SOURCES
     board.c             board.h
     boardscript.c       boardscript.h
     define.c            define.h
+    environment.c       environment.h
     error.c             error.h
     frontend.c          frontend.h
     gametype.c          gametype.h
@@ -58,7 +59,6 @@ set(GAME_SOURCES
     rulesetscript.c     rulesetscript.h
     screen.c            screen.h
     script.c            script.h
-    scriptenv.c         scriptenv.h
     softblock.c         softblock.h
     softfont.c          softfont.h
     softrender.c        softrender.h

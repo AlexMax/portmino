@@ -15,7 +15,7 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "scriptenv.h"
+#include "environment.h"
 
 #include <stdlib.h>
 
@@ -28,12 +28,12 @@
 /**
  * Create a environment that our game scripts can run inside
  */
-scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gametype) {
-    scriptenv_t* env = NULL;
+environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype) {
+    environment_t* env = NULL;
     int top = lua_gettop(L);
 
     // Allocate our scripting environment
-    if ((env = calloc(1, sizeof(scriptenv_t))) == NULL) {
+    if ((env = calloc(1, sizeof(environment_t))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
@@ -114,11 +114,11 @@ scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gamety
     return env;
 
 fail:
-    scriptenv_delete(env);
+    environment_delete(env);
     return NULL;
 }
 
-void scriptenv_delete(scriptenv_t* env) {
+void environment_delete(environment_t* env) {
     if (env == NULL) {
         return;
     }
@@ -135,7 +135,7 @@ void scriptenv_delete(scriptenv_t* env) {
 /**
  * Initialize our script environment for a new game
  */
-bool scriptenv_start(scriptenv_t* env) {
+bool environment_start(environment_t* env) {
     int top = lua_gettop(env->lua);
 
     // Try and call a function called "start" to initialize the game.
@@ -171,13 +171,13 @@ fail:
 /**
  * Rewind the environment to a specific past frame
  */
-bool scriptenv_rewind(scriptenv_t* env, uint32_t frame) {
+bool environment_rewind(environment_t* env, uint32_t frame) {
 
 }
 
 /**
  * Run one frame worth of game logic
  */
-bool scriptenv_frame(scriptenv_t* env) {
+bool environment_frame(environment_t* env) {
 
 }

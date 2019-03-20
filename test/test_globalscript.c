@@ -8,9 +8,9 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "environment.h"
 #include "platform.h"
 #include "script.h"
-#include "scriptenv.h"
 #include "vfs.h"
 
 static void test_globalscript_doconfig(void** state) {
@@ -27,7 +27,7 @@ static void test_globalscript_doconfig(void** state) {
     lua_pop(L, 1);
 
     // Should return a table with our pieces
-    scriptenv_t* env = scriptenv_new(L, "stdmino", "endurance");
+    environment_t* env = environment_new(L, "stdmino", "endurance");
     assert_non_null(env);
     luaL_loadstring(L, "return doconfig('pieces');");
     lua_rawgeti(L, LUA_REGISTRYINDEX, env->env_ref);
@@ -39,7 +39,7 @@ static void test_globalscript_doconfig(void** state) {
     lua_pop(L, 1); // pop l_piece table
     lua_pop(L, 1); // pop pieces table
 
-    scriptenv_delete(env);
+    environment_delete(env);
     lua_close(L);
 
     vfs_deinit();

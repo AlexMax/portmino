@@ -23,7 +23,7 @@
 typedef struct lua_State lua_State;
 typedef struct piece_configs_s piece_configs_t;
 
-typedef struct scriptenv_s {
+typedef struct environment_s {
     /**
      * Pointer to lua state.
      *
@@ -45,8 +45,8 @@ typedef struct scriptenv_s {
      * Pieces loaded from Lua.
      */
     piece_configs_t* pieces;
-} scriptenv_t;
+} environment_t;
 
-scriptenv_t* scriptenv_new(lua_State* L, const char* ruleset, const char* gametype);
-void scriptenv_delete(scriptenv_t* env);
-bool scriptenv_start(scriptenv_t* env);
+environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype);
+void environment_delete(environment_t* env);
+bool environment_start(environment_t* env);
