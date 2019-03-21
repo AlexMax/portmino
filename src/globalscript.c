@@ -258,7 +258,7 @@ static int globalscript_require(lua_State* L) {
     }
 
     // Turn the buffer into a runnable chunk.
-    if (luaL_loadbufferx(L, (char*)file->data, file->size, name, "t") != LUA_OK) {
+    if (luaL_loadbufferx(L, (char*)file->data, file->size, file->filename, "t") != LUA_OK) {
         lua_pushstring(L, name);
         goto fail;
     }
@@ -266,6 +266,10 @@ static int globalscript_require(lua_State* L) {
     // We don't need the file anymore.
     vfs_vfile_delete(file);
     file = NULL;
+
+    // Set the environment of the chunk
+    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_setupvalue(L, -2, 1);
 
     // Call it.  Result is on the stack.  Errors are propagated back through Lua.
     lua_call(L, 0, 1);

@@ -19,6 +19,8 @@
 
 #include "define.h"
 
+#include "input.h"
+
 // Forward declarations.
 typedef struct lua_State lua_State;
 typedef struct piece_configs_s piece_configs_t;
@@ -42,6 +44,16 @@ typedef struct environment_s {
     int ruleset_ref;
 
     /**
+     * Reference to state table.
+     */
+    int state_ref;
+
+    /**
+     * Last processed tic.
+     */
+    uint32_t gametic;
+
+    /**
      * Pieces loaded from Lua.
      */
     piece_configs_t* pieces;
@@ -50,3 +62,4 @@ typedef struct environment_s {
 environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype);
 void environment_delete(environment_t* env);
 bool environment_start(environment_t* env);
+bool environment_frame(environment_t* env, const playerinputs_t* inputs);

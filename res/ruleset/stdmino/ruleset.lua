@@ -13,6 +13,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
+local next_piece = require('next_piece')
+
 -- Stubbing out defines
 local STATE_RESULT_OK = 0
 local STATE_RESULT_ERROR = 1
@@ -32,9 +34,7 @@ local BOARD_PIECE = 1
 local BOARD_GHOST = 2
 
 -- Run this on game start
-local function start()
-    local state = mino_state.get()
-
+local function start(state)
     -- Player state
     state.player = {
         {
@@ -74,7 +74,7 @@ local function start()
             board = mino_board.new(),
 
             -- The "next piece" buffer.
-            next = mino_next.new(1),
+            next = {},
 
             -- Tic that the current piece spawned on.
             spawn_tic = 0,
@@ -130,7 +130,7 @@ local function board_next_piece(board, tic)
 end
 
 -- Run every frame
-local function frame()
+local function frame(state, gametic, inputs)
     local state = mino_state.get()
     local gametic = mino_state.get_gametic()
     local board = mino_board.get(1)

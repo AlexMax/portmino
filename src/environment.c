@@ -41,6 +41,8 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     env->lua = L;
     env->env_ref = LUA_NOREF;
     env->ruleset_ref = LUA_NOREF;
+    env->state_ref = LUA_NOREF;
+    env->gametic = 0;
     env->pieces = NULL;
 
     // Create a restricted ruleset environment and push a ref to it into
@@ -98,8 +100,15 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
         goto fail;
     }
 
-    // Keep a reference to our ruleset table.
+    // Keep a reference to our ruleset module table.
     if ((env->ruleset_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop ruleset table
+        error_push_allocerr();
+        goto fail;
+    }
+
+    // Create a state table and push a ref to it into the registry.
+    lua_createtable(L, 0, 0);
+    if ((env->state_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop env table dupe
         error_push_allocerr();
         goto fail;
     }
@@ -123,6 +132,7 @@ void environment_delete(environment_t* env) {
         return;
     }
 
+    luaL_unref(env->lua, LUA_REGISTRYINDEX, env->state_ref);
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref);
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->env_ref);
 
@@ -154,9 +164,15 @@ bool environment_start(environment_t* env) {
         error_push("Environment reference has gone stale.");
         goto fail;
     }
-
     lua_setupvalue(env->lua, -2, 1);
-    if (lua_pcall(env->lua, 0, 1, 0) != LUA_OK) {
+
+    // Parameter 1: State table
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {
+        error_push("State table reference has gone stale.");
+        goto fail;
+    }
+
+    if (lua_pcall(env->lua, 1, 1, 0) != LUA_OK) {
         error_push("lua_error: %s", lua_tostring(env->lua, -1));
         goto fail;
     }
@@ -172,12 +188,58 @@ fail:
  * Rewind the environment to a specific past frame
  */
 bool environment_rewind(environment_t* env, uint32_t frame) {
+    (void)env;
+    (void)frame;
 
+    return true;
 }
 
 /**
  * Run one frame worth of game logic
  */
-bool environment_frame(environment_t* env) {
+bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
+    int top = lua_gettop(env->lua);
 
+    // Try and call a function called "frame" to advance the game.
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref) != LUA_TTABLE) {
+        error_push("Ruleset module reference has gone stale.");
+        goto fail;
+    }
+
+    if (lua_getfield(env->lua, -1, "frame") != LUA_TFUNCTION) {
+        error_push("Ruleset module has no start function.");
+        goto fail;
+    }
+
+    // Grab our environment and apply it to our frame function.
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->env_ref) != LUA_TTABLE) {
+        error_push("Environment reference has gone stale.");
+        goto fail;
+    }
+    lua_setupvalue(env->lua, -2, 1);
+
+    // Parameter 1: State table
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {
+        error_push("State table reference has gone stale.");
+        goto fail;
+    }
+
+    // Parameter 2: Gametic
+    uint32_t gametic = env->gametic + 1;
+    lua_pushinteger(env->lua, gametic);
+
+    // Parameter 3: Player inputs
+    lua_pushlightuserdata(env->lua, (void*)inputs);
+
+    if (lua_pcall(env->lua, 3, 1, 0) != LUA_OK) {
+        error_push("lua_error: %s", lua_tostring(env->lua, -1));
+        goto fail;
+    }
+
+    env->gametic += gametic;
+    return true;
+
+fail:
+    lua_settop(env->lua, top);
+    return false;
 }
