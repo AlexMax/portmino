@@ -23,12 +23,10 @@
 
 #include "board.h"
 #include "error.h"
-#include "next.h"
 #include "piece.h"
 #include "render.h"
 #include "softblock.h"
 #include "softfont.h"
-#include "state.h"
 #include "vfs.h"
 
 // Forward declarations

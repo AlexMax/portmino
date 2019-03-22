@@ -19,19 +19,8 @@
 
 #include "lua.h"
 
-#include "input.h"
-#include "next.h"
-#include "piece.h"
-
-typedef struct board_s board_t;
+// Forward declarations.
 typedef struct menulist_s menulist_t;
-typedef struct state_s state_t;
-
-typedef enum {
-    RULESET_RESULT_OK,
-    RULESET_RESULT_ERROR,
-    RULESET_RESULT_TOPOUT,
-} ruleset_result_t;
 
 typedef struct ruleset_s {
     /**
@@ -60,4 +49,3 @@ typedef struct ruleset_s {
 ruleset_t* ruleset_new(lua_State* L, const char* name);
 void ruleset_delete(ruleset_t* ruleset);
 menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);
-bool ruleset_initialize(ruleset_t* ruleset, state_t* state);

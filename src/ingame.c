@@ -20,10 +20,10 @@
 #include <stdlib.h>
 
 #include "audio.h"
+#include "environment.h"
 #include "error.h"
 #include "gametype.h"
 #include "ruleset.h"
-#include "state.h"
 
 typedef struct ingame_s {
     /**
@@ -36,74 +36,46 @@ typedef struct ingame_s {
     /**
      * The current in-use ruleset.
      * 
-     * This _is_ an owning reference, even though it's passed to the allocation
-     * function, and must be freed.
+     * This _is_ an owning reference, which can be safely freed.
      */
     ruleset_t* ruleset;
 
     /**
-     * All current ingame state that exists outside of Lua.
+     * The complete environment of the game we're playing.
      */
-    state_t* state;
+    environment_t* environment;
 } ingame_t;
+
+typedef enum {
+    INGAME_RESULT_OK,
+    INGAME_RESULT_ERROR,
+    INGAME_RESULT_GAMEOVER
+} playmenu_result_t;
 
 /**
  * Process ingame inputs
  */
 static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
     ingame_t* ingame = screen->screen.ingame;
-    if (state_frame(ingame->state) == false) {
-        return RULESET_RESULT_ERROR;
+    if (environment_frame(ingame->environment, &inputs->game) == false) {
+        return INGAME_RESULT_ERROR;
     }
 
-    lua_State* L = ingame->ruleset->lua;
-
-    // Push our context into the registry so we can get at them from C
-    // functions called from inside Lua.
-    /*lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);
-    lua_setfield(L, LUA_REGISTRYINDEX, "env");
-    lua_pushlightuserdata(L, ingame->ruleset);
-    lua_setfield(L, LUA_REGISTRYINDEX, "ruleset");
-    lua_pushlightuserdata(L, ingame->gametype);
-    lua_setfield(L, LUA_REGISTRYINDEX, "gametype");
-    lua_pushlightuserdata(L, ingame->state);
-    lua_setfield(L, LUA_REGISTRYINDEX, "state");
-    lua_pushlightuserdata(L, (void*)(&inputs->game));
-    lua_setfield(L, LUA_REGISTRYINDEX, "playerinputs");
-
-    // Use our references to grab the state_frame function and its environment
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->state_frame_ref);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->ruleset->env_ref);*/
-
-    // Setup the environment
-    lua_setupvalue(L, -2, 1);
-
-    // Run the state_frame function.
-    if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
-        const char* err = lua_tostring(L, -1);
-        error_push("lua error: %s", err);
-        return RULESET_RESULT_ERROR;
-    }
-
-    // Handle our result
-    ruleset_result_t result = lua_tointeger(L, -1);
-    lua_pop(L, 1); // pop result
-
-    return result;
+    return INGAME_RESULT_OK;
 }
 
 /**
  * Navigate to the proper destination
  */
 static void ingame_navigate(screens_t* screens, int result) {
-    switch ((ruleset_result_t)result) {
-    case RULESET_RESULT_OK:
-        // Should never get here.
+    switch ((playmenu_result_t)result) {
+    case INGAME_RESULT_OK:
+        // Do nothing
         break;
-    case RULESET_RESULT_ERROR:
+    case INGAME_RESULT_ERROR:
         screens_pop(screens);
         break;
-    case RULESET_RESULT_TOPOUT:
+    case INGAME_RESULT_GAMEOVER:
         screens_pop(screens);
         audio_playsound(g_sound_gameover);
         break;
@@ -115,16 +87,8 @@ static void ingame_navigate(screens_t* screens, int result) {
  */
 static void ingame_render(screen_t* screen) {
     ingame_t* ingame = screen->screen.ingame;
-    lua_State* L = ingame->ruleset->lua;
 
-    // Use our references to grab the draw function
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ingame->gametype->draw_ref);
-
-    // Run the draw function.
-    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
-        const char* err = lua_tostring(L, -1);
-        error_push("lua error: %s", err);
-    }
+    environment_draw(ingame->environment);
 }
 
 /**
@@ -134,8 +98,8 @@ static void ingame_delete(screen_t* screen) {
     if (screen->screen.ingame != NULL) {
         gametype_delete(screen->screen.ingame->gametype);
         screen->screen.ingame->gametype = NULL;
-        state_delete(screen->screen.ingame->state);
-        screen->screen.ingame->state = NULL;
+        environment_delete(screen->screen.ingame->environment);
+        screen->screen.ingame->environment = NULL;
         free(screen->screen.ingame);
         screen->screen.ingame = NULL;
     }
@@ -161,21 +125,21 @@ screen_t ingame_new(ruleset_t* ruleset, gametype_t* gametype) {
         return screen;
     }
 
-    // Create our gamestate
-    state_t* state = state_new(ruleset, gametype);
-    if (state == NULL) {
+    // Create our game environment
+    environment_t* environment = environment_new(ruleset->lua, ruleset->name, gametype->name);
+    if (environment == NULL) {
         free(ingame);
         return screen;
     }
 
     // Because we're about to be ingame, actually initialize the game
-    if (state_initgame(state) == false) {
-        state_delete(state);
+    if (environment_start(environment) == false) {
+        environment_delete(environment);
         free(ingame);
         return screen;
     }
 
-    ingame->state = state;
+    ingame->environment = environment;
     ingame->ruleset = ruleset;
     ingame->gametype = gametype;
 

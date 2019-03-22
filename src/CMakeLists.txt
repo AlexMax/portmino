@@ -22,6 +22,7 @@ endif()
 # These warnings exist in both GCC and Clang
 checked_add_compile_option(-Werror=implicit-function-declaration E_IMPLICIT_FUNC)
 checked_add_compile_option(-Werror=incompatible-pointer-types E_INCOMPAT_PTR)
+checked_add_compile_option(-Werror=int-conversion E_INT_CONV)
 checked_add_compile_option(-Wformat=2 W_FORMAT_2)
 checked_add_compile_option(-Wnull-dereference W_NULL_DEREF)
 
@@ -43,8 +44,6 @@ set(GAME_SOURCES
     inputscript.c       inputscript.h
     mainmenu.c          mainmenu.h
     menu.c              menu.h
-    next.c              next.h
-    nextscript.c        nextscript.h
     picture.c           picture.h
     piece.c             piece.h
     piecescript.c       piecescript.h
@@ -56,15 +55,12 @@ set(GAME_SOURCES
     renderscript.c      renderscript.h
     ruleset.c           ruleset.h
     rulesetmenu.c       rulesetmenu.h
-    rulesetscript.c     rulesetscript.h
     screen.c            screen.h
     script.c            script.h
     softblock.c         softblock.h
     softfont.c          softfont.h
     softrender.c        softrender.h
     sound.c             sound.h
-    state.c             state.h
-    statescript.c       statescript.h
     vfs.c               vfs.h)
 
 if(EMSCRIPTEN)

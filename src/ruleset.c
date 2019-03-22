@@ -169,9 +169,9 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
         goto fail;
     }
     for (char** i = gametypes;*i != NULL;i++) {
-        // Try and find a file called manifest.cfg in every directory
+        // Try and find a file called gametype.cfg in every directory
         char* mainpath = NULL;
-        ok = asprintf(&mainpath, "gametype/%s/%s/manifest.cfg", ruleset->name, *i);
+        ok = asprintf(&mainpath, "gametype/%s/%s/gametype.cfg", ruleset->name, *i);
         if (ok < 0) {
             // Allocation error.
             goto fail;
@@ -233,33 +233,4 @@ fail:
     }
 
     return NULL;
-}
-
-/**
- * Run our initialization functions for a new game
- */
-bool ruleset_initialize(ruleset_t* ruleset, state_t* state) {
-    // Ensure our state is in the registry
-    lua_pushlightuserdata(ruleset->lua, state);
-    lua_setfield(ruleset->lua, LUA_REGISTRYINDEX, "state");
-
-    // Get our initialization function out of the registry
-    int type = lua_rawgeti(ruleset->lua, LUA_REGISTRYINDEX, 0 /*ruleset->init_ref*/);
-    if (type == LUA_TNIL) {
-        // No initilization function, we're fine.
-        return true;
-    } else if (type == LUA_TFUNCTION) {
-        // Call the function.
-        if (lua_pcall(ruleset->lua, 0, 0, 0) != LUA_OK) {
-            const char* err = lua_tostring(ruleset->lua, -1);
-            error_push("lua error: %s", err);
-            return false;
-        }
-        return true;
-    }
-
-    // What do we even have?
-    error_push("Ruleset initialization is not a function or nil.");
-    lua_pop(ruleset->lua, 1);
-    return false;
 }

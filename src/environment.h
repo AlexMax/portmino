@@ -63,3 +63,4 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
 void environment_delete(environment_t* env);
 bool environment_start(environment_t* env);
 bool environment_frame(environment_t* env, const playerinputs_t* inputs);
+void environment_draw(environment_t* env);

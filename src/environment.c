@@ -243,3 +243,10 @@ fail:
     lua_settop(env->lua, top);
     return false;
 }
+
+/**
+ * Draw the current frame of game logic
+ */
+void environment_draw(environment_t* env) {
+    (void)env;
+}
