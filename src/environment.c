@@ -159,13 +159,6 @@ bool environment_start(environment_t* env) {
         goto fail;
     }
 
-    // Grab our environment and apply it to our init function.
-    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->env_ref) != LUA_TTABLE) {
-        error_push("Environment reference has gone stale.");
-        goto fail;
-    }
-    lua_setupvalue(env->lua, -2, 1);
-
     // Parameter 1: State table
     if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {
         error_push("State table reference has gone stale.");
@@ -210,13 +203,6 @@ bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
         error_push("Ruleset module has no start function.");
         goto fail;
     }
-
-    // Grab our environment and apply it to our frame function.
-    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->env_ref) != LUA_TTABLE) {
-        error_push("Environment reference has gone stale.");
-        goto fail;
-    }
-    lua_setupvalue(env->lua, -2, 1);
 
     // Parameter 1: State table
     if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {

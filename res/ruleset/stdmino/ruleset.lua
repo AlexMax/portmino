@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
-local next_piece = require('next_piece')
+local next_buffer = require('next_buffer')
 
 -- Stubbing out defines
 local STATE_RESULT_OK = 0
@@ -76,6 +76,9 @@ local function start(state)
             -- The "next piece" buffer.
             next = {},
 
+            -- The "next piece" buffer index.
+            next_index = 0,
+
             -- Tic that the current piece spawned on.
             spawn_tic = 0,
 
@@ -85,7 +88,7 @@ local function start(state)
             -- Bag of random pieces.
             bag = {},
 
-            -- Size of the bag.
+            -- Bag size
             bag_size = 0,
         }
     }
@@ -93,15 +96,14 @@ end
 
 -- Given a specific board, cycle to the next piece
 local function board_next_piece(board, tic)
-    local state = mino_state.get()
-    local next = mino_next.get(1)
+    local next = board.next[1]
 
-    if mino_board.get_piece(board, BOARD_PIECE) ~= nil then
-        mino_board.unset_piece(board, BOARD_PIECE)
+    if board.board:get_piece(BOARD_PIECE) ~= nil then
+        board.board:unset_piece(BOARD_PIECE)
     end
 
     -- Find the next piece.
-    local config = mino_next.get_next_config(next)
+    local config = next_buffer.peek_next(board)
 
     -- See if our newly-spawned piece would collide with an existing piece.
     local spawn_pos = mino_piece.config_get_spawn_pos(config)
@@ -121,22 +123,20 @@ local function board_next_piece(board, tic)
     end
 
     -- Set the spawn tic.
-    state.board[1].spawn_tic = tic
+    board.spawn_tic = tic
 
     -- Advance the next index.
-    mino_next.consume_next(next)
+    next_buffer.consume_next(board)
 
     return true
 end
 
 -- Run every frame
 local function frame(state, gametic, inputs)
-    local state = mino_state.get()
-    local gametic = mino_state.get_gametic()
-    local board = mino_board.get(1)
+    local board = state.board[1]
 
     -- Get the next piece if we don't have one at this point.
-    if mino_board.get_piece(board, BOARD_PIECE) == nil then
+    if board.board:get_piece(BOARD_PIECE) == nil then
         if not board_next_piece(board, gametic) then
             return STATE_RESULT_GAMEOVER
         end

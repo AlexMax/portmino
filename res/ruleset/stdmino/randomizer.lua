@@ -13,11 +13,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
--- Run when a next piece buffer wants to get another piece
-local function next_piece()
-    local state = mino_state.get()
-    local board = state.board[board_id]
-
+-- Actually obtain the random next piece for a particular board
+local function next_piece(board)
     -- If our bag is empty, fill it back up.
     if board.bag_size == 0 then
         board.bag = mino_ruleset.get_piece_configs()
@@ -40,4 +37,6 @@ local function next_piece()
     return piece
 end
 
-return next_piece
+return {
+    next_piece = next_piece
+}
