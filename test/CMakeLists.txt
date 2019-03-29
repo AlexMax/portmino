@@ -3,6 +3,7 @@ set(TESTS
     test_globalscript
     test_ruleset
     test_rulesetscript
+    test_script
     test_vfs)
 if(UNIX)
     list(APPEND TESTS test_platform_unix)
