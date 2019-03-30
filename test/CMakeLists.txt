@@ -2,7 +2,6 @@ set(TESTS
     test_environment
     test_globalscript
     test_ruleset
-    test_rulesetscript
     test_script
     test_vfs)
 if(UNIX)
