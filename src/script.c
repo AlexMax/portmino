@@ -30,6 +30,7 @@
 #include "inputscript.h"
 #include "globalscript.h"
 #include "piecescript.h"
+#include "random.h"
 #include "randomscript.h"
 #include "renderscript.h"
 #include "vfs.h"
@@ -98,7 +99,7 @@ void script_push_vector(lua_State* L, const vec2i_t* vec) {
     lua_setfield(L, -2, "y");
 }
 
-static bool serilize_index(lua_State* L, int index, mpack_writer_t* writer) {
+static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
     if (index < 0) {
         // First translate into absolute index
         index = lua_gettop(L) + index + 1;
@@ -130,8 +131,27 @@ static bool serilize_index(lua_State* L, int index, mpack_writer_t* writer) {
     case LUA_TTABLE:
         serialize_table(L, index, writer);
         break;
+    case LUA_TUSERDATA: {
+        random_t* random = luaL_testudata(L, index, "random_t");
+        if (random != NULL) {
+            // Is this a random struct?  Serialize the random state...
+            buffer_t* random_data = random_serialize(random);
+            if (random_data == NULL) {
+                return false;
+            }
+
+            mpack_start_bin(writer, 1 + random_data->size);
+            mpack_write_bytes(writer, "\x01", 1);
+            mpack_write_bytes(writer, (const char*)(random_data->data), random_data->size);
+            mpack_finish_bin(writer);
+            break;
+        }
+
+        // No clue what this is then...
+        error_push("Data is not serializable.");
+        return false;
+    }
     case LUA_TFUNCTION:
-    case LUA_TUSERDATA:
     case LUA_TTHREAD:
     case LUA_TLIGHTUSERDATA:
         error_push("Data is not serializable.");
@@ -175,7 +195,7 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
             size_t str_len = 0;
             const char* str = lua_tolstring(L, -2, &str_len);
             mpack_write_str(writer, str, str_len);
-            serilize_index(L, -1, writer);
+            serialize_index(L, -1, writer);
             lua_pop(L, 1);
         }
         mpack_finish_map(writer);
@@ -193,7 +213,7 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
         mpack_start_array(writer, length);
         for (uint32_t i = 1;i <= len;i++) {
             lua_rawgeti(L, index, i);
-            serilize_index(L, -1, writer);
+            serialize_index(L, -1, writer);
             lua_pop(L, 1);
         }
         mpack_finish_array(writer);

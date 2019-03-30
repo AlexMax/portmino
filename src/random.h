@@ -28,3 +28,4 @@ typedef struct random_s {
 
 void random_init(random_t* random, uint32_t* seed);
 uint32_t random_number(random_t* random, uint32_t range);
+buffer_t* random_serialize(random_t* random);

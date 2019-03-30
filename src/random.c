@@ -22,6 +22,8 @@
 
 #include <stdlib.h>
 
+#include "mpack.h"
+
 #include "error.h"
 #include "frontend.h"
 #include "platform.h"
@@ -87,4 +89,36 @@ uint32_t random_number(random_t* random, uint32_t range) {
             return r % range;
         }
     }
+}
+
+/**
+ * Serialize random struct using msgpack
+ */
+buffer_t* random_serialize(random_t* random) {
+    buffer_t* buffer = NULL;
+    mpack_writer_t writer;
+
+    if ((buffer = calloc(1, sizeof(buffer_t))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    mpack_writer_init_growable(&writer, (char**)(&buffer->data), &buffer->size);
+    mpack_start_array(&writer, 2);
+    mpack_write_u32(&writer, random->state[0]);
+    mpack_write_u32(&writer, random->state[1]);
+    mpack_finish_array(&writer);
+
+    mpack_error_t err = mpack_writer_destroy(&writer);
+    if (err != mpack_ok) {
+        error_push("random_serialize error: %s", mpack_error_to_string(err));
+        goto fail;
+    }
+
+    return buffer;
+
+fail:
+    mpack_writer_destroy(&writer);
+    buffer_delete(buffer);
+    return NULL;
 }
