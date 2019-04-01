@@ -259,6 +259,47 @@ fail:
 }
 
 /**
+ * Recursively wrap all cfunctions with closures containing the given index
+ * as a first upvalue
+ *
+ * Pops the unwrapped item from the top of the stack and pushes a wrapped
+ * version of the item.  If the item didn't need to be wrapped, nothing
+ * happens.
+ */
+void script_wrap_cfuncs(lua_State* L, int index) {
+    if (index < 0) {
+        // First translate into absolute index
+        index = lua_gettop(L) + index + 1;
+    }
+
+    switch (lua_type(L, -1)) {
+    case LUA_TTABLE:
+        lua_createtable(L, 0, 0); // push dest table
+        lua_pushnil(L); // push initial key
+        while (lua_next(L, -3) != 0) {
+            script_wrap_cfuncs(L, index); // recursively replace table value
+            lua_pushvalue(L, -2); // dupe key
+            lua_insert(L, -2); // move dupe key to proper position
+            lua_settable(L, -4); // pop dupe key and value
+        }
+        lua_remove(L, -2); // remove original table
+        break;
+    case LUA_TFUNCTION: {
+        lua_CFunction func = lua_tocfunction(L, -1);
+        if (func != NULL) {
+            lua_pop(L, 1); // pop cfunction
+            lua_pushvalue(L, index); // push registry
+            lua_pushcclosure(L, func, 1); // pop registry, push closure
+        }
+        break;
+    }
+    default:
+        // No need to wrap anything
+        break;
+    }
+}
+
+/**
  * Take a configuration file and push a table that contains all defined
  * configuration values to the stack, or an error message if there was a
  * problem parsing the file

@@ -62,6 +62,7 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
         lua_getfield(L, -1, modules[i]);
+        script_wrap_cfuncs(L, 1);
         lua_setfield(L, -3, modules[i]);
     }
     lua_pop(L, 1);

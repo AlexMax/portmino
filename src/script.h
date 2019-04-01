@@ -27,6 +27,7 @@ lua_State* script_newstate(void);
 bool script_to_vector(lua_State* L, int index, vec2i_t* vec);
 void script_push_vector(lua_State* L, const vec2i_t* vec);
 buffer_t* script_to_serialized(lua_State* L, int index);
+void script_wrap_cfuncs(lua_State* L, int index);
 bool script_load_config(lua_State* L, vfile_t* file);
 void script_push_paths(lua_State* L, const char* ruleset, const char* gametype);
 void script_push_cpaths(lua_State* L, const char* ruleset, const char* gametype);
