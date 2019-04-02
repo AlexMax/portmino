@@ -209,9 +209,8 @@ static int globalscript_print(lua_State *L) {
  * Lua: "require" function.
  * 
  * This is actually a super-stripped down version of "require" that is missing
- * many features.  The environment to load the module against is stored in
- * the first upvalue, loaded packages are stored in the second upvalue, and
- * package search paths are stored in the third.
+ * many features.  Note that this function requires a local registry in
+ * the first upvalue.
  */
 static int globalscript_require(lua_State* L) {
     vfile_t* file = NULL;
@@ -219,24 +218,24 @@ static int globalscript_require(lua_State* L) {
     // Parameter 1: Name of the package.
     const char* name = luaL_checkstring(L, 1);
 
-    // Upvalue 1: _ENV
-    lua_pushvalue(L, lua_upvalueindex(1));
-    if (lua_type(L, -1) != LUA_TTABLE) {
-        luaL_error(L, "missing internal state");
+    // Internal State 1: _ENV
+    int type = lua_getfield(L, lua_upvalueindex(1), "_ENV");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "require: missing internal state (_ENV)");
         return 0;
     }
 
-    // Upvalue 2: Loaded modules
-    lua_pushvalue(L, lua_upvalueindex(2));
+    // Internal State 2: Loaded modules
+    type = lua_getfield(L, lua_upvalueindex(1), "loaded");
     if (lua_type(L, -1) != LUA_TTABLE) {
-        luaL_error(L, "missing internal state");
+        luaL_error(L, "require: missing internal state (loaded)");
         return 0;
     }
 
     // Upvalue 3: Search paths
-    lua_pushvalue(L, lua_upvalueindex(3));
+    type = lua_getfield(L, lua_upvalueindex(1), "paths");
     if (lua_type(L, -1) != LUA_TSTRING) {
-        luaL_error(L, "missing internal state");
+        luaL_error(L, "require: missing internal state (paths)");
         return 0;
     }
 
@@ -268,7 +267,7 @@ static int globalscript_require(lua_State* L) {
     file = NULL;
 
     // Set the environment of the chunk
-    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_pushvalue(L, 2);
     lua_setupvalue(L, -2, 1);
 
     // Call it.  Result is on the stack.  Errors are propagated back through Lua.

@@ -34,6 +34,11 @@ typedef struct environment_s {
     lua_State* lua;
 
     /**
+     * Reference to registry.
+     */
+    int registry_ref;
+
+    /**
      * Reference to environment.
      */
     int env_ref;
