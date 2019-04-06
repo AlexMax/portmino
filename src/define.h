@@ -21,8 +21,6 @@
 // just easier to include them all here.
 
 #include <stddef.h>
-#include <stdbool.h>
-#include <stdint.h>
 
 // We always have access to any compatibility defines.
 #include "compat.h"

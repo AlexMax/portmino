@@ -17,10 +17,20 @@
 
 #pragma once
 
+#include <stddef.h>
+
+// These are only available with C99 compilers or modern MSVC
+#include <stdbool.h>
+#include <stdint.h>
+
 #if defined(_MSC_VER)
 #define restrict __restrict
 #endif
 
 #if !defined(HAVE_ASPRINTF)
 int asprintf(char** ret, const char* format, ...);
+#endif
+
+#if !defined(HAVE_REALLOCARRAY)
+void* reallocarray(void* optr, size_t nmemb, size_t size);
 #endif
