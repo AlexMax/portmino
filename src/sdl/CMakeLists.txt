@@ -2,6 +2,7 @@ set(SDL_SOURCES
     main.c)
 
 add_executable(portmino ${SDL_SOURCES})
+add_portmino_settings(portmino)
 add_sanitizers(portmino)
 if(EMSCRIPTEN)
     if(PORTMINO_EMBED_RESOURCE)

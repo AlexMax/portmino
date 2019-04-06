@@ -9,6 +9,7 @@ if(NOT HAVE_ASPRINTF)
 endif()
 
 add_library(portmino-compat STATIC ${COMPAT_SOURCES})
+add_portmino_settings(portmino-compat)
 set_property(TARGET portmino-compat PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(portmino-compat PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(HAVE_ASPRINTF)

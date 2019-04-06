@@ -2,6 +2,7 @@ set(LIBRETRO_SOURCES
     libretro.c  libretro.h)
 
 add_library(portmino_libretro SHARED ${LIBRETRO_SOURCES})
+add_portmino_settings(portmino_libretro)
 set_target_properties(portmino_libretro PROPERTIES PREFIX "")
 target_link_libraries(portmino_libretro portmino-core basemino)
 
