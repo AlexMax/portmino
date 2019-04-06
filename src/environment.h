@@ -66,6 +66,7 @@ typedef struct environment_s {
 
 environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype);
 void environment_delete(environment_t* env);
+bool environment_dostring(environment_t* env, const char* script);
 bool environment_start(environment_t* env);
 bool environment_frame(environment_t* env, const playerinputs_t* inputs);
 void environment_draw(environment_t* env);

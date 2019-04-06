@@ -41,7 +41,7 @@ typedef struct piece_config_s {
      * 
      * Total size of this pointer is data_size * data_count.
      */
-    uint8_t* datas;
+    uint8_t* data;
 
     /**
      * Total width of a single piece, including blank space.
@@ -74,11 +74,6 @@ typedef struct piece_config_s {
     uint8_t spawn_rot;
 } piece_config_t;
 
-typedef struct piece_configs_s {
-    piece_config_t** configs;
-    size_t size;
-} piece_configs_t;
-
 typedef struct piece_s {
     /**
      * Current position of the piece, origin is at the top-left.  Can be off
@@ -99,10 +94,8 @@ typedef struct piece_s {
     const piece_config_t* config;
 } piece_t;
 
-piece_configs_t* piece_configs_new(lua_State* L);
-void piece_configs_delete(piece_configs_t* piece_configs);
-void pieces_init(void);
-void pieces_deinit(void);
+piece_config_t* piece_config_new(lua_State* L, const char* name);
+void piece_config_delete(piece_config_t* piece_config);
 piece_t* piece_new(const piece_config_t* config);
 void piece_delete(piece_t* piece);
 uint8_t* piece_get_rot(const piece_config_t* piece, uint8_t rot);

@@ -166,7 +166,7 @@ static void softrender_draw_board(vec2i_t pos, const board_t* board) {
             size_t end = i + piece->config->data_size;
             for (int j = 0;i < end;i++, j++) {
                 // What type of block are we rendering?
-                uint8_t btype = piece->config->datas[i];
+                uint8_t btype = piece->config->data[i];
                 if (!btype) {
                     continue;
                 }
@@ -257,7 +257,7 @@ static void softrender_draw_piece(vec2i_t pos, const piece_config_t* piece) {
     size_t end = i + piece->data_size;
     for (int j = 0;i < end;i++, j++) {
         // What type of block are we rendering?
-        uint8_t btype = piece->datas[i];
+        uint8_t btype = piece->data[i];
         if (!btype) {
             continue;
         }

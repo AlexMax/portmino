@@ -145,6 +145,9 @@ fail:
     return NULL;
 }
 
+/**
+ * Destroy the environment
+ */
 void environment_delete(environment_t* env) {
     if (env == NULL) {
         return;
@@ -159,6 +162,41 @@ void environment_delete(environment_t* env) {
     env->protos = NULL;
 
     free(env);
+}
+
+/**
+ * Run an arbitrary Lua script within the context of our environment
+ *
+ * This function is usually reserved for our unit tests.  There shouldn't
+ * be any reason to use it otherwise.
+ */
+bool environment_dostring(environment_t* env, const char* script) {
+    int top = lua_gettop(env->lua);
+
+    // Load the string into a chunk
+    if (luaL_loadstring(env->lua, script) != LUA_OK) {
+        error_push("lua_error: %s", lua_tostring(env->lua, -1));
+        goto fail;
+    }
+
+    // Load our environment and set the environment of the chunk to it
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->env_ref) != LUA_TTABLE) {
+        error_push("Environment reference has gone stale.");
+        goto fail;
+    }
+    lua_setupvalue(env->lua, -2, 1);
+
+    // Call the chunk
+    if (lua_pcall(env->lua, 0, LUA_MULTRET, 0) != LUA_OK) {
+        error_push("lua_error: %s", lua_tostring(env->lua, -1));
+        goto fail;
+    }
+
+    return true;
+
+fail:
+    lua_settop(env->lua, top);
+    return false;
 }
 
 /**

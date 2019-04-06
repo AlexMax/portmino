@@ -20,11 +20,25 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "piece.h"
+#include "proto.h"
+
 /**
  * Lua: Load a prototype.
  */
 int protoscript_load(lua_State* L) {
-    luaL_checktype(L, 1, LUA_TTABLE);
+    static const char* types[] = {
+        "piece", NULL
+    };
+
+    // Parameter 1: prototype type
+    int option = luaL_checkoption(L, 1, NULL, types);
+
+    // Parameter 2: prototype name
+    const char* name = luaL_checkstring(L, 2);
+
+    // Parameter 3: prototype data
+    luaL_checktype(L, 3, LUA_TTABLE);
 
     // Internal State 1: protos table
     int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
@@ -37,6 +51,36 @@ int protoscript_load(lua_State* L) {
     type = lua_getfield(L, lua_upvalueindex(1), "proto_container");
     if (type != LUA_TLIGHTUSERDATA) {
         luaL_error(L, "require: missing internal state (proto_container)");
+        return 0;
+    }
+    proto_container_t* protos = lua_touserdata(L, -1);
+
+    lua_pushvalue(L, -3); // push dupe configuration
+
+    // Depending on our prototype type, create a different prototype
+    proto_t* proto = NULL;
+    switch (option) {
+    case 0: {
+        piece_config_t* piece = piece_config_new(L, name);
+        if (piece == NULL) {
+            luaL_error(L, "could not create piece");
+            return 0;
+        }
+        proto = proto_new(PROTO_PIECE, piece, piece_config_delete);
+        if (proto == NULL) {
+            piece_config_delete(piece);
+            luaL_error(L, "could not create prototype");
+            return 0;
+        }
+        break;
+    }
+    default:
+        luaL_argerror(L, 1, "unknown type");
+        return 0;
+    }
+
+    if (proto_container_push(protos, proto) == false) {
+        luaL_error(L, "could not add prototype to container");
         return 0;
     }
 

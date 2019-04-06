@@ -20,198 +20,114 @@
 
 #include "lauxlib.h"
 
+#include "error.h"
 #include "frontend.h"
 #include "piece.h"
+#include "script.h"
 
 /**
- * Allocates a piece configuration array table at the top of the Lua state
+ * Allocates a piece configuration from the table at the top of the Lua stack
  * 
- * Assumes you have the table of pieces on the top of the Lua stack.  Consumes
- * the table from the Lua stack and leaves nothing on success, or an error
- * message on failure.
+ * Assumes you have a piece configuration table on the top of the Lua stack.
+ * Consumes the table from the Lua stack and leaves nothing on success, or
+ * an error message on failure.
  */
-piece_configs_t* piece_configs_new(lua_State* L) {
-    // Take note of the top of the stack.
+piece_config_t* piece_config_new(lua_State* L, const char* name) {
     int top = lua_gettop(L);
 
-    // Push our available pieces into the ruleset.
-    lua_Integer pieces_length = luaL_len(L, -1);
-    if (pieces_length <= 0) {
-        lua_settop(L, top - 1);
-        lua_pushstring(L, "No pieces defined");
-        return NULL;
-    } else if (pieces_length > MAX_PIECES) {
-        lua_settop(L, top - 1);
-        lua_pushstring(L, "Too many pieces defined");
-        return NULL;
+    const char* error = NULL;
+    char* namedup = NULL;
+    piece_config_t* piece = NULL;
+    vec2i_t spawn_pos = vec2i_zero();
+
+    // Duplicate our name string
+    if ((namedup = strdup(name)) == NULL) {
+        error = "Allocation error";
+        goto fail;
     }
 
-    piece_configs_t* piece_configs = calloc(1, sizeof(piece_configs_t));
-    if (piece_configs == NULL) {
-        lua_pushstring(L, "Allocation error");
-        return NULL;
+    // Spawn Position is a tuple of integers that contain an x and y coordinate
+    lua_getfield(L, -1, "spawn_pos");
+    if (script_to_vector(L, -1, &spawn_pos) == false) {
+        error = "Piece \"spawn_pos\" isn't a table";
+        goto fail;
+    }
+    lua_pop(L, 1); // pop spawn_pos
+
+    lua_getfield(L, -1, "spawn_rot");
+    uint8_t spawn_rot = (uint8_t)lua_tointeger(L, -1);
+    lua_pop(L, 1); // pop spawn_rot
+
+    lua_getfield(L, -1, "width");
+    uint8_t width = (uint8_t)lua_tointeger(L, -1);
+    lua_pop(L, 1); // pop width
+
+    lua_getfield(L, -1, "height");
+    uint8_t height = (uint8_t)lua_tointeger(L, -1);
+    lua_pop(L, 1); // pop height
+
+    // Data is a contiguous array of integers
+    int type = lua_getfield(L, -1, "data");
+    if (type != LUA_TTABLE) {
+        error = "Piece \"data\" isn't a table";
+        goto fail;
     }
 
-    piece_configs->configs = calloc(pieces_length, sizeof(piece_config_t*));
-    if (piece_configs->configs == NULL) {
-        piece_configs_delete(piece_configs);
-        lua_settop(L, top - 1);
-        lua_pushstring(L, "Allocation error");
-        return NULL;
-    }
-    piece_configs->size = pieces_length;
-    for (lua_Integer i = 1;i <= pieces_length;i++) {
-        // Get the individual piece table
-        int type = lua_rawgeti(L, -1, i);
-        if (type != LUA_TTABLE) {
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Piece definition isn't a table");
-            return NULL;
-        }
-
-        /// Get the various fields of the piece configuration
-        lua_pushstring(L, "name");
-        lua_gettable(L, -2);
-        const char* cname = lua_tostring(L, -1);
-        if (cname == NULL) {
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Piece \"name\" isn't a valid string");
-            return NULL;
-        }
-        char* name = strdup(cname);
-        lua_pop(L, 1); // pop name
-
-        // Spawn Position is a tuple of integers that contain an x and y coordinate
-        lua_pushstring(L, "spawn_pos");
-        type = lua_gettable(L, -2);
-        if (type != LUA_TTABLE) {
-            free(name);
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Piece \"spawn_pos\" isn't a table");
-            return NULL;
-        }
-
-        lua_Integer spawn_pos_length = luaL_len(L, -1);
-        if (spawn_pos_length != 2) {
-            free(name);
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Piece \"spawn_pos\" needs exactly two coordinates");
-            return NULL;
-        }
-
-        vec2i_t spawn_pos = vec2i_zero();
-        lua_rawgeti(L, -1, 1);
-        spawn_pos.x = (int)lua_tointeger(L, -1);
-        lua_pop(L, 1); // pop x
-
-        lua_rawgeti(L, -1, 2);
-        spawn_pos.y = (int)lua_tointeger(L, -1);
-        lua_pop(L, 1); // pop y
-        lua_pop(L, 1); // pop spawn_pos
-
-        lua_pushstring(L, "spawn_rot");
-        lua_gettable(L, -2);
-        uint8_t spawn_rot = (uint8_t)lua_tointeger(L, -1);
-        lua_pop(L, 1); // pop spawn_rot
-
-        lua_pushstring(L, "width");
-        lua_gettable(L, -2);
-        uint8_t width = (uint8_t)lua_tointeger(L, -1);
-        lua_pop(L, 1); // pop spawn_rot
-
-        lua_pushstring(L, "height");
-        lua_gettable(L, -2);
-        uint8_t height = (uint8_t)lua_tointeger(L, -1);
-        lua_pop(L, 1); // pop spawn_rot
-
-        // Data is a contiguous array of integers
-        lua_pushstring(L, "data");
-        type = lua_gettable(L, -2);
-        if (type != LUA_TTABLE) {
-            free(name);
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Piece \"data\" isn't a table");
-            return NULL;
-        }
-
-        lua_Integer data_length = luaL_len(L, -1);
-        uint8_t* data = calloc(data_length, sizeof(uint8_t));
-        if (data == NULL) {
-            free(name);
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Allocation error");
-            return NULL;
-        }
-
-        // Grab our array members.  Lua is 1-indexed.
-        for (lua_Integer i = 1;i <= data_length;i++) {
-            lua_rawgeti(L, -1, i);
-            data[i - 1] = (uint8_t)lua_tointeger(L, -1);
-            lua_pop(L, 1);
-        }
-        lua_pop(L, 1); // pop data
-
-        lua_pop(L, 1); // pop piece table
-
-        piece_config_t* piece_config = calloc(1, sizeof(piece_config_t));
-        if (piece_config == NULL) {
-            free(name);
-            free(data);
-            piece_configs_delete(piece_configs);
-            lua_settop(L, top - 1);
-            lua_pushstring(L, "Allocation error");
-            return NULL;
-        }
-
-        piece_config->name = name;
-        piece_config->datas = data;
-        piece_config->spawn_pos = spawn_pos;
-        piece_config->spawn_rot = spawn_rot;
-        piece_config->width = width;
-        piece_config->height = height;
-        piece_config->data_size = width * height * sizeof(piece_config->datas[0]);
-        piece_config->data_count = data_length / piece_config->data_size;
-
-        piece_configs->configs[i - 1] = piece_config;
+    lua_Integer data_length = luaL_len(L, -1);
+    uint8_t* data = calloc(data_length, sizeof(uint8_t));
+    if (data == NULL) {
+        error = "Allocation error";
+        goto fail;
     }
 
-    lua_settop(L, top - 1);
-    return piece_configs;
+    // Grab our array members.
+    for (lua_Integer i = 1;i <= data_length;i++) {
+        lua_rawgeti(L, -1, i);
+        data[i - 1] = (uint8_t)lua_tointeger(L, -1);
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1); // pop data
+    lua_pop(L, 1); // pop piece table
+
+    piece = calloc(1, sizeof(piece_config_t));
+    if (piece == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    piece->name = namedup;
+    piece->data = data;
+    piece->spawn_pos = spawn_pos;
+    piece->spawn_rot = spawn_rot;
+    piece->width = width;
+    piece->height = height;
+    piece->data_size = width * height * sizeof(piece->data[0]);
+    piece->data_count = data_length / piece->data_size;
+
+    return piece;
+
+fail:
+    lua_settop(L, top); // reset stack to previous position
+    lua_pushstring(L, error); // push error
+    piece_config_delete(piece);
+    free(namedup);
+    return NULL;
 }
 
 /**
  * Frees a piece configuration array
  */
-void piece_configs_delete(piece_configs_t* piece_configs) {
-    if (piece_configs == NULL) {
+void piece_config_delete(piece_config_t* piece_config) {
+    if (piece_config == NULL) {
         return;
     }
 
-    if (piece_configs->configs != NULL) {
-        if (piece_configs->size != 0) {
-            for (size_t i = 0;i < piece_configs->size;i++) {
-                if (piece_configs->configs[i] != NULL) {
-                    free(piece_configs->configs[i]->name);
-                    piece_configs->configs[i]->name = NULL;
-                    free(piece_configs->configs[i]->datas);
-                    piece_configs->configs[i]->datas = NULL;
-                    free(piece_configs->configs[i]);
-                    piece_configs->configs[i] = NULL;
-                }
-            }
-        }
+    free(piece_config->name);
+    piece_config->name = NULL;
+    free(piece_config->data);
+    piece_config->data = NULL;
 
-        free(piece_configs->configs);
-        piece_configs->configs = NULL;
-    }
-
-    free(piece_configs);
+    free(piece_config);
 }
 
 /**
@@ -238,5 +154,5 @@ void piece_delete(piece_t* piece) {
  * Get the initial data position of a particular rotation.
  */
 uint8_t* piece_get_rot(const piece_config_t* piece, uint8_t rot) {
-    return piece->datas + (rot * piece->data_size);
+    return piece->data + (rot * piece->data_size);
 }
