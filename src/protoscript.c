@@ -61,17 +61,20 @@ int protoscript_load(lua_State* L) {
     proto_t* proto = NULL;
     switch (option) {
     case 0: {
-        piece_config_t* piece = piece_config_new(L, name);
+        piece_config_t* piece = piece_config_new(L, name); // pops config
         if (piece == NULL) {
-            luaL_error(L, "could not create piece");
+            luaL_error(L, "could not create piece:\n\t%s", lua_tostring(L, -1));
             return 0;
         }
+
         proto = proto_new(PROTO_PIECE, piece, piece_config_delete);
         if (proto == NULL) {
             piece_config_delete(piece);
             luaL_error(L, "could not create prototype");
             return 0;
         }
+
+        lua_pushlightuserdata(L, piece);
         break;
     }
     default:
@@ -83,6 +86,10 @@ int protoscript_load(lua_State* L) {
         luaL_error(L, "could not add prototype to container");
         return 0;
     }
+
+    // At this point, nothing else can go wrong, so we can push our pointer
+    // into proto_hash without worrying that it doesn't work.
+    lua_setfield(L, -3, name);
 
     return 0;
 }

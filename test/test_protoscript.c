@@ -24,14 +24,18 @@ static void test_protoscript_load(void** state) {
     environment_t* env = environment_new(L, "stdmino", "endurance");
     assert_non_null(env);
 
+    // Does a proper piece work?
     bool ok = environment_dostring(env, "mino_proto.load('piece', 'test', {"
         "data = { 3, 3, 0, 0, 3, 3, 0, 0, 0,"
                  "0, 0, 3, 0, 3, 3, 0, 3, 0,"
                  "0, 0, 0, 3, 3, 0, 0, 3, 3,"
                  "0, 3, 0, 3, 3, 0, 3, 0, 0 },"
-        "spawn_pos = { x=3, y=1 }, spawn_rot = 0, width = 3, height = 3})");
+        "spawn_pos = { x = 3, y = 1 }, spawn_rot = 0, width = 3, height = 3 })");
     assert_true(ok == true);
-    error_debug();
+
+    // Does an improper piece error out cleanly?
+    ok = environment_dostring(env, "mino_proto.load('piece', 'test', {})");
+    assert_true(ok == false);
 
     environment_delete(env);
     lua_close(L);
