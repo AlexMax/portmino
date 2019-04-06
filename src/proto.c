@@ -26,6 +26,11 @@
  */
 typedef struct proto_container_s {
     /**
+     * Prototypes array.
+     */
+    proto_t** data;
+
+    /**
      * Number of prototypes in the container.
      */
     size_t size;
@@ -34,11 +39,6 @@ typedef struct proto_container_s {
      * Currently allocated capacity of container.
      */
     size_t capacity;
-
-    /**
-     * Prototypes array.
-     */
-    proto_t** data;
 } proto_container_t;
 
 /**
@@ -46,14 +46,14 @@ typedef struct proto_container_s {
  */
 static bool proto_container_grow(proto_container_t* protos) {
     proto_t** newdata = NULL;
-    
+
     size_t newcap;
     if (protos->capacity == 0) {
         newcap = 16;
         newdata = malloc(sizeof(*protos->data) * newcap);
     } else {
         newcap = protos->capacity * 2;
-        newdata = realloc(protos, sizeof(*protos->data) * newcap);
+        newdata = realloc(protos->data, sizeof(*protos->data) * newcap);
     }
 
     if (newdata == NULL) {
@@ -63,6 +63,7 @@ static bool proto_container_grow(proto_container_t* protos) {
 
     protos->capacity = newcap;
     protos->data = newdata;
+
     return true;
 }
 
@@ -98,6 +99,13 @@ void proto_container_delete(proto_container_t* protos) {
     }
 
     if (protos->data != NULL) {
+        // Free the contents of the data member
+        for (size_t i = 0;i < protos->size;i++) {
+            proto_delete(protos->data[i]);
+            protos->data[i] = NULL;
+        }
+
+        // Free the data member
         free(protos->data);
         protos->data = NULL;
     }
@@ -112,7 +120,52 @@ void proto_container_delete(proto_container_t* protos) {
  * worry about freeing it.
  */
 bool proto_container_push(proto_container_t* protos, proto_t* proto) {
-    (void)protos; 
-    (void)proto;
+    if (protos->size >= protos->capacity) {
+        if (proto_container_grow(protos) == false) {
+            return false;
+        }
+    }
+
+    protos->data[protos->size] = proto;
+    protos->size += 1;
+
     return true;
+}
+
+/**
+ * Allocate a new prototype
+ */
+proto_t* proto_new(proto_type_t type, void* data, proto_deinit_t deinit) {
+    proto_t* proto = NULL;
+
+    if ((proto = calloc(1, sizeof(*proto))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    proto->type = type;
+    proto->data = data;
+    proto->deinit = deinit;
+
+    return proto;
+
+fail:
+    free(proto);
+    return NULL;
+}
+
+/**
+ * Delete the prototype
+ */
+void proto_delete(proto_t* proto) {
+    if (proto == NULL) {
+        return;
+    }
+
+    proto->deinit(proto->data);
+    proto->type = PROTO_NONE;
+    proto->deinit = NULL;
+    proto->data = NULL;
+
+    free(proto);
 }

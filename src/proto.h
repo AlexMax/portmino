@@ -30,18 +30,28 @@ typedef enum {
     PROTO_BOARD
 } proto_type_t;
 
-typedef struct {
+/**
+ * Destructor function pointer.
+ * 
+ * All prototype destructors must conform to this function type.
+ */
+typedef void (*proto_deinit_t)(void* ptr);
+
+typedef struct proto_s {
     /**
      * Type of prototype.
      */
-    proto_type_t type; 
+    proto_type_t type;
 
     /**
-     * Underlying prototype data.
+     * Opaque data member
      */
-    union proto_s {
-        piece_config_t piece;
-    } proto;
+    void* data;
+
+    /**
+     * Prototype destructor
+     */
+    proto_deinit_t deinit;
 } proto_t;
 
 typedef struct proto_container_s proto_container_t;
@@ -49,3 +59,5 @@ typedef struct proto_container_s proto_container_t;
 proto_container_t* proto_container_new(void);
 void proto_container_delete(proto_container_t* protos);
 bool proto_container_push(proto_container_t* protos, proto_t* proto);
+proto_t* proto_new(proto_type_t type, void* data, proto_deinit_t deinit);
+void proto_delete(proto_t* proto);
