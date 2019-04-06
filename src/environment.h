@@ -23,7 +23,7 @@
 
 // Forward declarations.
 typedef struct lua_State lua_State;
-typedef struct piece_configs_s piece_configs_t;
+typedef struct proto_container_s proto_container_t;
 
 typedef struct environment_s {
     /**
@@ -59,9 +59,9 @@ typedef struct environment_s {
     uint32_t gametic;
 
     /**
-     * Pieces loaded from Lua.
+     * Prototypes loaded from Lua.
      */
-    piece_configs_t* pieces;
+    proto_container_t* protos;
 } environment_t;
 
 environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype);

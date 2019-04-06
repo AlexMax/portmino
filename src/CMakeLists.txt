@@ -47,6 +47,8 @@ set(GAME_SOURCES
     picture.c           picture.h
     piece.c             piece.h
     piecescript.c       piecescript.h
+    proto.c             proto.h
+    protoscript.c       protoscript.h
     platform.c          platform.h
     playmenu.c          playmenu.h
     random.c            random.h

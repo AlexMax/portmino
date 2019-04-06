@@ -22,7 +22,7 @@
 #include "lauxlib.h"
 
 #include "error.h"
-#include "piece.h"
+#include "proto.h"
 #include "script.h"
 
 /**
@@ -30,10 +30,17 @@
  */
 environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype) {
     environment_t* env = NULL;
+    proto_container_t* protos = NULL;
     int top = lua_gettop(L);
 
     // Allocate our scripting environment
     if ((env = calloc(1, sizeof(environment_t))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    // Allocate our prototype container
+    if ((protos = proto_container_new()) == NULL) {
         error_push_allocerr();
         goto fail;
     }
@@ -44,7 +51,7 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     env->ruleset_ref = LUA_NOREF;
     env->state_ref = LUA_NOREF;
     env->gametic = 0;
-    env->pieces = NULL;
+    env->protos = protos;
 
     // Create an environment-specific registry table and push a ref to it
     // into the global registry.
@@ -62,6 +69,10 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     lua_setfield(L, -2, "config_paths");
     lua_newtable(L); // loaded
     lua_setfield(L, -2, "loaded");
+    lua_pushlightuserdata(L, env->protos);
+    lua_setfield(L, -2, "proto_container");
+    lua_newtable(L); // prototype lookup table
+    lua_setfield(L, -2, "proto_hash");
 
     // Create a restricted ruleset environment and push a ref to it into
     // the registry, plus add it to the registry.
@@ -78,8 +89,8 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
 
     // For our new environment, set up links to the proper modules and globals.
     const char* modules[] = {
-        "mino_audio", "mino_board", "mino_input", "mino_piece", "mino_random",
-        "mino_render"
+        "mino_audio", "mino_board", "mino_input", "mino_piece", "mino_proto",
+        "mino_random", "mino_render"
     };
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
@@ -144,8 +155,8 @@ void environment_delete(environment_t* env) {
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->env_ref);
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->registry_ref);
 
-    piece_configs_delete(env->pieces);
-    env->pieces = NULL;
+    proto_container_delete(env->protos);
+    env->protos = NULL;
 
     free(env);
 }

@@ -1,6 +1,7 @@
 set(TESTS
     test_environment
     test_globalscript
+    test_proto
     test_ruleset
     test_script
     test_vfs)

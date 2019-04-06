@@ -30,6 +30,7 @@
 #include "inputscript.h"
 #include "globalscript.h"
 #include "piecescript.h"
+#include "protoscript.h"
 #include "random.h"
 #include "randomscript.h"
 #include "renderscript.h"
@@ -56,6 +57,7 @@ lua_State* script_newstate(void) {
         { "mino_board", boardscript_openlib },
         { "mino_input", inputscript_openlib },
         { "mino_piece", piecescript_openlib },
+        { "mino_proto", protoscript_openlib },
         { "mino_random", randomscript_openlib },
         { "mino_render", renderscript_openlib },
         { NULL, NULL }
