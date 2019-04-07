@@ -33,8 +33,17 @@ static void test_protoscript_load(void** state) {
         "spawn_pos = { x = 3, y = 1 }, spawn_rot = 0, width = 3, height = 3 })");
     assert_true(ok == true);
 
+    // Does a duplicate error out?
+    ok = environment_dostring(env, "mino_proto.load('piece', 'test', {"
+        "data = { 3, 3, 0, 0, 3, 3, 0, 0, 0,"
+                 "0, 0, 3, 0, 3, 3, 0, 3, 0,"
+                 "0, 0, 0, 3, 3, 0, 0, 3, 3,"
+                 "0, 3, 0, 3, 3, 0, 3, 0, 0 },"
+        "spawn_pos = { x = 3, y = 1 }, spawn_rot = 0, width = 3, height = 3 })");
+    assert_true(ok == false);
+
     // Does an improper piece error out cleanly?
-    ok = environment_dostring(env, "mino_proto.load('piece', 'test', {})");
+    ok = environment_dostring(env, "mino_proto.load('piece', 'empty', {})");
     assert_true(ok == false);
 
     environment_delete(env);
