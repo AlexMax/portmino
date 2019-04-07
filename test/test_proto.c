@@ -7,7 +7,6 @@
 
 #include "test.h"
 
-#include "error.h"
 #include "proto.h"
 
 static void test_proto(void** state) {

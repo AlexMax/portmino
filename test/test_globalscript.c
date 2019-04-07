@@ -8,7 +8,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-#include "error.h"
 #include "environment.h"
 #include "platform.h"
 #include "script.h"
@@ -31,7 +30,6 @@ static void test_globalscript_doconfig(void** state) {
     environment_t* env = environment_new(L, "stdmino", "endurance");
     assert_non_null(env);
     environment_dostring(env, "return doconfig('pieces');");
-    error_debug();
     assert_true(lua_istable(L, -1) == 1);
     lua_getfield(L, -1, "l_piece");
     assert_true(lua_istable(L, -1) == 1);

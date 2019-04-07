@@ -2,7 +2,10 @@
 
 #include "define.h"
 
+#include <stdio.h>
+
 #include "basemino.h"
+#include "error.h"
 #include "frontend.h"
 
 static buffer_t g_basemino;

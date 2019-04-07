@@ -7,7 +7,6 @@
 
 #include "lua.h"
 
-#include "error.h"
 #include "environment.h"
 #include "platform.h"
 #include "script.h"

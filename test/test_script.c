@@ -8,7 +8,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-#include "error.h"
 #include "platform.h"
 #include "script.h"
 #include "vfs.h"
