@@ -67,7 +67,7 @@ int protoscript_load(lua_State* L) {
             return 0;
         }
 
-        proto = proto_new(PROTO_PIECE, piece, (proto_deinit_t)piece_config_delete);
+        proto = proto_new(PROTO_PIECE, piece, piece_config_destruct);
         if (proto == NULL) {
             piece_config_delete(piece);
             luaL_error(L, "could not create prototype");

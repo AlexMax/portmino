@@ -115,7 +115,7 @@ fail:
 }
 
 /**
- * Frees a piece configuration array
+ * Frees a piece configuration
  */
 void piece_config_delete(piece_config_t* piece_config) {
     if (piece_config == NULL) {
@@ -128,6 +128,13 @@ void piece_config_delete(piece_config_t* piece_config) {
     piece_config->data = NULL;
 
     free(piece_config);
+}
+
+/**
+ * A generic destructor for the piece configuration
+ */
+void piece_config_destruct(void* piece_config) {
+    piece_config_delete((piece_config_t*)piece_config);
 }
 
 /**
