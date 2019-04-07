@@ -86,10 +86,10 @@ static int globalscript_doconfig(lua_State* L) {
     // Parameter 1: Name of the package.
     const char* name = luaL_checkstring(L, 1);
 
-    // Upvalue 1: Search paths
-    lua_pushvalue(L, lua_upvalueindex(1));
-    if (lua_type(L, -1) != LUA_TSTRING) {
-        luaL_error(L, "missing internal state");
+    // Internal State 1: Search paths
+    int type = lua_getfield(L, lua_upvalueindex(1), "config_paths");
+    if (type != LUA_TSTRING) {
+        luaL_error(L, "doconfig: missing internal state (config_paths)");
         return 0;
     }
 
@@ -113,7 +113,7 @@ static int globalscript_doconfig(lua_State* L) {
 
 fail:
     vfs_vfile_delete(file);
-    luaL_error(L, "config '%s' not found:\n\t%s",
+    luaL_error(L, "doconfig: '%s' not found:\n\t%s",
         lua_tostring(L, 1), lua_tostring(L, -1));
     return 0;
 }
