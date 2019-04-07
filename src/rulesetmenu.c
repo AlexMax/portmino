@@ -204,7 +204,7 @@ screen_t rulesetmenu_new(void) {
         }
 
         // Resize the rulesets array.
-        char** newrulesets = realloc(menu->rulesets, sizeof(char*) * (menu->ruleset_count + 1));
+        char** newrulesets = reallocarray(menu->rulesets, menu->ruleset_count + 1, sizeof(char*));
         if (newrulesets == NULL) {
             free(newruleset);
             goto fail;

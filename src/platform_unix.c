@@ -178,8 +178,7 @@ static const char** unix_data_dirs(void) {
     }
 
     // Split the list of data dirs into separate strings.
-    g_data_dirs = malloc(sizeof(char*));
-    if (g_data_dirs == NULL) {
+    if ((g_data_dirs = calloc(1, sizeof(*g_data_dirs))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
@@ -197,7 +196,7 @@ static const char** unix_data_dirs(void) {
         }
 
         // Make room for the next entry...
-        char** new_data_dirs = realloc(g_data_dirs, sizeof(char*) * (index + 2));
+        char** new_data_dirs = reallocarray(g_data_dirs, (index + 2), sizeof(char*));
         if (new_data_dirs == NULL) {
             free(dir);
             error_push_allocerr();

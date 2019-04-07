@@ -50,11 +50,10 @@ static bool proto_container_grow(proto_container_t* protos) {
     size_t newcap;
     if (protos->capacity == 0) {
         newcap = 16;
-        newdata = malloc(sizeof(*protos->data) * newcap);
     } else {
         newcap = protos->capacity * 2;
-        newdata = realloc(protos->data, sizeof(*protos->data) * newcap);
     }
+    newdata = reallocarray(protos->data, newcap, sizeof(*protos->data));
 
     if (newdata == NULL) {
         error_push_allocerr();

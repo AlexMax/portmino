@@ -38,12 +38,14 @@
  * use picture_fill.
  */
 picture_t* picture_new(int width, int height) {
+    picture_t* pic = NULL;
+
     if (width > UINT16_MAX || height > UINT16_MAX) {
         return NULL;
     }
 
-    picture_t* pic = malloc(sizeof(picture_t));
-    if (pic == NULL) {
+    if ((pic = calloc(1, sizeof(*pic))) == NULL) {
+        error_push_allocerr();
         return NULL;
     }
 
@@ -51,13 +53,16 @@ picture_t* picture_new(int width, int height) {
     pic->height = height;
     pic->size = width * height * MINO_PICTURE_BPP;
 
-    pic->data = malloc(pic->size * sizeof(uint8_t));
-    if (pic->data == NULL) {
-        free(pic);
-        return NULL;
+    if ((pic->data = malloc(pic->size)) == NULL) {
+        error_push_allocerr();
+        goto fail;
     }
 
     return pic;
+
+fail:
+    free(pic);
+    return NULL;
 }
 
 /**

@@ -141,7 +141,12 @@ void piece_config_destruct(void* piece_config) {
  * Initialize a new piece on the board.
  */
 piece_t* piece_new(const piece_config_t* config) {
-    piece_t* piece = malloc(sizeof(piece_t));
+    piece_t* piece = NULL;
+
+    if ((piece = calloc(1, sizeof(piece_t))) == NULL) {
+        error_push_allocerr();
+        return NULL;
+    }
 
     piece->config = config;
     piece->rot = config->spawn_rot;

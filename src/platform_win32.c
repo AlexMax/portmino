@@ -58,8 +58,7 @@ static const char** win32_data_dirs(void) {
         return g_data_dirs;
     }
 
-    g_data_dirs = malloc(sizeof(const char*) * 2);
-    if (g_data_dirs == NULL) {
+    if ((g_data_dirs = reallocarray(NULL, 2, sizeof(*g_data_dirs))) == NULL) {
         return NULL;
     }
 
