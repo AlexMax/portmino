@@ -57,7 +57,7 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     // into the global registry.
     lua_newtable(L);
     lua_pushvalue(L, -1);
-    if ((env->env_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop registry table dupe
+    if ((env->registry_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop registry table dupe
         error_push_allocerr();
         goto fail;
     }
