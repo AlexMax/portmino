@@ -46,7 +46,7 @@ static int boardscript_delete(lua_State* L) {
     // Parameter 1: Our userdata
     board_t* board = luaL_checkudata(L, 1, "board_t");
 
-    free(board);
+    board_deinit(board);
     board = NULL;
 
     return 0;
@@ -251,7 +251,6 @@ int boardscript_openlib(lua_State* L) {
 
     // Create the board_t type
     static const luaL_Reg boardtype[] = {
-        { "__gc", boardscript_delete },
         { "set_piece", boardscript_set_piece },
         { "unset_piece", boardscript_unset_piece },
         { "get_piece", boardscript_get_piece },
@@ -263,8 +262,13 @@ int boardscript_openlib(lua_State* L) {
     };
 
     luaL_newmetatable(L, "board_t");
+
     luaL_newlib(L, boardtype);
     lua_setfield(L, -2, "__index");
+
+    lua_pushcfunction(L, boardscript_delete);
+    lua_setfield(L, -2, "__gc");
+
     lua_pop(L, 1);
 
     return 1;
