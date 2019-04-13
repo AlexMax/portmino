@@ -395,6 +395,10 @@ void script_debug(lua_State* L, int index) {
     case LUA_TBOOLEAN:
         fprintf(stderr, "%s", lua_toboolean(L, index) ? "true" : "false");
         break;
+    case LUA_TLIGHTUSERDATA:
+    case LUA_TUSERDATA:
+        fprintf(stderr, "%p", lua_touserdata(L, index));
+        break;
     case LUA_TNUMBER:
         fprintf(stderr, "%f", lua_tonumber(L, index));
         break;

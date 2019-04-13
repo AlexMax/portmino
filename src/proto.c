@@ -162,7 +162,7 @@ void proto_delete(proto_t* proto) {
     }
 
     proto->deinit(proto->data);
-    proto->type = PROTO_NONE;
+    proto->type = MINO_PROTO_NONE;
     proto->deinit = NULL;
     proto->data = NULL;
 

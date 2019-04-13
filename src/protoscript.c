@@ -67,6 +67,7 @@ int protoscript_load(lua_State* L) {
 
     // Depending on our prototype type, create a different prototype
     proto_t* proto = NULL;
+
     switch (option) {
     case 0: {
         piece_config_t* piece = piece_config_new(L, name); // pops config
@@ -75,14 +76,14 @@ int protoscript_load(lua_State* L) {
             return 0;
         }
 
-        proto = proto_new(PROTO_PIECE, piece, piece_config_destruct);
+        proto = proto_new(MINO_PROTO_PIECE, piece, piece_config_destruct);
         if (proto == NULL) {
             piece_config_delete(piece);
             luaL_error(L, "require: could not create prototype");
             return 0;
         }
 
-        lua_pushlightuserdata(L, piece);
+        lua_pushlightuserdata(L, proto); // push prototype for hash
         break;
     }
     default:

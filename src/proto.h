@@ -25,9 +25,9 @@
  * Type of prototype.
  */
 typedef enum {
-    PROTO_NONE,
-    PROTO_PIECE,
-    PROTO_BOARD
+    MINO_PROTO_NONE,
+    MINO_PROTO_PIECE,
+    MINO_PROTO_BOARD
 } proto_type_t;
 
 /**

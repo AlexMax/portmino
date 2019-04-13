@@ -16,7 +16,7 @@ static void test_proto(void** state) {
     for (size_t i = 0;i < 40;i++) {
         piece_config_t* piece = calloc(1, sizeof(piece_config_t));
         assert_true(piece != NULL);
-        proto_t* proto = proto_new(PROTO_PIECE, piece, free);
+        proto_t* proto = proto_new(MINO_PROTO_PIECE, piece, free);
         assert_true(proto != NULL);
         bool ok = proto_container_push(protos, proto);
         assert_true(ok);

@@ -33,8 +33,19 @@ local ROT_L = 3
 local BOARD_PIECE = 1
 local BOARD_GHOST = 2
 
+-- The basic seven pieces we always should have access to
+pieces = {
+    'j_piece', 'l_piece', 's_piece', 'z_piece', 't_piece', 'i_piece', 'o_piece'
+}
+
 -- Run this on game start
 local function start(state)
+    -- Load the seven basic pieces
+    local pieces_cfg = doconfig('pieces')
+    for _, value in ipairs(pieces) do
+        mino_proto.load('piece', value, pieces_cfg[value])
+    end
+
     -- Player state
     state.player = {
         {
@@ -108,18 +119,18 @@ local function board_next_piece(board, tic)
     -- See if our newly-spawned piece would collide with an existing piece.
     local spawn_pos = mino_piece.config_get_spawn_pos(config)
     local spawn_rot = mino_piece.config_get_spawn_rot(config)
-    if not mino_board.test_piece(board, config, spawn_pos, spawn_rot) then
+    if not board.board:test_piece(config, spawn_pos, spawn_rot) then
         spawn_pos.y = spawn_pos.y - 1
-        if not mino_board.test_piece(board, config, spawn_pos, spawn_rot) then
+        if not board.board:test_piece(config, spawn_pos, spawn_rot) then
             return false
         end
 
         -- Piece spawns offset from its usual spot
-        mino_board.set_piece(board, BOARD_PIECE, config)
-        local piece = mino_board.get_piece(board, BOARD_PIECE)
+        board.board:set_piece(BOARD_PIECE, config)
+        local piece = board.board:get_piece(BOARD_PIECE)
         mino_piece.set_pos(piece, spawn_pos)
     else
-        mino_board.set_piece(board, BOARD_PIECE, config)
+        board.board:set_piece(BOARD_PIECE, config)
     end
 
     -- Set the spawn tic.

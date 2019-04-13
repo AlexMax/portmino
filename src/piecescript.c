@@ -18,6 +18,7 @@
 #include "lauxlib.h"
 
 #include "piece.h"
+#include "proto.h"
 #include "script.h"
 
 /**
@@ -140,16 +141,26 @@ static int piecescript_config_get_name(lua_State* L) {
  * Lua: Get the spawn position for a given piece config handle.
  */
 static int piecescript_config_get_spawn_pos(lua_State* L) {
-    // Parameter 1: Piece configuration handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 1);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece configuration handle");
+    // Parameter 1: Piece configuration name
+    const char* piece_config = luaL_checkstring(L, 1);
+
+    // Internal State 1: protos table
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "get_spawn_pos: missing internal state (proto_hash)");
+        return 0;
     }
 
-    // Fetch the config and return the spawn point as a table
+    // Get the piece configuration
+    lua_getfield(L, -1, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "get_spawn_pos: invalid piece configuration");
+        return 0;
+    }
+
+    // Return the spawn point as a table
+    piece_config_t* config = proto->data;
     script_push_vector(L, &config->spawn_pos);
     return 1;
 }
@@ -158,16 +169,26 @@ static int piecescript_config_get_spawn_pos(lua_State* L) {
  * Lua: Get the spawn position for a given piece config handle.
  */
 static int piecescript_config_get_spawn_rot(lua_State* L) {
-    // Parameter 1: Piece configuration handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 1);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece configuration handle");
+    // Parameter 1: Piece configuration name
+    const char* piece_config = luaL_checkstring(L, 1);
+
+    // Internal State 1: protos table
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "get_spawn_pos: missing internal state (proto_hash)");
+        return 0;
     }
 
-    // Fetch the config and return the spawn point as a table
+    // Get the piece configuration
+    lua_getfield(L, -1, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "get_spawn_pos: invalid piece configuration");
+        return 0;
+    }
+
+    // Return the spawn rotation as an integer
+    piece_config_t* config = proto->data;
     lua_pushinteger(L, config->spawn_rot);
     return 1;
 }
@@ -176,16 +197,26 @@ static int piecescript_config_get_spawn_rot(lua_State* L) {
  * Lua: Get the number of rotations that a piece has.
  */
 static int piecescript_config_get_rot_count(lua_State* L) {
-    // Parameter 1: Piece configuration handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 1);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece configuration handle");
+    // Parameter 1: Piece configuration name
+    const char* piece_config = luaL_checkstring(L, 1);
+
+    // Internal State 1: protos table
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "get_spawn_pos: missing internal state (proto_hash)");
+        return 0;
     }
 
-    // Fetch the number of rotations and return the spawn point as a table
+    // Get the piece configuration
+    lua_getfield(L, -1, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "get_spawn_pos: invalid piece configuration");
+        return 0;
+    }
+
+    // Return the number of rotations as an integer
+    piece_config_t* config = proto->data;
     lua_pushinteger(L, config->data_count);
     return 1;
 }
