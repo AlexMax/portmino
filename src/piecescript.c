@@ -175,7 +175,7 @@ static int piecescript_config_get_spawn_rot(lua_State* L) {
     // Internal State 1: protos table
     int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
     if (type != LUA_TTABLE) {
-        luaL_error(L, "get_spawn_pos: missing internal state (proto_hash)");
+        luaL_error(L, "get_spawn_rot: missing internal state (proto_hash)");
         return 0;
     }
 
@@ -183,7 +183,7 @@ static int piecescript_config_get_spawn_rot(lua_State* L) {
     lua_getfield(L, -1, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
     if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "get_spawn_pos: invalid piece configuration");
+        luaL_error(L, "get_spawn_rot: invalid piece configuration");
         return 0;
     }
 
@@ -203,7 +203,7 @@ static int piecescript_config_get_rot_count(lua_State* L) {
     // Internal State 1: protos table
     int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
     if (type != LUA_TTABLE) {
-        luaL_error(L, "get_spawn_pos: missing internal state (proto_hash)");
+        luaL_error(L, "get_spawn_rot_count: missing internal state (proto_hash)");
         return 0;
     }
 
@@ -211,7 +211,7 @@ static int piecescript_config_get_rot_count(lua_State* L) {
     lua_getfield(L, -1, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
     if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "get_spawn_pos: invalid piece configuration");
+        luaL_error(L, "get_spawn_rot_count: invalid piece configuration");
         return 0;
     }
 

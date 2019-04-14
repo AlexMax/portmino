@@ -25,6 +25,33 @@
 #include "proto.h"
 #include "script.h"
 
+static lua_State *getthread (lua_State *L, int *arg) {
+    if (lua_isthread(L, 1)) {
+        *arg = 1;
+        return lua_tothread(L, 1);
+    }
+    else {
+        *arg = 0;
+        return L;  /* function will operate over current thread */
+    }
+}
+
+/**
+ * debug.backtrace from Lua stdlib
+ */
+static int db_traceback(lua_State *L) {
+    int arg;
+    lua_State *L1 = getthread(L, &arg);
+    const char *msg = lua_tostring(L, arg + 1);
+    if (msg == NULL && !lua_isnoneornil(L, arg + 1))  /* non-string 'msg'? */
+        lua_pushvalue(L, arg + 1);  /* return it untouched */
+    else {
+        int level = (int)luaL_optinteger(L, arg + 2, (L == L1) ? 1 : 0);
+        luaL_traceback(L, L1, msg, level);
+    }
+    return 1;
+}
+
 /**
  * Create a environment that our game scripts can run inside
  */
@@ -205,6 +232,9 @@ fail:
 bool environment_start(environment_t* env) {
     int top = lua_gettop(env->lua);
 
+    // Error message handler
+    lua_pushcfunction(env->lua, db_traceback);
+
     // Try and call a function called "start" to initialize the game.
     if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref) != LUA_TTABLE) {
         error_push("Ruleset module reference has gone stale.");
@@ -222,11 +252,12 @@ bool environment_start(environment_t* env) {
         goto fail;
     }
 
-    if (lua_pcall(env->lua, 1, 1, 0) != LUA_OK) {
-        error_push("lua_error: %s", lua_tostring(env->lua, -1));
+    if (lua_pcall(env->lua, 1, 1, top + 1) != LUA_OK) {
+        error_push("Lua error: %s", lua_tostring(env->lua, -1));
         goto fail;
     }
 
+    lua_settop(env->lua, top);
     return true;
 
 fail:
@@ -249,6 +280,9 @@ bool environment_rewind(environment_t* env, uint32_t frame) {
  */
 bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
     int top = lua_gettop(env->lua);
+
+    // Error message handler
+    lua_pushcfunction(env->lua, db_traceback);
 
     // Try and call a function called "frame" to advance the game.
     if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref) != LUA_TTABLE) {
@@ -274,12 +308,13 @@ bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
     // Parameter 3: Player inputs
     lua_pushlightuserdata(env->lua, (void*)inputs);
 
-    if (lua_pcall(env->lua, 3, 1, 0) != LUA_OK) {
-        error_push("lua_error: %s", lua_tostring(env->lua, -1));
+    if (lua_pcall(env->lua, 3, 1, top + 1) != LUA_OK) {
+        error_push("Lua error: %s", lua_tostring(env->lua, -1));
         goto fail;
     }
 
     env->gametic += gametic;
+    lua_settop(env->lua, top);
     return true;
 
 fail:

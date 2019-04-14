@@ -20,6 +20,7 @@
 #include "lauxlib.h"
 
 #include "board.h"
+#include "proto.h"
 #include "script.h"
 
  /**
@@ -140,24 +141,34 @@ static int boardscript_test_piece(lua_State* L) {
     // Parameter 1: Our userdata
     board_t* board = luaL_checkudata(L, 1, "board_t");
 
-    // Parameter 2: Piece configuration handle
-    int type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 2);
-    if (config == NULL) {
-        luaL_argerror(L, 2, "nil piece configuration handle");
-        return 0;
-    }
+    // Parameter 2: Piece name
+    const char* piece_config = luaL_checkstring(L, 2);
 
     // Parameter 3: Position table
     vec2i_t pos = { 0, 0 };
     bool ok = script_to_vector(L, 3, &pos);
-    luaL_argcheck(L, ok, 3, "invalid position");
+    luaL_argcheck(L, ok, 3, "test_piece: invalid position");
 
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
 
+    // Internal State 1: protos table
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "test_piece: missing internal state (proto_hash)");
+        return 0;
+    }
+
+    // Get the piece configuration
+    lua_getfield(L, -1, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "test_piece: invalid piece configuration");
+        return 0;
+    }
+
     // Actually run the test and return the result
+    piece_config_t* config = proto->data;
     bool result = board_test_piece(board, config, pos, rot);
     lua_pushboolean(L, result);
     return 1;
@@ -171,14 +182,8 @@ static int boardscript_test_piece_between(lua_State* L) {
     // Parameter 1: Our userdata
     board_t* board = luaL_checkudata(L, 1, "board_t");
 
-    // Parameter 2: Piece configuration handle
-    int type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 2);
-    if (config == NULL) {
-        luaL_argerror(L, 2, "nil piece configuration handle");
-        return 0;
-    }
+    // Parameter 2: Piece name
+    const char* piece_config = luaL_checkstring(L, 2);
 
     // Parameter 3: Source position
     vec2i_t src = { 0, 0 };
@@ -191,9 +196,25 @@ static int boardscript_test_piece_between(lua_State* L) {
     // Parameter 5: Destination position
     vec2i_t dst = { 0, 0 };
     ok = script_to_vector(L, 5, &dst);
-    luaL_argcheck(L, ok, 5, "invalid position");
+    luaL_argcheck(L, ok, 5, "test_piece_between: invalid position");
+
+    // Internal State 1: protos table
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "test_piece_between: missing internal state (proto_hash)");
+        return 0;
+    }
+
+    // Get the piece configuration
+    lua_getfield(L, -1, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "test_piece_between: invalid piece configuration");
+        return 0;
+    }
 
     // Actually run the test and return the result
+    piece_config_t* config = proto->data;
     vec2i_t result = board_test_piece_between(board, config, src, rot, dst);
     script_push_vector(L, &result);
     return 1;
@@ -206,24 +227,34 @@ static int boardscript_lock_piece(lua_State* L) {
     // Parameter 1: Our userdata
     board_t* board = luaL_checkudata(L, 1, "board_t");
 
-    // Parameter 2: Piece configuration handle
-    int type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 2);
-    if (config == NULL) {
-        luaL_argerror(L, 2, "nil piece configuration handle");
-        return 0;
-    }
+    // Parameter 2: Piece name
+    const char* piece_config = luaL_checkstring(L, 2);
 
     // Parameter 3: Position table
     vec2i_t pos = { 0, 0 };
     bool ok = script_to_vector(L, 3, &pos);
-    luaL_argcheck(L, ok, 3, "invalid position");
+    luaL_argcheck(L, ok, 3, "lock_piece: invalid position");
 
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
 
+    // Internal State 1: protos table
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "lock_piece: missing internal state (proto_hash)");
+        return 0;
+    }
+
+    // Get the piece configuration
+    lua_getfield(L, -1, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "lock_piece: invalid piece configuration");
+        return 0;
+    }
+
     // Actually lock the piece
+    piece_config_t* config = proto->data;
     board_lock_piece(board, config, pos, rot);
     return 0;
 }
