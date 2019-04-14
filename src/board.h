@@ -89,8 +89,8 @@ typedef struct board_s {
     size_t piece_count;
 } board_t;
 
-bool board_init(board_t* board);
-void board_deinit(board_t* board);
+board_t* board_new(void);
+void board_delete(board_t* board);
 piece_t* board_set_piece(board_t* board, size_t index, const piece_config_t* config);
 void board_unset_piece(board_t* board, size_t index);
 piece_t* board_get_piece(board_t* board, size_t index);

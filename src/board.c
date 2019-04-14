@@ -20,14 +20,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "piece.h"
 #include "ruleset.h"
 
 /**
  * Create a new board structure.
  */
-bool board_init(board_t* board) {
-    memset(board, 0x00, sizeof(board_t));
+board_t* board_new(void) {
+    board_t* board = NULL;
+
+    if ((board = calloc(1, sizeof(*board))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
 
     // Define our configuration
     board->config.width = 10;
@@ -40,16 +46,21 @@ bool board_init(board_t* board) {
     board->data.size = size;
     board->data.data = calloc(size, sizeof(uint8_t));
     if (board->data.data == NULL) {
-        return false;
+        error_push_allocerr();
+        goto fail;
     }
 
-    return true;
+    return board;
+
+fail:
+    board_delete(board);
+    return NULL;
 }
 
 /**
  * Delete a board structure.
  */
-void board_deinit(board_t* board) {
+void board_delete(board_t* board) {
     if (board == NULL) {
         return;
     }
@@ -61,6 +72,8 @@ void board_deinit(board_t* board) {
 
     free(board->data.data);
     board->data.data = NULL;
+
+    free(board);
 }
 
 /**

@@ -27,9 +27,17 @@
   * Lua: Initialize new board state.
   */
 static int boardscript_new(lua_State* L) {
+    // Internal State 1: registry reference
+    int type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
+    if (type != LUA_TNUMBER) {
+        luaL_error(L, "new: missing internal state (registry_ref)");
+        return 0;
+    }
+
     // Initialize (and return) board state
-    board_t* board = lua_newuserdata(L, sizeof(board_t));
-    if (board_init(board) == false) {
+    userdata_t* udata = lua_newuserdata(L, sizeof(userdata_t));
+    udata->registry_ref = lua_tointeger(L, -2);
+    if ((udata->data = board_new()) == NULL) {
         luaL_error(L, "Could not allocate new board.");
         return 0;
     }
@@ -45,11 +53,12 @@ static int boardscript_new(lua_State* L) {
  */
 static int boardscript_delete(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
 
-    board_deinit(board);
-    board = NULL;
+    board_delete(udata->data);
+    udata->data = NULL;
 
+    udata = NULL;
     return 0;
 }
 
@@ -58,7 +67,8 @@ static int boardscript_delete(lua_State* L) {
  */
 static int boardscript_set_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
@@ -68,7 +78,7 @@ static int boardscript_set_piece(lua_State* L) {
     }
     index -= 1;
 
-    // Parameter 2: Piece configuration handle
+    // Parameter 3: Piece configuration handle
     int type = lua_type(L, 3);
     luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 3, "invalid piece configuration handle");
     const piece_config_t* config = lua_touserdata(L, 3);
@@ -93,7 +103,8 @@ static int boardscript_set_piece(lua_State* L) {
  */
 static int boardscript_unset_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
@@ -113,7 +124,8 @@ static int boardscript_unset_piece(lua_State* L) {
  */
 static int boardscript_get_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
@@ -139,7 +151,8 @@ static int boardscript_get_piece(lua_State* L) {
  */
 static int boardscript_test_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Parameter 2: Piece name
     const char* piece_config = luaL_checkstring(L, 2);
@@ -147,15 +160,21 @@ static int boardscript_test_piece(lua_State* L) {
     // Parameter 3: Position table
     vec2i_t pos = { 0, 0 };
     bool ok = script_to_vector(L, 3, &pos);
-    luaL_argcheck(L, ok, 3, "test_piece: invalid position");
+    luaL_argcheck(L, ok, 3, "invalid position");
 
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
 
     // Internal State 1: protos table
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, udata->registry_ref);
     if (type != LUA_TTABLE) {
-        luaL_error(L, "test_piece: missing internal state (proto_hash)");
+        luaL_error(L, "missing internal state (registry_ref)");
+        return 0;
+    }
+
+    type = lua_getfield(L, -1, "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "missing internal state (proto_hash)");
         return 0;
     }
 
@@ -163,7 +182,7 @@ static int boardscript_test_piece(lua_State* L) {
     lua_getfield(L, -1, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
     if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "test_piece: invalid piece configuration");
+        luaL_error(L, "invalid piece configuration");
         return 0;
     }
 
@@ -180,7 +199,8 @@ static int boardscript_test_piece(lua_State* L) {
  */
 static int boardscript_test_piece_between(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Parameter 2: Piece name
     const char* piece_config = luaL_checkstring(L, 2);
@@ -196,12 +216,18 @@ static int boardscript_test_piece_between(lua_State* L) {
     // Parameter 5: Destination position
     vec2i_t dst = { 0, 0 };
     ok = script_to_vector(L, 5, &dst);
-    luaL_argcheck(L, ok, 5, "test_piece_between: invalid position");
+    luaL_argcheck(L, ok, 5, "invalid position");
 
     // Internal State 1: protos table
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, udata->registry_ref);
     if (type != LUA_TTABLE) {
-        luaL_error(L, "test_piece_between: missing internal state (proto_hash)");
+        luaL_error(L, "missing internal state (registry_ref)");
+        return 0;
+    }
+
+    type = lua_getfield(L, -1, "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "missing internal state (proto_hash)");
         return 0;
     }
 
@@ -209,7 +235,7 @@ static int boardscript_test_piece_between(lua_State* L) {
     lua_getfield(L, -1, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
     if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "test_piece_between: invalid piece configuration");
+        luaL_error(L, "invalid piece configuration");
         return 0;
     }
 
@@ -225,7 +251,8 @@ static int boardscript_test_piece_between(lua_State* L) {
  */
 static int boardscript_lock_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Parameter 2: Piece name
     const char* piece_config = luaL_checkstring(L, 2);
@@ -239,9 +266,15 @@ static int boardscript_lock_piece(lua_State* L) {
     lua_Integer rot = luaL_checkinteger(L, 4);
 
     // Internal State 1: protos table
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, udata->registry_ref);
     if (type != LUA_TTABLE) {
-        luaL_error(L, "lock_piece: missing internal state (proto_hash)");
+        luaL_error(L, "missing internal state (registry_ref)");
+        return 0;
+    }
+
+    type = lua_getfield(L, -1, "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "missing internal state (proto_hash)");
         return 0;
     }
 
@@ -249,7 +282,7 @@ static int boardscript_lock_piece(lua_State* L) {
     lua_getfield(L, -1, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
     if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "lock_piece: invalid piece configuration");
+        luaL_error(L, "invalid piece configuration");
         return 0;
     }
 
@@ -264,7 +297,8 @@ static int boardscript_lock_piece(lua_State* L) {
  */
 static int boardscript_clear_lines(lua_State* L) {
     // Parameter 1: Our userdata
-    board_t* board = luaL_checkudata(L, 1, "board_t");
+    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    board_t* board = udata->data;
 
     // Clear lines and return the number of lines cleared.
     uint8_t lines = board_clear_lines(board);

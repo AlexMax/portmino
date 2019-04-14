@@ -90,6 +90,8 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     }
 
     // We need to populate our registry with a few things...
+    lua_pushinteger(L, env->registry_ref); // registry reference
+    lua_setfield(L, -2, "registry_ref");
     script_push_paths(L, ruleset, gametype); // paths
     lua_setfield(L, -2, "paths");
     script_push_cpaths(L, ruleset, gametype); // config paths
