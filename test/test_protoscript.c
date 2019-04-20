@@ -10,6 +10,7 @@
 #include "environment.h"
 #include "piece.h"
 #include "platform.h"
+#include "proto.h"
 #include "script.h"
 #include "vfs.h"
 
@@ -50,7 +51,10 @@ static void test_protoscript_load(void** state) {
     lua_rawgeti(L, LUA_REGISTRYINDEX, env->registry_ref);
     lua_getfield(L, -1, "proto_hash");
     lua_getfield(L, -1, "test");
-    piece_config_t* piece = lua_touserdata(L, -1);
+    proto_t* proto = lua_touserdata(L, -1);
+    assert_true(proto != NULL);
+    assert_true(proto->type == MINO_PROTO_PIECE);
+    piece_config_t* piece = proto->data;
     assert_true(piece != NULL);
     assert_true(piece->spawn_pos.x == 3);
     assert_true(piece->spawn_pos.y == 1);
