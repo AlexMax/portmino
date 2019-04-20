@@ -6,6 +6,7 @@ set(GAME_SOURCES
     board.c             board.h
     boardscript.c       boardscript.h
     define.c            define.h
+    entity.c            entity.h
     environment.c       environment.h
     error.c             error.h
     frontend.c          frontend.h

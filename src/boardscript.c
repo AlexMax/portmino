@@ -20,6 +20,7 @@
 #include "lauxlib.h"
 
 #include "board.h"
+#include "entity.h"
 #include "proto.h"
 #include "script.h"
 
@@ -27,23 +28,42 @@
   * Lua: Initialize new board state.
   */
 static int boardscript_new(lua_State* L) {
-    // Internal State 1: registry reference
+    // Internal State 1: Registry reference
     int type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
     if (type != LUA_TNUMBER) {
-        luaL_error(L, "new: missing internal state (registry_ref)");
+        luaL_error(L, "missing internal state (registry_ref)");
         return 0;
     }
 
+    // Internal State 2: Next ID
+    type = lua_getfield(L, lua_upvalueindex(1), "entity_next");
+    if (type != LUA_TNUMBER) {
+        luaL_error(L, "missing internal state (entity_next)");
+        return 0;
+    }
+
+    uint32_t entity_next = lua_tointeger(L, -1);
+    int registry_ref = lua_tointeger(L, -2);
+
     // Initialize (and return) board state
-    userdata_t* udata = lua_newuserdata(L, sizeof(userdata_t));
-    udata->registry_ref = lua_tointeger(L, -2);
-    if ((udata->data = board_new()) == NULL) {
+    entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
+    if ((entity->data = board_new()) == NULL) {
         luaL_error(L, "Could not allocate new board.");
         return 0;
     }
 
-    // Apply methods to the userdata
+    // Set our entity properties
+    entity->id = entity_next;
+    entity->registry_ref = registry_ref;
+    entity->type = MINO_ENTITY_BOARD;
+    entity->deinit = board_delete;
+
+    // Apply methods to the entity
     luaL_setmetatable(L, "board_t");
+
+    // Increment our next entity counter
+    lua_pushinteger(L, entity_next + 1);
+    lua_setfield(L, lua_upvalueindex(1), "entity_next");
 
     return 1;
 }
@@ -53,12 +73,11 @@ static int boardscript_new(lua_State* L) {
  */
 static int boardscript_delete(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
 
-    board_delete(udata->data);
-    udata->data = NULL;
+    entity_deinit(entity);
+    entity = NULL;
 
-    udata = NULL;
     return 0;
 }
 
@@ -67,8 +86,8 @@ static int boardscript_delete(lua_State* L) {
  */
 static int boardscript_set_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
@@ -103,8 +122,8 @@ static int boardscript_set_piece(lua_State* L) {
  */
 static int boardscript_unset_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
@@ -124,8 +143,8 @@ static int boardscript_unset_piece(lua_State* L) {
  */
 static int boardscript_get_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
@@ -151,8 +170,8 @@ static int boardscript_get_piece(lua_State* L) {
  */
 static int boardscript_test_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Parameter 2: Piece name
     const char* piece_config = luaL_checkstring(L, 2);
@@ -166,7 +185,7 @@ static int boardscript_test_piece(lua_State* L) {
     lua_Integer rot = luaL_checkinteger(L, 4);
 
     // Internal State 1: protos table
-    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, udata->registry_ref);
+    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, entity->registry_ref);
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (registry_ref)");
         return 0;
@@ -199,8 +218,8 @@ static int boardscript_test_piece(lua_State* L) {
  */
 static int boardscript_test_piece_between(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Parameter 2: Piece name
     const char* piece_config = luaL_checkstring(L, 2);
@@ -219,7 +238,7 @@ static int boardscript_test_piece_between(lua_State* L) {
     luaL_argcheck(L, ok, 5, "invalid position");
 
     // Internal State 1: protos table
-    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, udata->registry_ref);
+    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, entity->registry_ref);
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (registry_ref)");
         return 0;
@@ -251,8 +270,8 @@ static int boardscript_test_piece_between(lua_State* L) {
  */
 static int boardscript_lock_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Parameter 2: Piece name
     const char* piece_config = luaL_checkstring(L, 2);
@@ -260,13 +279,13 @@ static int boardscript_lock_piece(lua_State* L) {
     // Parameter 3: Position table
     vec2i_t pos = { 0, 0 };
     bool ok = script_to_vector(L, 3, &pos);
-    luaL_argcheck(L, ok, 3, "lock_piece: invalid position");
+    luaL_argcheck(L, ok, 3, "invalid position");
 
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
 
     // Internal State 1: protos table
-    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, udata->registry_ref);
+    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, entity->registry_ref);
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (registry_ref)");
         return 0;
@@ -297,8 +316,8 @@ static int boardscript_lock_piece(lua_State* L) {
  */
 static int boardscript_clear_lines(lua_State* L) {
     // Parameter 1: Our userdata
-    userdata_t* udata = luaL_checkudata(L, 1, "board_t");
-    board_t* board = udata->data;
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
 
     // Clear lines and return the number of lines cleared.
     uint8_t lines = board_clear_lines(board);

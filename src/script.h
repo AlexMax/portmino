@@ -23,21 +23,6 @@
 typedef struct lua_State lua_State;
 typedef struct vfile_s vfile_t;
 
-/**
- * A userdata wrapper that contains the environment reference
- */
-typedef struct {
-    /**
-     * Data pointer of unknown type
-     */
-    void* data;
-
-    /**
-     * Registry reference
-     */
-    int registry_ref;
-} userdata_t;
-
 lua_State* script_newstate(void);
 bool script_to_vector(lua_State* L, int index, vec2i_t* vec);
 void script_push_vector(lua_State* L, const vec2i_t* vec);

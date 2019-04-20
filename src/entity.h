@@ -19,32 +19,40 @@
 
 #include "define.h"
 
-#include "piece.h"
-
 /**
- * Type of prototype.
+ * Type of entity.
  */
 typedef enum {
-    MINO_PROTO_NONE,
-    MINO_PROTO_PIECE,
-    MINO_PROTO_BOARD
-} proto_type_t;
+    MINO_ENTITY_NONE,
+    MINO_ENTITY_PIECE,
+    MINO_ENTITY_BOARD
+} entity_type_t;
 
 /**
  * Destructor function pointer.
- * 
+ *
  * All prototype destructors must conform to this function type.
  */
-typedef void (*proto_deinit_t)(void* ptr);
+typedef void(*entity_deinit_t)(void* ptr);
 
 /**
- * Generic prototype.
+ * Generic entity.
  */
-typedef struct proto_s {
+typedef struct entity_s {
     /**
-     * Type of prototype.
+     * Entity unique id.
      */
-    proto_type_t type;
+    uint32_t id;
+
+    /**
+     * Registry reference for entity.
+     */
+    int registry_ref;
+
+    /**
+     * Type of entity.
+     */
+    entity_type_t type;
 
     /**
      * Opaque data member.
@@ -52,15 +60,9 @@ typedef struct proto_s {
     void* data;
 
     /**
-     * Prototype destructor.
+     * Entity destructor.
      */
-    proto_deinit_t deinit;
-} proto_t;
+    entity_deinit_t deinit;
+} entity_t;
 
-typedef struct proto_container_s proto_container_t;
-
-proto_container_t* proto_container_new(void);
-void proto_container_delete(proto_container_t* protos);
-bool proto_container_push(proto_container_t* protos, proto_t* proto);
-proto_t* proto_new(proto_type_t type, void* data, proto_deinit_t deinit);
-void proto_delete(proto_t* proto);
+void entity_deinit(entity_t* entity);
