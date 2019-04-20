@@ -22,14 +22,6 @@
 // Forward declarations.
 typedef struct lua_State lua_State;
 
-// Right now we only support seven piece configurations.
-#define MAX_PIECES 7
-
-#define ROT_0 0
-#define ROT_R 1
-#define ROT_2 2
-#define ROT_L 3
-
 typedef struct piece_config_s {
     /**
      * Name of the piece.
