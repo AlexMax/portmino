@@ -138,6 +138,13 @@ void piece_config_destruct(void* piece_config) {
 }
 
 /**
+ * Get the initial data position of a particular rotation.
+ */
+uint8_t* piece_config_get_rot(const piece_config_t* piece, uint8_t rot) {
+    return piece->data + (rot * piece->data_size);
+}
+
+/**
  * Initialize a new piece on the board.
  */
 piece_t* piece_new(const piece_config_t* config) {
@@ -149,8 +156,6 @@ piece_t* piece_new(const piece_config_t* config) {
     }
 
     piece->config = config;
-    piece->rot = config->spawn_rot;
-    piece->pos = config->spawn_pos;
 
     return piece;
 }
@@ -160,11 +165,4 @@ piece_t* piece_new(const piece_config_t* config) {
  */
 void piece_delete(piece_t* piece) {
     free(piece);
-}
-
-/**
- * Get the initial data position of a particular rotation.
- */
-uint8_t* piece_get_rot(const piece_config_t* piece, uint8_t rot) {
-    return piece->data + (rot * piece->data_size);
 }

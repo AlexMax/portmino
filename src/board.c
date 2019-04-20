@@ -132,7 +132,7 @@ piece_t* board_get_piece(board_t* board, size_t index) {
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot) {
     for (size_t i = 0;i < piece->data_size;i++) {
         // Get the source cell.
-        uint8_t* scell = piece_get_rot(piece, rot) + i;
+        uint8_t* scell = piece_config_get_rot(piece, rot) + i;
         if (!*scell) {
             // Source cell is empty, no collision test necessary.
             continue;
@@ -244,7 +244,7 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
 void board_lock_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot) {
     for (size_t i = 0;i < piece->data_size;i++) {
         // Get the source cell.
-        uint8_t* scell = piece_get_rot(piece, rot) + i;
+        uint8_t* scell = piece_config_get_rot(piece, rot) + i;
         if (!*scell) {
             // Source cell is empty, do nothing.
             continue;

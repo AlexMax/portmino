@@ -160,7 +160,7 @@ static void softrender_draw_board(vec2i_t pos, const board_t* board) {
     // so it gets drawn over top of the ghost in case of overlap.
     for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
         if (board->pieces[i] != NULL) {
-            const piece_t* piece = board->pieces[i];
+            const boardpiece_t* piece = board->pieces[i];
 
             size_t i = piece->rot * piece->config->data_size;
             size_t end = i + piece->config->data_size;

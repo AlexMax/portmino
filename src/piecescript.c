@@ -17,207 +17,133 @@
 
 #include "lauxlib.h"
 
+#include "entity.h"
 #include "piece.h"
 #include "proto.h"
 #include "script.h"
 
 /**
- * Lua: Get the position for a given piece handle.
+ * Lua: Initialize new board state.
  */
-static int piecescript_get_pos(lua_State* L) {
-    // Parameter 1: Piece handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece handle");
-    const piece_t* piece = lua_touserdata(L, 1);
-    if (piece == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece handle");
+static int piecescript_new(lua_State* L) {
+    // Parameter 1: Piece configuration
+    const char* piece_config = luaL_checkstring(L, 1);
+
+    // Internal State 1: Prototype hash
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    if (type != LUA_TTABLE) {
+        luaL_error(L, "missing internal state (proto_hash)");
+        return 0;
     }
 
-    // Return the position
-    script_push_vector(L, &piece->pos);
+    // Internal State 2: Registry ref
+    type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
+    if (type != LUA_TNUMBER) {
+        luaL_error(L, "missing internal state (registry_ref)");
+        return 0;
+    }
+
+    // Internal State 3: Next ID
+    type = lua_getfield(L, lua_upvalueindex(1), "entity_next");
+    if (type != LUA_TNUMBER) {
+        luaL_error(L, "missing internal state (entity_next)");
+        return 0;
+    }
+
+    // Get the piece configuration
+    lua_getfield(L, -3, piece_config);
+    proto_t* proto = lua_touserdata(L, -1);
+    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
+        luaL_error(L, "invalid piece configuration");
+        return 0;
+    }
+    piece_config_t* config = proto->data;
+
+    // Get our other entity data
+    uint32_t entity_next = lua_tointeger(L, -1);
+    int registry_ref = lua_tointeger(L, -2);
+
+    // Initialize (and return) board state
+    entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
+    if ((entity->data = piece_new(config)) == NULL) {
+        luaL_error(L, "Could not allocate new piece.");
+        return 0;
+    }
+
+    // Set our entity properties
+    entity->id = entity_next;
+    entity->registry_ref = registry_ref;
+    entity->type = MINO_ENTITY_PIECE;
+    entity->deinit = piece_delete;
+
+    // Apply methods to the entity
+    luaL_setmetatable(L, "piece_t");
+
+    // Increment our next entity counter
+    lua_pushinteger(L, entity_next + 1);
+    lua_setfield(L, lua_upvalueindex(1), "entity_next");
+
     return 1;
 }
 
 /**
- * Lua: Set the position for a given piece handle.
+ * Lua: board_t finalizer.
  */
-static int piecescript_set_pos(lua_State* L) {
-    // Parameter 1: Piece handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece handle");
-    piece_t* piece = lua_touserdata(L, 1);
-    if (piece == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece handle");
-    }
+static int piecescript_delete(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
 
-    // Parameter 2: Position
-    vec2i_t pos = { 0, 0 };
-    bool ok = script_to_vector(L, 2, &pos);
+    entity_deinit(entity);
+    entity = NULL;
 
-    luaL_argcheck(L, ok, 2, "invalid position");
-
-    piece->pos = pos;
-    return 0;
-}
-
-/**
- * Lua: Get the rotation for a given piece handle.
- */
-static int piecescript_get_rot(lua_State* L) {
-    // Parameter 1: Piece handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece handle");
-    const piece_t* piece = lua_touserdata(L, 1);
-    if (piece == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece handle");
-    }
-
-    // Return the rotation as an integer
-    lua_pushinteger(L, piece->rot);
-    return 1;
-}
-
-/**
- * Lua: Set the position for a given piece handle.
- */
-static int piecescript_set_rot(lua_State* L) {
-    // Parameter 1: Piece handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece handle");
-    piece_t* piece = lua_touserdata(L, 1);
-    if (piece == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece handle");
-    }
-
-    // Parameter 2: Rotation
-    // FIXME: Prevent out-of-bounds rotation values
-    lua_Integer rot = luaL_checkinteger(L, 2);
-
-    piece->rot = rot;
     return 0;
 }
 
 /**
  * Lua: Get the configuration userdata for a given piece handle.
  */
-static int piecescript_get_config(lua_State* L) {
-    // Parameter 1: Piece handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece handle");
-    const piece_t* piece = lua_touserdata(L, 1);
-    if (piece == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece handle");
-    }
+static int piecescript_config_name(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    piece_t* piece = entity->data;
 
-    // Return the piece config as a light userdata
-    lua_pushlightuserdata(L, (void*)piece->config);
-    return 1;
-}
-
-/**
- * Lua: Get the name for a given piece config handle.
- */
-static int piecescript_config_get_name(lua_State* L) {
-    // Parameter 1: Piece configuration handle
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 1, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 1);
-    if (config == NULL) {
-        // never returns
-        luaL_argerror(L, 1, "nil piece configuration handle");
-    }
-
-    // Fetch the config and return the spawn point as a table
-    lua_pushstring(L, config->name);
-    return 1;
-}
-
-/**
- * Lua: Get the spawn position for a given piece config handle.
- */
-static int piecescript_config_get_spawn_pos(lua_State* L) {
-    // Parameter 1: Piece configuration name
-    const char* piece_config = luaL_checkstring(L, 1);
-
-    // Internal State 1: protos table
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
-    if (type != LUA_TTABLE) {
-        luaL_error(L, "get_spawn_pos: missing internal state (proto_hash)");
-        return 0;
-    }
-
-    // Get the piece configuration
-    lua_getfield(L, -1, piece_config);
-    proto_t* proto = lua_touserdata(L, -1);
-    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "get_spawn_pos: invalid piece configuration");
-        return 0;
-    }
-
-    // Return the spawn point as a table
-    piece_config_t* config = proto->data;
-    script_push_vector(L, &config->spawn_pos);
-    return 1;
-}
-
-/**
- * Lua: Get the spawn position for a given piece config handle.
- */
-static int piecescript_config_get_spawn_rot(lua_State* L) {
-    // Parameter 1: Piece configuration name
-    const char* piece_config = luaL_checkstring(L, 1);
-
-    // Internal State 1: protos table
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
-    if (type != LUA_TTABLE) {
-        luaL_error(L, "get_spawn_rot: missing internal state (proto_hash)");
-        return 0;
-    }
-
-    // Get the piece configuration
-    lua_getfield(L, -1, piece_config);
-    proto_t* proto = lua_touserdata(L, -1);
-    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "get_spawn_rot: invalid piece configuration");
-        return 0;
-    }
-
-    // Return the spawn rotation as an integer
-    piece_config_t* config = proto->data;
-    lua_pushinteger(L, config->spawn_rot);
+    lua_pushstring(L, piece->config->name);
     return 1;
 }
 
 /**
  * Lua: Get the number of rotations that a piece has.
  */
-static int piecescript_config_get_rot_count(lua_State* L) {
-    // Parameter 1: Piece configuration name
-    const char* piece_config = luaL_checkstring(L, 1);
+static int piecescript_spawn_pos(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    piece_t* piece = entity->data;
 
-    // Internal State 1: protos table
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
-    if (type != LUA_TTABLE) {
-        luaL_error(L, "get_spawn_rot_count: missing internal state (proto_hash)");
-        return 0;
-    }
+    script_push_vector(L, &piece->config->spawn_pos);
+    return 1;
+}
 
-    // Get the piece configuration
-    lua_getfield(L, -1, piece_config);
-    proto_t* proto = lua_touserdata(L, -1);
-    if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
-        luaL_error(L, "get_spawn_rot_count: invalid piece configuration");
-        return 0;
-    }
+/**
+ * Lua: Get the number of rotations that a piece has.
+ */
+static int piecescript_spawn_rot(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    piece_t* piece = entity->data;
 
-    // Return the number of rotations as an integer
-    piece_config_t* config = proto->data;
-    lua_pushinteger(L, config->data_count);
+    lua_pushinteger(L, piece->config->spawn_rot);
+    return 1;
+}
+
+/**
+ * Lua: Get the number of rotations that a piece has.
+ */
+static int piecescript_rot_count(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    piece_t* piece = entity->data;
+
+    lua_pushinteger(L, piece->config->data_count);
     return 1;
 }
 
@@ -226,19 +152,30 @@ static int piecescript_config_get_rot_count(lua_State* L) {
  */
 int piecescript_openlib(lua_State* L) {
     static const luaL_Reg piecelib[] = {
-        { "get_pos", piecescript_get_pos },
-        { "set_pos", piecescript_set_pos },
-        { "get_rot", piecescript_get_rot },
-        { "set_rot", piecescript_set_rot },
-        { "get_config", piecescript_get_config },
-        { "config_get_name", piecescript_config_get_name },
-        { "config_get_spawn_pos", piecescript_config_get_spawn_pos },
-        { "config_get_spawn_rot", piecescript_config_get_spawn_rot },
-        { "config_get_rot_count", piecescript_config_get_rot_count },
+        { "new", piecescript_new },
         { NULL, NULL }
     };
 
     luaL_newlib(L, piecelib);
+
+    // Create the piece_t type
+    static const luaL_Reg piecetype[] = {
+        { "config_name", piecescript_config_name },
+        { "spawn_pos", piecescript_spawn_pos },
+        { "spawn_rot", piecescript_spawn_rot },
+        { "rot_count", piecescript_rot_count },
+        { NULL, NULL }
+    };
+
+    luaL_newmetatable(L, "piece_t");
+
+    luaL_newlib(L, piecetype);
+    lua_setfield(L, -2, "__index");
+
+    lua_pushcfunction(L, piecescript_delete);
+    lua_setfield(L, -2, "__gc");
+
+    lua_pop(L, 1);
 
     return 1;
 }

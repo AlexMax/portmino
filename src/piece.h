@@ -76,17 +76,6 @@ typedef struct piece_config_s {
 
 typedef struct piece_s {
     /**
-     * Current position of the piece, origin is at the top-left.  Can be off
-     * the side of the board.
-     */
-    vec2i_t pos;
-
-    /**
-     * Current orientation of the piece.
-     */
-    uint8_t rot;
-
-    /**
      * Configuration of the piece.
      * 
      * The piece does not own this pointer, so don't malloc or free it.
@@ -97,6 +86,6 @@ typedef struct piece_s {
 piece_config_t* piece_config_new(lua_State* L, const char* name);
 void piece_config_delete(piece_config_t* piece_config);
 void piece_config_destruct(void* piece_config);
+uint8_t* piece_config_get_rot(const piece_config_t* piece, uint8_t rot);
 piece_t* piece_new(const piece_config_t* config);
 void piece_delete(piece_t* piece);
-uint8_t* piece_get_rot(const piece_config_t* piece, uint8_t rot);

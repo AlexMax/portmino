@@ -27,6 +27,32 @@ typedef struct ruleset_s ruleset_t;
 // Maximum number of pieces per board.
 #define MAX_BOARD_PIECES 4
 
+typedef struct {
+    /**
+     * A reference to the piece entity
+     */
+    int piece_ref;
+
+    /**
+     * A piece configuration
+     *
+     * This technically exists in the piece reference, but it's easier to
+     * cache it here.
+     */
+    piece_config_t* config;
+
+    /**
+     * Current position of the piece, origin is at the top-left.  Can be off
+     * the side of the board.
+     */
+    vec2i_t pos;
+
+    /**
+     * Current orientation of the piece.
+     */
+    uint8_t rot;
+} boardpiece_t;
+
 /**
  * Configuration variables for the board.
  */
@@ -81,7 +107,7 @@ typedef struct board_s {
      * This structure _does_ own the pieces.  Don't delete them from anywhere
      * else except inside the board structure.
      */
-    piece_t* pieces[MAX_BOARD_PIECES];
+    boardpiece_t* pieces[MAX_BOARD_PIECES];
 
     /**
      * Number of active pieces on the board.
