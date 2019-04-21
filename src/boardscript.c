@@ -47,7 +47,7 @@ static int boardscript_new(lua_State* L) {
 
     // Initialize (and return) board state
     entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
-    if ((entity->data = board_new()) == NULL) {
+    if ((entity->data = board_new(L)) == NULL) {
         luaL_error(L, "Could not allocate new board.");
         return 0;
     }
@@ -82,7 +82,7 @@ static int boardscript_delete(lua_State* L) {
 }
 
 /**
- * Lua: Set a new piece for the board.
+ * Lua: Set a piece into a position on the board.
  */
 static int boardscript_set_piece(lua_State* L) {
     // Parameter 1: Our userdata
@@ -97,24 +97,14 @@ static int boardscript_set_piece(lua_State* L) {
     }
     index -= 1;
 
-    // Parameter 3: Piece configuration handle
-    int type = lua_type(L, 3);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 3, "invalid piece configuration handle");
-    const piece_config_t* config = lua_touserdata(L, 3);
-    if (config == NULL) {
-        luaL_argerror(L, 3, "nil piece configuration handle");
-        return 0;
-    }
+    // Parameter 3: Piece userdata
+    entity_t* pentity = luaL_checkudata(L, 1, "piece_t");
+    piece_t* piece = pentity->data;
 
-    // Fetch the piece and return a handle to it
-    piece_t* piece = board_set_piece(board, index, config);
-    if (piece == NULL) {
-        lua_pushnil(L);
-        return 1;
-    }
+    int piece_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    board_set_piece(board, index, piece, piece_ref);
 
-    lua_pushlightuserdata(L, piece);
-    return 1;
+    return 0;
 }
 
 /**
@@ -155,13 +145,12 @@ static int boardscript_get_piece(lua_State* L) {
     index -= 1;
 
     // Fetch the piece and return a handle to it
-    piece_t* piece = board_get_piece(board, index);
-    if (piece == NULL) {
+    int piece_ref = board_get_piece(board, index);
+    if (piece_ref == LUA_NOREF) {
         lua_pushnil(L);
         return 1;
     }
-
-    lua_pushlightuserdata(L, piece);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, piece_ref);
     return 1;
 }
 

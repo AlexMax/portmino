@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lauxlib.h"
+
 #include "error.h"
 #include "piece.h"
 #include "ruleset.h"
@@ -27,13 +29,15 @@
 /**
  * Create a new board structure.
  */
-board_t* board_new(void) {
+board_t* board_new(lua_State* L) {
     board_t* board = NULL;
 
     if ((board = calloc(1, sizeof(*board))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
+
+    board->lua = L;
 
     // Define our configuration
     board->config.width = 10;
@@ -48,6 +52,12 @@ board_t* board_new(void) {
     if (board->data.data == NULL) {
         error_push_allocerr();
         goto fail;
+    }
+
+    // Initialize board pieces
+    for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
+        board->pieces[i].piece_ref = LUA_NOREF;
+        board->pieces[i].piece = NULL;
     }
 
     return board;
@@ -66,8 +76,7 @@ void board_delete(board_t* board) {
     }
 
     for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
-        piece_delete(board->pieces[i]);
-        board->pieces[i] = NULL;
+        board_unset_piece(board, i);
     }
 
     free(board->data.data);
@@ -81,46 +90,52 @@ void board_delete(board_t* board) {
  * 
  * If a piece exists at that index, deletes it first.
  */
-piece_t* board_set_piece(board_t* board, size_t index, const piece_config_t* config) {
+void board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
         return NULL;
     }
 
-    if (board->pieces[index] != NULL) {
-        // We have a piece here already.  Recreate it.
-        piece_delete(board->pieces[index]);
+    if (board->pieces[index].piece != NULL) {
+        // We have a piece here already.  Unref it.
+        board_unset_piece(board, index);
     }
 
-    board->pieces[index] = piece_new(config);
-    return board->pieces[index];
+    board->pieces[index].piece_ref = piece_ref;
+    board->pieces[index].piece = piece;
 }
 
 /**
  * Delete a piece owned by the board by index, with no replacement.
  */
 void board_unset_piece(board_t* board, size_t index) {
-    if (board->pieces[index] != NULL) {
-        piece_delete(board->pieces[index]);
-        board->pieces[index] = NULL;
+    if (index >= MAX_BOARD_PIECES) {
+        // Out of range board piece.
+        return NULL;
+    }
+
+    if (board->pieces[index].piece != NULL) {
+        luaL_unref(board->lua, LUA_REGISTRYINDEX, board->pieces[index].piece_ref);
+        board->pieces[index].piece_ref = LUA_NOREF;
+        board->pieces[index].piece = NULL;
     }
 }
 
 /**
  * Get a piece from the board by index.
  */
-piece_t* board_get_piece(board_t* board, size_t index) {
+int board_get_piece(board_t* board, size_t index) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
-        return NULL;
+        return LUA_NOREF;
     }
 
-    if (board->pieces[index] == NULL) {
+    if (board->pieces[index].piece == NULL) {
         // No piece exists here.
-        return NULL;
+        return LUA_NOREF;
     }
 
-    return board->pieces[index];
+    return board->pieces[index].piece_ref;
 }
 
 /**

@@ -20,6 +20,7 @@
 #include "define.h"
 
 // Forward declarations.
+typedef struct lua_State lua_State;
 typedef struct piece_s piece_t;
 typedef struct piece_config_s piece_config_t;
 typedef struct ruleset_s ruleset_t;
@@ -34,12 +35,9 @@ typedef struct {
     int piece_ref;
 
     /**
-     * A piece configuration
-     *
-     * This technically exists in the piece reference, but it's easier to
-     * cache it here.
+     * The cached piece entity
      */
-    piece_config_t* config;
+    piece_t* piece;
 
     /**
      * Current position of the piece, origin is at the top-left.  Can be off
@@ -51,6 +49,11 @@ typedef struct {
      * Current orientation of the piece.
      */
     uint8_t rot;
+
+    /**
+     * True if piece should be rendered as a ghost piece, otherwise false.
+     */
+    bool render_ghost;
 } boardpiece_t;
 
 /**
@@ -87,6 +90,13 @@ typedef struct {
 
 typedef struct board_s {
     /**
+     * Lua state.
+     *
+     * Necessary for deleting piece references.
+     */
+    lua_State* lua;
+
+    /**
      * Unique id of the board.
      */
     size_t id;
@@ -107,7 +117,7 @@ typedef struct board_s {
      * This structure _does_ own the pieces.  Don't delete them from anywhere
      * else except inside the board structure.
      */
-    boardpiece_t* pieces[MAX_BOARD_PIECES];
+    boardpiece_t pieces[MAX_BOARD_PIECES];
 
     /**
      * Number of active pieces on the board.
@@ -115,11 +125,11 @@ typedef struct board_s {
     size_t piece_count;
 } board_t;
 
-board_t* board_new(void);
+board_t* board_new(lua_State* L);
 void board_delete(board_t* board);
-piece_t* board_set_piece(board_t* board, size_t index, const piece_config_t* config);
+void board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref);
 void board_unset_piece(board_t* board, size_t index);
-piece_t* board_get_piece(board_t* board, size_t index);
+int board_get_piece(board_t* board, size_t index);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,
                                  vec2i_t src, uint8_t rot, vec2i_t dst);
