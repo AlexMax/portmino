@@ -93,9 +93,27 @@ void board_destruct(void* board) {
 }
 
 /**
+ * Get a piece reference from the board by index.
+ */
+int board_get_piece_ref(board_t* board, size_t index) {
+    if (index >= MAX_BOARD_PIECES) {
+        // Out of range board piece.
+        return LUA_NOREF;
+    }
+
+    if (board->pieces[index].piece == NULL) {
+        // No piece exists here.
+        return LUA_NOREF;
+    }
+
+    return board->pieces[index].piece_ref;
+}
+
+/**
  * Allocate a piece owned by the board.
  * 
- * If a piece exists at that index, deletes it first.
+ * Piece spawns with default spawn point and rotation.  If a piece exists
+ * at that index, deletes it first.
  */
 bool board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref) {
     if (index >= MAX_BOARD_PIECES) {
@@ -112,6 +130,8 @@ bool board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref
 
     board->pieces[index].piece_ref = piece_ref;
     board->pieces[index].piece = piece;
+    board->pieces[index].pos = piece->config->spawn_pos;
+    board->pieces[index].rot = piece->config->spawn_rot;
 
     return true;
 }
@@ -125,30 +145,38 @@ bool board_unset_piece(board_t* board, size_t index) {
         return false;
     }
 
-    if (board->pieces[index].piece != NULL) {
-        luaL_unref(board->lua, LUA_REGISTRYINDEX, board->pieces[index].piece_ref);
-        board->pieces[index].piece_ref = LUA_NOREF;
-        board->pieces[index].piece = NULL;
+    if (board->pieces[index].piece == NULL) {
+        // It's unset already.
+        return true;
     }
+
+    luaL_unref(board->lua, LUA_REGISTRYINDEX, board->pieces[index].piece_ref);
+    board->pieces[index].piece_ref = LUA_NOREF;
+    board->pieces[index].piece = NULL;
+    board->pieces[index].pos = vec2i_zero();
+    board->pieces[index].rot = 0;
 
     return true;
 }
 
 /**
- * Get a piece from the board by index.
+ * Returns a boardpiece so we can manipulate it.
+ * 
+ * Don't hold this pointer for too long, the boardpiece stays in one spot
+ * and can mutate based on the piece that is taking up the slot.
  */
-int board_get_piece(board_t* board, size_t index) {
+boardpiece_t* board_get_boardpiece(board_t* board, size_t index) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
-        return LUA_NOREF;
+        return NULL;
     }
 
     if (board->pieces[index].piece == NULL) {
-        // No piece exists here.
-        return LUA_NOREF;
+        // Not a valid piece, return no data.
+        return NULL;
     }
 
-    return board->pieces[index].piece_ref;
+    return &board->pieces[index];
 }
 
 /**

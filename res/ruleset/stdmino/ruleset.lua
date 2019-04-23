@@ -156,13 +156,13 @@ local function frame(state, gametic, inputs)
 
     -- Get our piece
     local piece = board.board:get_piece(BOARD_PIECE)
-    local piece_pos = board.board:get_pos(BOARD_PIECE, piece)
-    local piece_rot = board.board:get_rot(BOARD_PIECE, piece)
+    local piece_pos = board.board:get_pos(BOARD_PIECE)
+    local piece_rot = board.board:get_rot(BOARD_PIECE)
     local piece_config = piece:config_name()
 
     -- Is our piece blocked from the bottom?  If so, lock logic takes priority.
     local down_pos = { x = piece_pos.x, y = piece_pos.y + 1 }
-    if not mino_board.test_piece(board, piece_config, down_pos, piece_rot) then
+    if not board.board:test_piece(piece_config, down_pos, piece_rot) then
         if state.player[1].lock_tic == 0 then
             -- This is our first tic that we've locked.
             state.player[1].lock_tic = gametic
@@ -171,11 +171,11 @@ local function frame(state, gametic, inputs)
 
         if gametic - state.player[1].lock_tic >= DEFAULT_LOCK_DELAY then
             -- Our lock timer has run out, lock the piece.
-            mino_board.lock_piece(board, piece_config, piece_pos, piece_rot)
+            board:lock_piece(piece_config, piece_pos, piece_rot)
             mino_audio.playsound("lock")
 
             -- Clear the board of any lines.
-            local lines = mino_board.clear_lines(board)
+            local lines = board:clear_lines()
 
             -- Advance the new piece.
             if not board_next_piece(board, gametic) then
@@ -187,10 +187,10 @@ local function frame(state, gametic, inputs)
             state.player[1].lock_tic = 0
 
             -- Get the piece pointer again, because we mutated it.
-            piece = mino_board.get_piece(board, BOARD_PIECE)
-            piece_pos = mino_piece.get_pos(piece)
-            piece_rot = mino_piece.get_rot(piece)
-            piece_config = mino_piece.get_config(piece)
+            piece = board:get_piece(BOARD_PIECE)
+            piece_pos = board:get_pos(BOARD_PIECE)
+            piece_rot = board:get_rot(BOARD_PIECE)
+            piece_config = piece:config_name()
         end
     else
         -- We are not in lock logic anymore.

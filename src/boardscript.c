@@ -82,6 +82,32 @@ static int boardscript_delete(lua_State* L) {
 }
 
 /**
+ * Lua: Get a board piece handle by index
+ */
+static int boardscript_get_piece(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
+
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        luaL_argerror(L, 2, "invalid piece id");
+        return 0;
+    }
+    index -= 1;
+
+    // Fetch the piece and return a handle to it
+    int piece_ref = board_get_piece_ref(board, index);
+    if (piece_ref == LUA_NOREF) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_rawgeti(L, LUA_REGISTRYINDEX, piece_ref);
+    return 1;
+}
+
+/**
  * Lua: Set a piece into a position on the board.
  */
 static int boardscript_set_piece(lua_State* L) {
@@ -129,9 +155,9 @@ static int boardscript_unset_piece(lua_State* L) {
 }
 
 /**
- * Lua: Get a board piece handle by index
+ * Lua: Get piece position
  */
-static int boardscript_get_piece(lua_State* L) {
+static int boardscript_get_pos(lua_State* L) {
     // Parameter 1: Our userdata
     entity_t* entity = luaL_checkudata(L, 1, "board_t");
     board_t* board = entity->data;
@@ -144,14 +170,103 @@ static int boardscript_get_piece(lua_State* L) {
     }
     index -= 1;
 
-    // Fetch the piece and return a handle to it
-    int piece_ref = board_get_piece(board, index);
-    if (piece_ref == LUA_NOREF) {
-        lua_pushnil(L);
-        return 1;
+    // Get the piece position
+    boardpiece_t* piece = board_get_boardpiece(board, index);
+    if (piece == NULL) {
+        luaL_error(L, "no piece in this board index");
+        return 0;
     }
-    lua_rawgeti(L, LUA_REGISTRYINDEX, piece_ref);
+    script_push_vector(L, &piece->pos);
     return 1;
+}
+
+/**
+ * Lua: Set piece position
+ */
+static int boardscript_set_pos(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
+
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        luaL_argerror(L, 2, "invalid piece id");
+        return 0;
+    }
+    index -= 1;
+
+    // Parameter 3: Position
+    luaL_checktype(L, 3, LUA_TTABLE);
+
+    // Set the piece position
+    boardpiece_t* piece = board_get_boardpiece(board, index);
+    if (piece == NULL) {
+        luaL_error(L, "no piece in this board index");
+        return 0;
+    }
+    vec2i_t pos = vec2i_zero();
+    if (script_to_vector(L, 3, &pos) == false) {
+        luaL_error(L, "position is not a valid vector");
+        return 0;
+    }
+    piece->pos = pos;
+    return 0;
+}
+
+/**
+ * Lua: Get piece rotation
+ */
+static int boardscript_get_rot(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
+
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        luaL_argerror(L, 2, "invalid piece id");
+        return 0;
+    }
+    index -= 1;
+
+    // Get the piece rotation
+    boardpiece_t* piece = board_get_boardpiece(board, index);
+    if (piece == NULL) {
+        luaL_error(L, "no piece in this board index");
+        return 0;
+    }
+    lua_pushinteger(L, piece->rot);
+    return 1;
+}
+
+/**
+ * Lua: Set piece rotation
+ */
+static int boardscript_set_rot(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
+
+    // Parameter 2: Piece index
+    lua_Integer index = luaL_checkinteger(L, 2);
+    if (index <= 0) {
+        luaL_argerror(L, 2, "invalid piece id");
+        return 0;
+    }
+    index -= 1;
+
+    // Parameter 3: Piece rotation
+    lua_Integer rot = luaL_checkinteger(L, 3);
+
+    // Set the piece rotation
+    boardpiece_t* piece = board_get_boardpiece(board, index);
+    if (piece == NULL) {
+        luaL_error(L, "no piece in this board index");
+        return 0;
+    }
+    piece->rot = rot;
+    return 0;
 }
 
 /**
@@ -324,9 +439,13 @@ int boardscript_openlib(lua_State* L) {
 
     // Create the board_t type
     static const luaL_Reg boardtype[] = {
+        { "get_piece", boardscript_get_piece },
         { "set_piece", boardscript_set_piece },
         { "unset_piece", boardscript_unset_piece },
-        { "get_piece", boardscript_get_piece },
+        { "get_pos", boardscript_get_pos },
+        { "set_pos", boardscript_set_pos },
+        { "get_rot", boardscript_get_rot },
+        { "set_rot", boardscript_set_rot },
         { "test_piece", boardscript_test_piece },
         { "test_piece_between", boardscript_test_piece_between },
         { "lock_piece", boardscript_lock_piece },

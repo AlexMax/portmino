@@ -128,9 +128,10 @@ typedef struct board_s {
 board_t* board_new(lua_State* L);
 void board_delete(board_t* board);
 void board_destruct(void* board);
+int board_get_piece_ref(board_t* board, size_t index);
 bool board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref);
 bool board_unset_piece(board_t* board, size_t index);
-int board_get_piece(board_t* board, size_t index);
+boardpiece_t* board_get_boardpiece(board_t* board, size_t index);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* piece,
                                  vec2i_t src, uint8_t rot, vec2i_t dst);
