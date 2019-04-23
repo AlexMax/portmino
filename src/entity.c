@@ -29,8 +29,8 @@ void entity_deinit(entity_t* entity) {
         return;
     }
 
-    entity->deinit(entity->data);
+    entity->destruct(entity->data);
     entity->type = MINO_ENTITY_NONE;
-    entity->deinit = NULL;
+    entity->destruct = NULL;
     entity->data = NULL;
 }

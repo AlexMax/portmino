@@ -74,7 +74,7 @@ static int piecescript_new(lua_State* L) {
     entity->id = entity_next;
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_PIECE;
-    entity->deinit = piece_delete;
+    entity->destruct = piece_destruct;
 
     // Apply methods to the entity
     luaL_setmetatable(L, "piece_t");
@@ -114,7 +114,7 @@ static int piecescript_config_name(lua_State* L) {
 /**
  * Lua: Get the number of rotations that a piece has.
  */
-static int piecescript_spawn_pos(lua_State* L) {
+static int piecescript_config_spawn_pos(lua_State* L) {
     // Parameter 1: Our userdata
     entity_t* entity = luaL_checkudata(L, 1, "piece_t");
     piece_t* piece = entity->data;
@@ -126,7 +126,7 @@ static int piecescript_spawn_pos(lua_State* L) {
 /**
  * Lua: Get the number of rotations that a piece has.
  */
-static int piecescript_spawn_rot(lua_State* L) {
+static int piecescript_config_spawn_rot(lua_State* L) {
     // Parameter 1: Our userdata
     entity_t* entity = luaL_checkudata(L, 1, "piece_t");
     piece_t* piece = entity->data;
@@ -138,7 +138,7 @@ static int piecescript_spawn_rot(lua_State* L) {
 /**
  * Lua: Get the number of rotations that a piece has.
  */
-static int piecescript_rot_count(lua_State* L) {
+static int piecescript_config_rot_count(lua_State* L) {
     // Parameter 1: Our userdata
     entity_t* entity = luaL_checkudata(L, 1, "piece_t");
     piece_t* piece = entity->data;
@@ -161,9 +161,9 @@ int piecescript_openlib(lua_State* L) {
     // Create the piece_t type
     static const luaL_Reg piecetype[] = {
         { "config_name", piecescript_config_name },
-        { "spawn_pos", piecescript_spawn_pos },
-        { "spawn_rot", piecescript_spawn_rot },
-        { "rot_count", piecescript_rot_count },
+        { "config_spawn_pos", piecescript_config_spawn_pos },
+        { "config_spawn_rot", piecescript_config_spawn_rot },
+        { "config_rot_count", piecescript_config_rot_count },
         { NULL, NULL }
     };
 

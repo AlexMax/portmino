@@ -59,7 +59,7 @@ static vfile_t* searchpath(lua_State* L, const char* name, const char* path) {
             LUA_PATH_MARK, name);
         lua_remove(L, -2);  // pop path template
 
-        vfile_t* file = vfs_vfile_new(filename);
+        vfile_t* file = vfs_vfile_new(filename, MINO_VFILE_NOERR);
         if (file != NULL) {
             lua_pop(L, 1); // pop filename
             return file;

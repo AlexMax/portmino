@@ -166,3 +166,10 @@ piece_t* piece_new(const piece_config_t* config) {
 void piece_delete(piece_t* piece) {
     free(piece);
 }
+
+/**
+ * A generic destructor for the piece
+ */
+void piece_destruct(void* piece) {
+    piece_delete(piece);
+}

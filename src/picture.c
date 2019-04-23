@@ -72,7 +72,7 @@ picture_t* picture_new_vfs(const char* path) {
     vfile_t* file = NULL;
     picture_t* pic = NULL;
 
-    if ((file = vfs_vfile_new(path)) == NULL) {
+    if ((file = vfs_vfile_new(path, 0)) == NULL) {
         error_push("Could not find picture %s.", path);
         goto fail;
     }

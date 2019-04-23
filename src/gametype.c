@@ -55,7 +55,7 @@ gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name) {
     }
 
     // Load the file with our gametype in it.
-    if ((file = vfs_vfile_new(filename)) == NULL) {
+    if ((file = vfs_vfile_new(filename, 0)) == NULL) {
         error_push("Could not find gametype %s.", name);
         goto fail;
     }

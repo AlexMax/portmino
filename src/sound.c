@@ -58,7 +58,7 @@ sound_t* sound_new(const char* path) {
     unsigned int samplerate;
     uint64_t framecount;
 
-    vfile_t* file = vfs_vfile_new(path);
+    vfile_t* file = vfs_vfile_new(path, 0);
     if (file == NULL) {
         error_push("Could not find sound %s.", path);
         return NULL;

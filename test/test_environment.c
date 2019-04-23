@@ -32,6 +32,7 @@ static void test_environment(void** state) {
 
     playerinputs_t* inputs = { 0 };
     ok = environment_frame(env, inputs);
+    error_debug();
     assert_true(ok == true);
 
     environment_delete(env);

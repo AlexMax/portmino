@@ -59,7 +59,7 @@ ruleset_t* ruleset_new(lua_State* L, const char* name) {
     }
 
     // Load the file with our ruleset in it.
-    if ((file = vfs_vfile_new(filename)) == NULL) {
+    if ((file = vfs_vfile_new(filename, 0)) == NULL) {
         error_push("Could not find ruleset %s.", name);
         goto fail;
     }
@@ -177,7 +177,7 @@ menulist_t* ruleset_get_gametypes(ruleset_t* ruleset) {
             goto fail;
         }
 
-        vfile_t* file = vfs_vfile_new(mainpath);
+        vfile_t* file = vfs_vfile_new(mainpath, 0);
         free(mainpath);
         if (file == NULL) {
             // TODO: A warning message would be nice.

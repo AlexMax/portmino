@@ -19,6 +19,15 @@
 
 #include "define.h"
 
+typedef enum {
+    /**
+     * Don't push an error on failure.
+     */
+    MINO_VFILE_NOERR = 1 << 0,
+} vfile_flag_t;
+
+typedef unsigned vfile_flags_t;
+
 /**
  * A file obtained from the virtual filesystem
  */
@@ -41,6 +50,6 @@ typedef struct vfile_s {
 
 bool vfs_init(const char* argv0);
 void vfs_deinit(void);
-vfile_t* vfs_vfile_new(const char* filename);
+vfile_t* vfs_vfile_new(const char* filename, vfile_flags_t flags);
 void vfs_vfile_delete(vfile_t* file);
 char* vfs_path_join(const char* base, const char* append, char sep);

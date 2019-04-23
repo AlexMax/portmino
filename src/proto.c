@@ -134,7 +134,7 @@ bool proto_container_push(proto_container_t* protos, proto_t* proto) {
 /**
  * Allocate a new prototype
  */
-proto_t* proto_new(proto_type_t type, void* data, proto_deinit_t deinit) {
+proto_t* proto_new(proto_type_t type, void* data, proto_destruct_t destruct) {
     proto_t* proto = NULL;
 
     if ((proto = calloc(1, sizeof(*proto))) == NULL) {
@@ -144,7 +144,7 @@ proto_t* proto_new(proto_type_t type, void* data, proto_deinit_t deinit) {
 
     proto->type = type;
     proto->data = data;
-    proto->deinit = deinit;
+    proto->destruct = destruct;
 
     return proto;
 
@@ -161,9 +161,9 @@ void proto_delete(proto_t* proto) {
         return;
     }
 
-    proto->deinit(proto->data);
+    proto->destruct(proto->data);
     proto->type = MINO_PROTO_NONE;
-    proto->deinit = NULL;
+    proto->destruct = NULL;
     proto->data = NULL;
 
     free(proto);

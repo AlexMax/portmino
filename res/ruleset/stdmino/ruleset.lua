@@ -114,11 +114,12 @@ local function board_next_piece(board, tic)
     end
 
     -- Find the next piece.
-    local config = next_buffer.peek_next(board)
+    local piece = next_buffer.peek_next(board)
 
     -- See if our newly-spawned piece would collide with an existing piece.
-    local spawn_pos = mino_piece.config_get_spawn_pos(config)
-    local spawn_rot = mino_piece.config_get_spawn_rot(config)
+    local config = piece:config_name()
+    local spawn_pos = piece:config_spawn_pos()
+    local spawn_rot = piece:config_spawn_rot()
     if not board.board:test_piece(config, spawn_pos, spawn_rot) then
         spawn_pos.y = spawn_pos.y - 1
         if not board.board:test_piece(config, spawn_pos, spawn_rot) then
@@ -126,11 +127,10 @@ local function board_next_piece(board, tic)
         end
 
         -- Piece spawns offset from its usual spot
-        board.board:set_piece(BOARD_PIECE, config)
-        local piece = board.board:get_piece(BOARD_PIECE)
-        mino_piece.set_pos(piece, spawn_pos)
+        board.board:set_piece(BOARD_PIECE, piece)
+        board.board:set_pos(BOARD_PIECE, spawn_pos)
     else
-        board.board:set_piece(BOARD_PIECE, config)
+        board.board:set_piece(BOARD_PIECE, piece)
     end
 
     -- Set the spawn tic.
@@ -155,10 +155,10 @@ local function frame(state, gametic, inputs)
     end
 
     -- Get our piece
-    local piece = mino_board.get_piece(board, BOARD_PIECE)
-    local piece_pos = mino_piece.get_pos(piece)
-    local piece_rot = mino_piece.get_rot(piece)
-    local piece_config = mino_piece.get_config(piece)
+    local piece = board.board:get_piece(BOARD_PIECE)
+    local piece_pos = board.board:get_pos(BOARD_PIECE, piece)
+    local piece_rot = board.board:get_rot(BOARD_PIECE, piece)
+    local piece_config = piece:config_name()
 
     -- Is our piece blocked from the bottom?  If so, lock logic takes priority.
     local down_pos = { x = piece_pos.x, y = piece_pos.y + 1 }

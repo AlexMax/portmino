@@ -33,7 +33,7 @@ typedef enum {
  *
  * All prototype destructors must conform to this function type.
  */
-typedef void(*entity_deinit_t)(void* ptr);
+typedef void(*entity_destruct_t)(void* ptr);
 
 /**
  * Generic entity.
@@ -62,7 +62,7 @@ typedef struct entity_s {
     /**
      * Entity destructor.
      */
-    entity_deinit_t deinit;
+    entity_destruct_t destruct;
 } entity_t;
 
 void entity_deinit(entity_t* entity);

@@ -18,7 +18,7 @@ local function next_piece(board)
     -- If our bag is empty, fill it back up.
     if board.bag_size == 0 then
         for key, value in ipairs(pieces) do
-            board.bag[key] = value
+            board.bag[key] = mino_piece.new(value)
         end
         board.bag_size = #board.bag
     end

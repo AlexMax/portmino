@@ -101,14 +101,16 @@ void vfs_deinit(void) {
  * 
  * The returned file struct must be freed by the caller.
  */
-vfile_t* vfs_vfile_new(const char* filename) {
+vfile_t* vfs_vfile_new(const char* filename, vfile_flags_t flags) {
     PHYSFS_File* fh = NULL;
     vfile_t* filedata = NULL;
 
     // Check in the VFS for the given file.
     if ((fh = PHYSFS_openRead(filename)) == NULL) {
-        PHYSFS_ErrorCode err = PHYSFS_getLastErrorCode();
-        error_push("VFS file read error.  (file: %s, error: %s)", filename, PHYSFS_getErrorByCode(err));
+        if ((flags & MINO_VFILE_NOERR) == 0) {
+            PHYSFS_ErrorCode err = PHYSFS_getLastErrorCode();
+            error_push("VFS file read error.  (file: %s, error: %s)", filename, PHYSFS_getErrorByCode(err));
+        }
         goto fail;
     }
 

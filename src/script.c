@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include "lua.h"
+#include "lualib.h"
 #include "lauxlib.h"
 #include "mpack.h"
 
@@ -60,6 +61,7 @@ lua_State* script_newstate(void) {
         { "mino_proto", protoscript_openlib },
         { "mino_random", randomscript_openlib },
         { "mino_render", renderscript_openlib },
+        { LUA_TABLIBNAME, luaopen_table },
         { NULL, NULL }
     };
 

@@ -21,6 +21,9 @@
 
 #include "piece.h"
 
+// Forward declarations.
+typedef struct proto_container_s proto_container_t;
+
 /**
  * Type of prototype.
  */
@@ -35,7 +38,7 @@ typedef enum {
  * 
  * All prototype destructors must conform to this function type.
  */
-typedef void (*proto_deinit_t)(void* ptr);
+typedef void (*proto_destruct_t)(void* ptr);
 
 /**
  * Generic prototype.
@@ -54,13 +57,11 @@ typedef struct proto_s {
     /**
      * Prototype destructor.
      */
-    proto_deinit_t deinit;
+    proto_destruct_t destruct;
 } proto_t;
-
-typedef struct proto_container_s proto_container_t;
 
 proto_container_t* proto_container_new(void);
 void proto_container_delete(proto_container_t* protos);
 bool proto_container_push(proto_container_t* protos, proto_t* proto);
-proto_t* proto_new(proto_type_t type, void* data, proto_deinit_t deinit);
+proto_t* proto_new(proto_type_t type, void* data, proto_destruct_t destruct);
 void proto_delete(proto_t* proto);

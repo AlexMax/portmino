@@ -56,7 +56,7 @@ static int boardscript_new(lua_State* L) {
     entity->id = entity_next;
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_BOARD;
-    entity->deinit = board_delete;
+    entity->destruct = board_destruct;
 
     // Apply methods to the entity
     luaL_setmetatable(L, "board_t");
@@ -92,13 +92,13 @@ static int boardscript_set_piece(lua_State* L) {
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
     if (index <= 0) {
-        luaL_argerror(L, 1, "invalid piece id");
+        luaL_argerror(L, 2, "invalid piece id");
         return 0;
     }
     index -= 1;
 
     // Parameter 3: Piece userdata
-    entity_t* pentity = luaL_checkudata(L, 1, "piece_t");
+    entity_t* pentity = luaL_checkudata(L, 3, "piece_t");
     piece_t* piece = pentity->data;
 
     int piece_ref = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -118,7 +118,7 @@ static int boardscript_unset_piece(lua_State* L) {
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
     if (index <= 0) {
-        luaL_argerror(L, 1, "invalid piece id");
+        luaL_argerror(L, 2, "invalid piece id");
         return 0;
     }
     index -= 1;
@@ -139,7 +139,7 @@ static int boardscript_get_piece(lua_State* L) {
     // Parameter 2: Piece index
     lua_Integer index = luaL_checkinteger(L, 2);
     if (index <= 0) {
-        luaL_argerror(L, 1, "invalid piece id");
+        luaL_argerror(L, 2, "invalid piece id");
         return 0;
     }
     index -= 1;

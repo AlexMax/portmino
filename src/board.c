@@ -86,32 +86,43 @@ void board_delete(board_t* board) {
 }
 
 /**
+ * A generic destructor for the board
+ */
+void board_destruct(void* board) {
+    board_delete(board);
+}
+
+/**
  * Allocate a piece owned by the board.
  * 
  * If a piece exists at that index, deletes it first.
  */
-void board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref) {
+bool board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
-        return NULL;
+        return false;
     }
 
     if (board->pieces[index].piece != NULL) {
         // We have a piece here already.  Unref it.
-        board_unset_piece(board, index);
+        if (board_unset_piece(board, index) == false) {
+            return false;
+        }
     }
 
     board->pieces[index].piece_ref = piece_ref;
     board->pieces[index].piece = piece;
+
+    return true;
 }
 
 /**
  * Delete a piece owned by the board by index, with no replacement.
  */
-void board_unset_piece(board_t* board, size_t index) {
+bool board_unset_piece(board_t* board, size_t index) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
-        return NULL;
+        return false;
     }
 
     if (board->pieces[index].piece != NULL) {
@@ -119,6 +130,8 @@ void board_unset_piece(board_t* board, size_t index) {
         board->pieces[index].piece_ref = LUA_NOREF;
         board->pieces[index].piece = NULL;
     }
+
+    return true;
 }
 
 /**
