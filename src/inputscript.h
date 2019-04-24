@@ -21,5 +21,5 @@
 typedef struct lua_State lua_State;
 typedef struct playerinputs_s playerinputs_t;
 
-void inputscript_push_playerinputs(lua_State* L, const playerinputs_t* playerinputs);
+void inputscript_push_inputs(lua_State* L, const playerinputs_t* inputs);
 int inputscript_openlib(lua_State* L);

@@ -30,9 +30,8 @@ static void test_environment(void** state) {
     bool ok = environment_start(env);
     assert_true(ok == true);
 
-    playerinputs_t* inputs = { 0 };
-    ok = environment_frame(env, inputs);
-    error_debug();
+    playerinputs_t inputs = { 0 };
+    ok = environment_frame(env, &inputs);
     assert_true(ok == true);
 
     environment_delete(env);

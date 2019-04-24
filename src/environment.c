@@ -22,6 +22,7 @@
 #include "lauxlib.h"
 
 #include "error.h"
+#include "inputscript.h"
 #include "proto.h"
 #include "script.h"
 
@@ -310,7 +311,7 @@ bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
     lua_pushinteger(env->lua, gametic);
 
     // Parameter 3: Player inputs
-    lua_pushlightuserdata(env->lua, (void*)inputs);
+    inputscript_push_inputs(env->lua, inputs);
 
     if (lua_pcall(env->lua, 3, 1, top + 1) != LUA_OK) {
         error_push("Lua error: %s", lua_tostring(env->lua, -1));

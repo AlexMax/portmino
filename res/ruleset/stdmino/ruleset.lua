@@ -203,14 +203,14 @@ local function frame(state, gametic, inputs)
 
     -- Soft dropping and hard dropping aren't anything too special, they
     -- just toy with gravity.
-    if mino_event.check_softdrop(1) then
+    if inputs:check_softdrop(1) then
         gravity_tics = 2
         gravity_cells = 1
     end
 
     -- If you press soft and hard drop at the same time, hard drop wins.
     -- If you hold hard drop and press soft drop afterwards, soft drop wins.
-    if mino_event.check_harddrop(1) then
+    if inputs:check_harddrop(1) then
         if state.player[1].harddrop_tic == 0 then
             -- We only pay attention to hard drops on the tic they were invoked.
             -- Othewise, you have rapid-fire dropping or even pieces running
@@ -262,14 +262,14 @@ local function frame(state, gametic, inputs)
     -- Here we track the number of frames we've been holding a particular
     -- direction.  We use this to track DAS and to also ensure that pressing
     -- both directions at once in a staggered way behaves correctly.
-    if mino_event.check_left(1) then
+    if inputs:check_left(1) then
         if state.player[1].left_tic == 0 then
             state.player[1].left_tic = gametic
         end
     else
         state.player[1].left_tic = 0
     end
-    if mino_event.check_right(1) then
+    if inputs:check_right(1) then
         if state.player[1].right_tic == 0 then
             state.player[1].right_tic = gametic
         end
@@ -331,7 +331,7 @@ local function frame(state, gametic, inputs)
 
     -- Handle rotation.
     local drot = 0
-    if mino_event.check_ccw(1) then
+    if inputs:check_ccw(1) then
         if state.player[1].ccw_already == false then
             -- Only rotate if this is the first tic of the event
             drot = drot - 1
@@ -340,7 +340,7 @@ local function frame(state, gametic, inputs)
     else
         state.player[1].ccw_already = false
     end
-    if mino_event.check_cw(1) then
+    if inputs:check_cw(1) then
         if state.player[1].cw_already == false then
             -- Only rotate if this is the first tic of the event
             drot = drot + 1
@@ -349,7 +349,7 @@ local function frame(state, gametic, inputs)
     else
         state.player[1].cw_already = false
     end
-    if mino_event.check_180(1) then
+    if inputs:check_180(1) then
         -- FIXME: This doesn't have debouncing yet
         drot = drot - 2
     end
@@ -448,20 +448,17 @@ local function frame(state, gametic, inputs)
     end
 
     -- Create the ghost piece
-    local ghost = mino_board.set_piece(board, BOARD_GHOST, piece_config)
+    local ghost = board.board:set_piece(BOARD_GHOST, piece)
 
     -- Push the ghost to the bottom of the screen
     local ghost_dst = { x = piece_pos.x, y = 22 }
-    local ghost_pos = mino_board.test_piece_between(board, piece_config,
+    local ghost_pos = board.board:test_piece_between(piece_config,
         piece_pos, piece_rot, ghost_dst)
-    mino_piece.set_pos(ghost, ghost_pos)
-    mino_piece.set_rot(ghost, piece_rot)
+    board.board:set_pos(BOARD_GHOST, ghost_pos)
+    board.board:set_rot(BOARD_GHOST, piece_rot)
 
     -- Our gametype might want to end the game, so check it first.
-    local after_frame_result = mino_ruleset.gametype_call("after_frame")
-    if after_frame_result ~= nil then
-        return after_frame_result
-    end
+    -- TODO: Add this functionality
 
     -- We're done with this tic.
     return STATE_RESULT_OK

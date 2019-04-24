@@ -34,17 +34,12 @@ typedef struct {
 static isca_t inputscript_check_args(lua_State* L) {
     isca_t ret;
 
-    // Check internal state.
-    lua_pushstring(L, "playerinputs");
-    if (lua_gettable(L, LUA_REGISTRYINDEX) != LUA_TLIGHTUSERDATA) {
-        // never returns
-        luaL_argerror(L, 1, "no inputs are available");
-    }
-    ret.playerinputs = lua_touserdata(L, -1);
+    // Parameter 1: Our userdata
+    ret.playerinputs = luaL_checkudata(L, 1, "inputs_t");
 
-    // Parameter 1: Player number, 1-indexed.
-    lua_Integer player = luaL_checkinteger(L, 1);
-    luaL_argcheck(L, (player >= 1 && player <= MINO_MAX_PLAYERS), 1, "invalid player index");
+    // Parameter 2: Player number, 1-indexed.
+    lua_Integer player = luaL_checkinteger(L, 2);
+    luaL_argcheck(L, (player >= 1 && player <= MINO_MAX_PLAYERS), 2, "invalid player index");
     ret.player = player - 1;
 
     return ret;
@@ -131,10 +126,22 @@ static int inputscript_check_180(lua_State* L) {
 }
 
 /**
+ * Push a new inputs userdata to the stack.
+ */
+void inputscript_push_inputs(lua_State* L, const playerinputs_t* inputs) {
+    // Copy our inputs into a new userdata
+    playerinputs_t* ud = lua_newuserdata(L, sizeof(playerinputs_t));
+    memcpy(ud, inputs, sizeof(*ud));
+
+    // Apply methods to the inputs
+    luaL_setmetatable(L, "inputs_t");
+}
+
+/**
  * Initialize the inputs module.
  */
 int inputscript_openlib(lua_State* L) {
-    static const luaL_Reg inputlib[] = {
+    static const luaL_Reg inputstype[] = {
         { "check_left", inputscript_check_left },
         { "check_right", inputscript_check_right },
         { "check_softdrop", inputscript_check_softdrop },
@@ -146,6 +153,12 @@ int inputscript_openlib(lua_State* L) {
         { NULL, NULL }
     };
 
-    luaL_newlib(L, inputlib);
+    luaL_newmetatable(L, "inputs_t");
+
+    luaL_newlib(L, inputstype);
+    lua_setfield(L, -2, "__index");
+
+    lua_pop(L, 1);
+
     return 1;
 }
