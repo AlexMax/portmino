@@ -315,11 +315,11 @@ local function frame(state, gametic, inputs)
 
     -- dx will be != depending on where the piece must be moved.
     if dx ~= 0 then
-        local dpos = mino_piece.get_pos(piece)
+        local dpos = board.board:get_pos(BOARD_PIECE)
         dpos.x = dpos.x + dx
-        if mino_board.test_piece(board, piece_config, dpos, piece_rot) then
-            mino_piece.set_pos(piece, dpos)
-            piece_pos = mino_piece.get_pos(piece)
+        if board.board:test_piece(piece_config, dpos, piece_rot) then
+            board.board:set_pos(BOARD_PIECE, dpos)
+            piece_pos = board.board:get_pos(BOARD_PIECE)
             mino_audio.playsound("move")
 
             -- Moving the piece successfully resets our lock timer.
@@ -356,7 +356,8 @@ local function frame(state, gametic, inputs)
     end
 
     if drot ~= 0 then
-        local piece_rot_count = mino_piece.config_get_rot_count(piece_config)
+        local piece = board.board:get_piece(BOARD_PIECE)
+        local piece_rot_count = piece:config_rot_count()
 
         local prot = piece_rot + drot
         if prot < 0 then
@@ -373,10 +374,10 @@ local function frame(state, gametic, inputs)
             { x = 0, y = 0 },
         }
 
-        local piece_name = mino_piece.config_get_name(piece_config)
-        if piece_name == "O" then
+        local piece_name = piece:config_name()
+        if piece_name == "o_piece" then
             -- Don't wallkick the "O" piece.
-        elseif piece_name == "I" then
+        elseif piece_name == "i_piece" then
             -- Wallkicks for the "I" piece are unique.
             if (piece_rot == ROT_0 and prot == ROT_R) or (piece_rot == ROT_L and prot == ROT_2) then
                 tries[2].x = -2; tries[2].y =  0
@@ -431,9 +432,9 @@ local function frame(state, gametic, inputs)
                 y = piece_pos.y + v.y,
             }
 
-            if mino_board.test_piece(board, piece_config, test_pos, prot) then
-                mino_piece.set_pos(piece, test_pos)
-                mino_piece.set_rot(piece, prot)
+            if board.board:test_piece(piece_config, test_pos, prot) then
+                board.board:set_pos(BOARD_PIECE, test_pos)
+                board.board:set_rot(BOARD_PIECE, prot)
                 mino_audio.playsound("rotate")
 
                 -- Rotating the piece successfully resets our lock timer.

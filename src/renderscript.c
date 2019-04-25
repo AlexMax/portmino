@@ -81,7 +81,7 @@ static int renderscript_draw_piece(lua_State* L) {
     entity_t* entity = luaL_checkudata(L, 2, "piece_t");
     piece_t* piece = entity->data;
 
-    render()->draw_piece(pos, piece);
+    render()->draw_piece(pos, piece->config);
     return 0;
 }
 

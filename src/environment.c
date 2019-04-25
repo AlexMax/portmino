@@ -122,7 +122,7 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     // For our new environment, set up links to the proper modules and globals.
     const char* modules[] = {
         "mino_audio", "mino_board", "mino_input", "mino_piece", "mino_proto",
-        "mino_random", "mino_render", "table"
+        "mino_random", "mino_render", "string", "table"
     };
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
@@ -318,7 +318,7 @@ bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
         goto fail;
     }
 
-    env->gametic += gametic;
+    env->gametic += 1;
     lua_settop(env->lua, top);
     return true;
 
