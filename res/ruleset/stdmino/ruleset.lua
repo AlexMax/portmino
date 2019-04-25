@@ -14,6 +14,7 @@
 -- along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
 
 local next_buffer = require('next_buffer')
+local gametype = require('gametype')
 
 -- Stubbing out defines
 local STATE_RESULT_OK = 0
@@ -464,7 +465,13 @@ local function frame(state, gametic, inputs)
     return STATE_RESULT_OK
 end
 
+-- Run every frame to draw the game
+local function draw(state)
+    gametype.draw(state)
+end
+
 return {
     start = start,
     frame = frame,
+    draw = draw,
 }

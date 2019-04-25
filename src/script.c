@@ -346,10 +346,10 @@ void script_push_paths(lua_State* L, const char* ruleset, const char* gametype) 
     if (gametype != NULL) {
         // Our search path contains gametype and ruleset
         lua_pushfstring(L, 
-            "gametype/%s/?.lua;" "gametype/%s/?/init.lua;" \
+            "gametype/%s/%s/?.lua;" "gametype/%s/%s/?/init.lua;" \
             "ruleset/%s/?.lua;" "ruleset/%s/?/init.lua;" \
             "script/?.lua;" "script/?/init.lua",
-            gametype, gametype, ruleset, ruleset);
+            ruleset, gametype, ruleset, gametype, ruleset, ruleset);
     } else if (ruleset != NULL) {
         // Our search path contains ruleset
         lua_pushfstring(L, 

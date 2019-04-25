@@ -20,6 +20,8 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "entity.h"
+#include "piece.h"
 #include "render.h"
 #include "script.h"
 
@@ -43,13 +45,8 @@ static int renderscript_draw_board(lua_State* L) {
     luaL_argcheck(L, ok, 1, "invalid position");
 
     // Parameter 2: Board handle
-    int type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid board handle");
-    board_t* board = lua_touserdata(L, 2);
-    if (board == NULL) {
-        luaL_argerror(L, 2, "nil board handle");
-        return 0;
-    }
+    entity_t* entity = luaL_checkudata(L, 2, "board_t");
+    board_t* board = entity->data;
 
     render()->draw_board(pos, board);
     return 0;
@@ -81,13 +78,8 @@ static int renderscript_draw_piece(lua_State* L) {
     luaL_argcheck(L, ok, 1, "invalid position");
 
     // Parameter 2: Piece handle
-    int type = lua_type(L, 2);
-    luaL_argcheck(L, (type == LUA_TLIGHTUSERDATA), 2, "invalid piece handle");
-    piece_config_t* piece = lua_touserdata(L, 2);
-    if (piece == NULL) {
-        luaL_argerror(L, 2, "nil piece handle");
-        return 0;
-    }
+    entity_t* entity = luaL_checkudata(L, 2, "piece_t");
+    piece_t* piece = entity->data;
 
     render()->draw_piece(pos, piece);
     return 0;

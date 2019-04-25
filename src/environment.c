@@ -296,7 +296,7 @@ bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
     }
 
     if (lua_getfield(env->lua, -1, "frame") != LUA_TFUNCTION) {
-        error_push("Ruleset module has no start function.");
+        error_push("Ruleset module has no frame function.");
         goto fail;
     }
 
@@ -331,5 +331,36 @@ fail:
  * Draw the current frame of game logic
  */
 void environment_draw(environment_t* env) {
-    (void)env;
+    int top = lua_gettop(env->lua);
+
+    // Error message handler
+    lua_pushcfunction(env->lua, db_traceback);
+
+    // Try and call a function called "draw" to draw the game.
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref) != LUA_TTABLE) {
+        error_push("Ruleset module reference has gone stale.");
+        goto fail;
+    }
+
+    if (lua_getfield(env->lua, -1, "draw") != LUA_TFUNCTION) {
+        error_push("Ruleset module has no draw function.");
+        goto fail;
+    }
+
+    // Parameter 1: State table
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {
+        error_push("State table reference has gone stale.");
+        goto fail;
+    }
+
+    if (lua_pcall(env->lua, 1, 1, top + 1) != LUA_OK) {
+        error_push("Lua error: %s", lua_tostring(env->lua, -1));
+        goto fail;
+    }
+
+    lua_settop(env->lua, top);
+    return;
+
+fail:
+    lua_settop(env->lua, top);
 }

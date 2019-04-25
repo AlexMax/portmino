@@ -23,27 +23,18 @@ local TEXT_Y = BOARD_Y
 local NEXT_X_START = 18
 local NEXT_Y = (BOARD_Y - 20)
 
-local function init()
-
-end
-
-local function after_frame()
-
-end
-
-local function draw()
-    local board = mino_board.get(1)
-    local next = mino_next.get(1)
+local function draw(state)
+    local board = state.board[1]
+    --local next = mino_next.get(1)
 
     -- Draw the actual game
     mino_render.draw_background()
-    mino_render.draw_board({x = BOARD_X, y = BOARD_Y}, board)
+    mino_render.draw_board({x = BOARD_X, y = BOARD_Y}, board.board)
 
-    local piece = mino_next.get_next_config(next)
-    mino_render.draw_piece({x = NEXT_X_START, y = NEXT_Y}, piece)
+    --local piece = mino_next.get_next_config(next)
+    --mino_render.draw_piece({x = NEXT_X_START, y = NEXT_Y}, piece)
 
     -- Draw the HUD
-    local state = mino_state.get()
     mino_render.draw_font({x = TEXT_X, y = TEXT_Y}, "Marathon")
     mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 1)}, "(150 Line Game)")
 
@@ -64,9 +55,5 @@ local function draw()
 end
 
 return {
-    init = init,
-    state_functions = {
-        after_frame = after_frame,
-    },
     draw = draw,
 }
