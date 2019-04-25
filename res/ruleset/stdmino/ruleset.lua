@@ -171,11 +171,11 @@ local function frame(state, gametic, inputs)
 
         if gametic - state.player[1].lock_tic >= DEFAULT_LOCK_DELAY then
             -- Our lock timer has run out, lock the piece.
-            board:lock_piece(piece_config, piece_pos, piece_rot)
+            board.board:lock_piece(piece_config, piece_pos, piece_rot)
             mino_audio.playsound("lock")
 
             -- Clear the board of any lines.
-            local lines = board:clear_lines()
+            local lines = board.board:clear_lines()
 
             -- Advance the new piece.
             if not board_next_piece(board, gametic) then
@@ -187,9 +187,9 @@ local function frame(state, gametic, inputs)
             state.player[1].lock_tic = 0
 
             -- Get the piece pointer again, because we mutated it.
-            piece = board:get_piece(BOARD_PIECE)
-            piece_pos = board:get_pos(BOARD_PIECE)
-            piece_rot = board:get_rot(BOARD_PIECE)
+            piece = board.board:get_piece(BOARD_PIECE)
+            piece_pos = board.board:get_pos(BOARD_PIECE)
+            piece_rot = board.board:get_rot(BOARD_PIECE)
             piece_config = piece:config_name()
         end
     else
@@ -226,30 +226,30 @@ local function frame(state, gametic, inputs)
 
     -- Handle gravity.
     if (gametic - state.board[1].spawn_tic) % gravity_tics >= gravity_tics - 1 then
-        local src = mino_piece.get_pos(piece)
-        local dst = mino_piece.get_pos(piece)
+        local src = board.board:get_pos(BOARD_PIECE)
+        local dst = board.board:get_pos(BOARD_PIECE)
         dst.y = dst.y + gravity_cells
-        local res = mino_board.test_piece_between(board, piece_config, src, piece_rot, dst)
+        local res = board.board:test_piece_between(piece_config, src, piece_rot, dst)
 
         -- Our new location is always wherever the test tells us.  If we
         -- can't move down, we're relying on our lock delay logic to handle
         -- things next tic.
-        mino_piece.set_pos(piece, res)
-        piece_pos = mino_piece.get_pos(piece)
+        board.board:set_pos(BOARD_PIECE, res)
+        piece_pos = board.board:get_pos(BOARD_PIECE)
 
         if state.player[1].harddrop_tic == gametic then
             -- ...unless our gravity was actually a hard drop.  In that case,
             -- lock the piece immediately
-            mino_board.lock_piece(board, piece_config, piece_pos, piece_rot)
+            board.board:lock_piece(piece_config, piece_pos, piece_rot)
             mino_audio.playsound("lock")
 
             -- Clear the board of any lines.
-            local lines = mino_board.clear_lines(board)
+            local lines = board.board:clear_lines()
 
             -- There is no possible other move we can make this tic.  We
             -- delete the piece here, but we don't advance to the next piece
             -- until the next tic, to ensure gravity isn't screwed up.
-            mino_board.unset_piece(board, BOARD_PIECE)
+            board.board:unset_piece(BOARD_PIECE)
 
             -- Again, doing a hard drop is mutually exclusive with any other
             -- piece movement this tic.
