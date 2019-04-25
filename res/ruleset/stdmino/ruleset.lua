@@ -88,9 +88,6 @@ local function start(state)
             -- The "next piece" buffer.
             next = {},
 
-            -- The "next piece" buffer index.
-            next_index = 0,
-
             -- Tic that the current piece spawned on.
             spawn_tic = 0,
 
@@ -104,6 +101,9 @@ local function start(state)
             bag_size = 0,
         }
     }
+
+    -- Ensure the next piece buffer is filled
+    next_buffer.init_next(state.board[1])
 end
 
 -- Given a specific board, cycle to the next piece

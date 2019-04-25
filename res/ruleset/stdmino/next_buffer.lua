@@ -17,25 +17,29 @@ local randomizer = require('randomizer')
 
 local NEXT_BUFFER_SIZE = 3
 
+-- Initialize the next piece buffer
+local function init_next(board)
+    for i = 1, NEXT_BUFFER_SIZE do
+        board.next[i] = randomizer.next_piece(board)
+    end
+end
+
 -- Peek at the next piece
 local function peek_next(board)
-    if board.next_index == 0 then
-        for i = 1, NEXT_BUFFER_SIZE do
-            board.next[i] = randomizer.next_piece(board)
-        end
-        board.next_index = 1
-    end
-    
-    return board.next[board.next_index]
+    return board.next[1]
 end
 
 -- Consume the current next piece
 local function consume_next(board)
     -- Remove the head of the table 
     table.remove(board.next, 1)
+
+    -- Grab another piece out of the bag and put it into tail of the table
+    board.next[NEXT_BUFFER_SIZE] = randomizer.next_piece(board)
 end
 
 return {
+    init_next = init_next,
     peek_next = peek_next,
     consume_next = consume_next
 }
