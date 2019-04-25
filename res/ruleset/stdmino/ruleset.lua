@@ -161,175 +161,6 @@ local function frame(state, gametic, inputs)
     local piece_rot = board.board:get_rot(BOARD_PIECE)
     local piece_config = piece:config_name()
 
-    -- Is our piece blocked from the bottom?  If so, lock logic takes priority.
-    local down_pos = { x = piece_pos.x, y = piece_pos.y + 1 }
-    if not board.board:test_piece(piece_config, down_pos, piece_rot) then
-        if state.player[1].lock_tic == 0 then
-            -- This is our first tic that we've locked.
-            state.player[1].lock_tic = gametic
-            mino_audio.playsound("step")
-        end
-
-        if gametic - state.player[1].lock_tic >= DEFAULT_LOCK_DELAY then
-            -- Our lock timer has run out, lock the piece.
-            board.board:lock_piece(piece_config, piece_pos, piece_rot)
-            mino_audio.playsound("lock")
-
-            -- Clear the board of any lines.
-            local lines = board.board:clear_lines()
-
-            -- Advance the new piece.
-            if not board_next_piece(board, gametic) then
-                return STATE_RESULT_GAMEOVER
-            end
-            mino_audio.playsound("piece0")
-
-            -- We're done with locking, so cancel the tic out.
-            state.player[1].lock_tic = 0
-
-            -- Get the piece pointer again, because we mutated it.
-            piece = board.board:get_piece(BOARD_PIECE)
-            piece_pos = board.board:get_pos(BOARD_PIECE)
-            piece_rot = board.board:get_rot(BOARD_PIECE)
-            piece_config = piece:config_name()
-        end
-    else
-        -- We are not in lock logic anymore.
-        state.player[1].lock_tic = 0
-    end
-
-    -- Determine what our gravity is going to be.
-    local gravity_tics = 64 -- number of tics between gravity tics
-    local gravity_cells = 1 -- number of cells to move the piece per gravity tics.
-
-    -- Soft dropping and hard dropping aren't anything too special, they
-    -- just toy with gravity.
-    if inputs:check_softdrop(1) then
-        gravity_tics = 2
-        gravity_cells = 1
-    end
-
-    -- If you press soft and hard drop at the same time, hard drop wins.
-    -- If you hold hard drop and press soft drop afterwards, soft drop wins.
-    if inputs:check_harddrop(1) then
-        if state.player[1].harddrop_tic == 0 then
-            -- We only pay attention to hard drops on the tic they were invoked.
-            -- Othewise, you have rapid-fire dropping or even pieces running
-            -- into each other at the top of the well.
-            gravity_tics = 1
-            gravity_cells = 20
-
-            state.player[1].harddrop_tic = gametic
-        end
-    else
-        state.player[1].harddrop_tic = 0
-    end
-
-    -- Handle gravity.
-    if (gametic - state.board[1].spawn_tic) % gravity_tics >= gravity_tics - 1 then
-        local src = board.board:get_pos(BOARD_PIECE)
-        local dst = board.board:get_pos(BOARD_PIECE)
-        dst.y = dst.y + gravity_cells
-        local res = board.board:test_piece_between(piece_config, src, piece_rot, dst)
-
-        -- Our new location is always wherever the test tells us.  If we
-        -- can't move down, we're relying on our lock delay logic to handle
-        -- things next tic.
-        board.board:set_pos(BOARD_PIECE, res)
-        piece_pos = board.board:get_pos(BOARD_PIECE)
-
-        if state.player[1].harddrop_tic == gametic then
-            -- ...unless our gravity was actually a hard drop.  In that case,
-            -- lock the piece immediately
-            board.board:lock_piece(piece_config, piece_pos, piece_rot)
-            mino_audio.playsound("lock")
-
-            -- Clear the board of any lines.
-            local lines = board.board:clear_lines()
-
-            -- There is no possible other move we can make this tic.  We
-            -- delete the piece here, but we don't advance to the next piece
-            -- until the next tic, to ensure gravity isn't screwed up.
-            board.board:unset_piece(BOARD_PIECE)
-
-            -- Again, doing a hard drop is mutually exclusive with any other
-            -- piece movement this tic.
-            return STATE_RESULT_OK
-        end
-    end
-
-    -- Handle movement.
-    --
-    -- Here we track the number of frames we've been holding a particular
-    -- direction.  We use this to track DAS and to also ensure that pressing
-    -- both directions at once in a staggered way behaves correctly.
-    if inputs:check_left(1) then
-        if state.player[1].left_tic == 0 then
-            state.player[1].left_tic = gametic
-        end
-    else
-        state.player[1].left_tic = 0
-    end
-    if inputs:check_right(1) then
-        if state.player[1].right_tic == 0 then
-            state.player[1].right_tic = gametic
-        end
-    else
-        state.player[1].right_tic = 0
-    end
-
-    local dx = 0
-    if state.player[1].left_tic == state.player[1].right_tic then
-        -- Either neither event is happening, or both events started at once.
-    elseif state.player[1].left_tic > state.player[1].right_tic then
-        -- Ignore right event, figure out our left event DAS.
-        local tics = gametic - state.player[1].left_tic
-        if tics == 0 then
-            -- Move immediately
-            dx = -1
-        elseif tics >= DEFAULT_DAS then
-            -- Waited out the delay.
-            tics = tics - DEFAULT_DAS
-            if DEFAULT_DAS_PERIOD == 0 then
-                dx = -(state.boards[0].config.width)
-            elseif tics % DEFAULT_DAS_PERIOD == 0 then
-                dx = -1
-            end
-        end
-    elseif state.player[1].left_tic < state.player[1].right_tic then
-        -- Ignore left event, figure out our right event DAS.
-        local tics = gametic - state.player[1].right_tic
-        if tics == 0 then
-            -- Move immediately.
-            dx = 1
-        elseif tics >= DEFAULT_DAS then
-            -- Waited out the delay.
-            tics = tics - DEFAULT_DAS
-            if DEFAULT_DAS_PERIOD == 0 then
-                dx = state.boards[0].config.width
-            elseif tics % DEFAULT_DAS_PERIOD == 0 then
-                dx = 1
-            end
-        end
-    end
-
-    -- dx will be != depending on where the piece must be moved.
-    if dx ~= 0 then
-        local dpos = board.board:get_pos(BOARD_PIECE)
-        dpos.x = dpos.x + dx
-        if board.board:test_piece(piece_config, dpos, piece_rot) then
-            board.board:set_pos(BOARD_PIECE, dpos)
-            piece_pos = board.board:get_pos(BOARD_PIECE)
-            mino_audio.playsound("move")
-
-            -- Moving the piece successfully resets our lock timer.
-            if state.player[1].lock_tic ~= 0 then
-                state.player[1].lock_tic = gametic
-                mino_audio.playsound("step")
-            end
-        end
-    end
-
     -- Handle rotation.
     local drot = 0
     if inputs:check_ccw(1) then
@@ -437,6 +268,11 @@ local function frame(state, gametic, inputs)
                 board.board:set_rot(BOARD_PIECE, prot)
                 mino_audio.playsound("rotate")
 
+                -- Make sure that we update our board piece information so
+                -- shifts take into account our new position.
+                piece_pos = test_pos
+                piece_rot = prot
+
                 -- Rotating the piece successfully resets our lock timer.
                 if state.player[1].lock_tic ~= 0 then
                     state.player[1].lock_tic = gametic
@@ -446,6 +282,175 @@ local function frame(state, gametic, inputs)
                 -- We don't need to test any more piece positions.
                 break
             end
+        end
+    end
+
+    -- Handle movement.
+    --
+    -- Here we track the number of frames we've been holding a particular
+    -- direction.  We use this to track DAS and to also ensure that pressing
+    -- both directions at once in a staggered way behaves correctly.
+    if inputs:check_left(1) then
+        if state.player[1].left_tic == 0 then
+            state.player[1].left_tic = gametic
+        end
+    else
+        state.player[1].left_tic = 0
+    end
+    if inputs:check_right(1) then
+        if state.player[1].right_tic == 0 then
+            state.player[1].right_tic = gametic
+        end
+    else
+        state.player[1].right_tic = 0
+    end
+
+    local dx = 0
+    if state.player[1].left_tic == state.player[1].right_tic then
+        -- Either neither event is happening, or both events started at once.
+    elseif state.player[1].left_tic > state.player[1].right_tic then
+        -- Ignore right event, figure out our left event DAS.
+        local tics = gametic - state.player[1].left_tic
+        if tics == 0 then
+            -- Move immediately
+            dx = -1
+        elseif tics >= DEFAULT_DAS then
+            -- Waited out the delay.
+            tics = tics - DEFAULT_DAS
+            if DEFAULT_DAS_PERIOD == 0 then
+                dx = -(state.boards[0].config.width)
+            elseif tics % DEFAULT_DAS_PERIOD == 0 then
+                dx = -1
+            end
+        end
+    elseif state.player[1].left_tic < state.player[1].right_tic then
+        -- Ignore left event, figure out our right event DAS.
+        local tics = gametic - state.player[1].right_tic
+        if tics == 0 then
+            -- Move immediately.
+            dx = 1
+        elseif tics >= DEFAULT_DAS then
+            -- Waited out the delay.
+            tics = tics - DEFAULT_DAS
+            if DEFAULT_DAS_PERIOD == 0 then
+                dx = state.boards[0].config.width
+            elseif tics % DEFAULT_DAS_PERIOD == 0 then
+                dx = 1
+            end
+        end
+    end
+
+    -- dx will be != depending on where the piece must be moved.
+    if dx ~= 0 then
+        local dpos = board.board:get_pos(BOARD_PIECE)
+        dpos.x = dpos.x + dx
+        if board.board:test_piece(piece_config, dpos, piece_rot) then
+            board.board:set_pos(BOARD_PIECE, dpos)
+            piece_pos = board.board:get_pos(BOARD_PIECE)
+            mino_audio.playsound("move")
+
+            -- Moving the piece successfully resets our lock timer.
+            if state.player[1].lock_tic ~= 0 then
+                state.player[1].lock_tic = gametic
+                mino_audio.playsound("step")
+            end
+        end
+    end
+
+    -- Is our piece blocked from the bottom?  If so, lock logic takes priority
+    -- over gravity logic.
+    local down_pos = { x = piece_pos.x, y = piece_pos.y + 1 }
+    if not board.board:test_piece(piece_config, down_pos, piece_rot) then
+        if state.player[1].lock_tic == 0 then
+            -- This is our first tic that we've locked.
+            state.player[1].lock_tic = gametic
+            mino_audio.playsound("step")
+        end
+
+        if gametic - state.player[1].lock_tic >= DEFAULT_LOCK_DELAY then
+            -- Our lock timer has run out, lock the piece.
+            board.board:lock_piece(piece_config, piece_pos, piece_rot)
+            mino_audio.playsound("lock")
+
+            -- Clear the board of any lines.
+            local lines = board.board:clear_lines()
+
+            -- We're done with locking, so cancel the tic out.
+            state.player[1].lock_tic = 0
+
+            -- There is no possible other move we can make this tic.  We
+            -- delete the piece here, but we don't advance to the next piece
+            -- until the next tic, to ensure gravity isn't screwed up.
+            board.board:unset_piece(BOARD_PIECE)
+            board.board:unset_piece(BOARD_GHOST)
+
+            -- Again, piece lock is mutually exclusive with any other
+            -- piece movement this tic.
+            return STATE_RESULT_OK
+        end
+    else
+        -- We are not in lock logic anymore.
+        state.player[1].lock_tic = 0
+    end
+
+    -- Determine what our gravity is going to be.
+    local gravity_tics = 64 -- number of tics between gravity tics
+    local gravity_cells = 1 -- number of cells to move the piece per gravity tics.
+
+    -- Soft dropping and hard dropping aren't anything too special, they
+    -- just toy with gravity.
+    if inputs:check_softdrop(1) then
+        gravity_tics = 2
+        gravity_cells = 1
+    end
+
+    -- If you press soft and hard drop at the same time, hard drop wins.
+    -- If you hold hard drop and press soft drop afterwards, soft drop wins.
+    if inputs:check_harddrop(1) then
+        if state.player[1].harddrop_tic == 0 then
+            -- We only pay attention to hard drops on the tic they were invoked.
+            -- Othewise, you have rapid-fire dropping or even pieces running
+            -- into each other at the top of the well.
+            gravity_tics = 1
+            gravity_cells = 20
+
+            state.player[1].harddrop_tic = gametic
+        end
+    else
+        state.player[1].harddrop_tic = 0
+    end
+
+    -- Handle gravity.
+    if (gametic - state.board[1].spawn_tic) % gravity_tics >= gravity_tics - 1 then
+        local src = board.board:get_pos(BOARD_PIECE)
+        local dst = board.board:get_pos(BOARD_PIECE)
+        dst.y = dst.y + gravity_cells
+        local res = board.board:test_piece_between(piece_config, src, piece_rot, dst)
+
+        -- Our new location is always wherever the test tells us.  If we
+        -- can't move down, we're relying on our lock delay logic to handle
+        -- things next tic.
+        board.board:set_pos(BOARD_PIECE, res)
+        piece_pos = board.board:get_pos(BOARD_PIECE)
+
+        if state.player[1].harddrop_tic == gametic then
+            -- ...unless our gravity was actually a hard drop.  In that case,
+            -- lock the piece immediately
+            board.board:lock_piece(piece_config, piece_pos, piece_rot)
+            mino_audio.playsound("lock")
+
+            -- Clear the board of any lines.
+            local lines = board.board:clear_lines()
+
+            -- There is no possible other move we can make this tic.  We
+            -- delete the piece here, but we don't advance to the next piece
+            -- until the next tic, to ensure gravity isn't screwed up.
+            board.board:unset_piece(BOARD_PIECE)
+            board.board:unset_piece(BOARD_GHOST)
+
+            -- Again, doing a hard drop is mutually exclusive with any other
+            -- piece movement this tic.
+            return STATE_RESULT_OK
         end
     end
 
