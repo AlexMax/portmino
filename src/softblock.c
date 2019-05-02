@@ -32,15 +32,17 @@ typedef struct softblock_s {
  * Allocate a block atlas from a filename.
  */
 softblock_t* softblock_new(const char* path) {
-    picture_t* blockpic = picture_new_vfs(path);
+    picture_t* blockpic = NULL;
+    softblock_t* block = NULL;
+
+    blockpic = picture_new_vfs(path);
     if (blockpic == NULL) {
-        return NULL;
+        goto fail;
     }
 
-    softblock_t* block = calloc(1, sizeof(softblock_t));
+    block = calloc(1, sizeof(softblock_t));
     if (block == NULL) {
-        picture_delete(blockpic);
-        return NULL;
+        goto fail;
     }
 
     // Blocks are assumed to be square, and our block count stems from that.
@@ -48,17 +50,13 @@ softblock_t* softblock_new(const char* path) {
     block->block_height = blockpic->height;
     block->count = blockpic->width / block->block_width;
     if (block->count == 0) {
-        picture_delete(blockpic);
-        softblock_delete(block);
-        return NULL;
+        goto fail;
     }
 
     // Allocate our blocks.
-    block->blocks = calloc(block->count, sizeof(picture_t));
+    block->blocks = calloc(block->count, sizeof(picture_t*));
     if (block->blocks == NULL) {
-        picture_delete(blockpic);
-        softblock_delete(block);
-        return NULL;
+        goto fail;
     }
 
     // Copy our block picture into the individual sliced up blocks.
@@ -69,15 +67,18 @@ softblock_t* softblock_new(const char* path) {
 
         block->blocks[i] = picture_new(block->block_width, block->block_height);
         if (block->blocks[i] == NULL) {
-            picture_delete(blockpic);
-            softblock_delete(block);
-            return NULL;
+            goto fail;
         }
         picture_copy(block->blocks[i], vec2i_zero(), blockpic, srcpos);
     }
 
     picture_delete(blockpic);
     return block;
+
+fail:
+    picture_delete(blockpic);
+    softblock_delete(block);
+    return NULL;
 }
 
 /**
@@ -88,7 +89,7 @@ void softblock_delete(softblock_t* block) {
         return;
     }
 
-    if (block->count > 0) {
+    if (block->blocks != NULL) {
         for (size_t i = 0;i < block->count;i++) {
             picture_delete(block->blocks[i]);
             block->blocks[i] = NULL;

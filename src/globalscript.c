@@ -227,14 +227,14 @@ static int globalscript_require(lua_State* L) {
 
     // Internal State 2: Loaded modules
     type = lua_getfield(L, lua_upvalueindex(1), "loaded");
-    if (lua_type(L, -1) != LUA_TTABLE) {
+    if (type != LUA_TTABLE) {
         luaL_error(L, "require: missing internal state (loaded)");
         return 0;
     }
 
     // Upvalue 3: Search paths
     type = lua_getfield(L, lua_upvalueindex(1), "paths");
-    if (lua_type(L, -1) != LUA_TSTRING) {
+    if (type != LUA_TSTRING) {
         luaL_error(L, "require: missing internal state (paths)");
         return 0;
     }
