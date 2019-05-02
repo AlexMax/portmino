@@ -99,6 +99,7 @@ static input_t sdl_scancode_to_input(int code) {
     case SDL_SCANCODE_UP: return INPUT_HARDDROP;
     case SDL_SCANCODE_Z: return INPUT_CCW;
     case SDL_SCANCODE_X: return INPUT_CW;
+    case SDL_SCANCODE_C: return INPUT_HOLD;
     default: return INPUT_NONE;
     }
 }

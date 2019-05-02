@@ -23,6 +23,9 @@ local TEXT_Y = BOARD_Y
 local NEXT_X_START = 18
 local NEXT_Y = (BOARD_Y - 20)
 
+local HOLD_X = 18
+local HOLD_Y = (NEXT_Y - 20)
+
 local function draw(state)
     local board = state.board[1]
 
@@ -30,10 +33,15 @@ local function draw(state)
     mino_render.draw_background()
     mino_render.draw_board({x = BOARD_X, y = BOARD_Y}, board.board)
 
+    -- Draw the hold piece
+    if board.hold ~= nil then
+        mino_render.draw_piece({x = HOLD_X, y = HOLD_Y}, board.hold)
+    end
+
     -- Draw the next pieces
-    mino_render.draw_piece({x = NEXT_X_START, y = NEXT_Y}, state.board[1].next[1])
-    mino_render.draw_piece({x = NEXT_X_START + 36, y = NEXT_Y}, state.board[1].next[2])
-    mino_render.draw_piece({x = NEXT_X_START + 72, y = NEXT_Y}, state.board[1].next[3])
+    mino_render.draw_piece({x = NEXT_X_START, y = NEXT_Y}, board.next[1])
+    mino_render.draw_piece({x = NEXT_X_START + 36, y = NEXT_Y}, board.next[2])
+    mino_render.draw_piece({x = NEXT_X_START + 72, y = NEXT_Y}, board.next[3])
 
     -- Draw the HUD
     mino_render.draw_font({x = TEXT_X, y = TEXT_Y}, "Marathon")

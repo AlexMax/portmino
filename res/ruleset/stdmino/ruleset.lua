@@ -99,6 +99,12 @@ local function start(state)
 
             -- Bag size
             bag_size = 0,
+
+            -- Hold piece
+            hold = nil,
+
+            -- Hold lockout, usually when somebody has already held a piece
+            hold_lock = false,
         }
     }
 
@@ -107,15 +113,23 @@ local function start(state)
 end
 
 -- Given a specific board, cycle to the next piece
-local function board_next_piece(board, tic)
+--
+-- The `force_piece` parameter is optional, set it to force a specific next
+-- piece and bypass the next buffer.
+local function board_next_piece(board, tic, force_piece)
     local next = board.next[1]
 
     if board.board:get_piece(BOARD_PIECE) ~= nil then
         board.board:unset_piece(BOARD_PIECE)
     end
 
-    -- Find the next piece.
-    local piece = next_buffer.peek_next(board)
+    if force_piece ~= nil then
+        -- Our next piece is forced.
+        piece = force_piece
+    else
+        -- Get the next piece from the next buffer.
+        piece = next_buffer.peek_next(board)
+    end
 
     -- See if our newly-spawned piece would collide with an existing piece.
     local config = piece:config_name()
@@ -137,8 +151,13 @@ local function board_next_piece(board, tic)
     -- Set the spawn tic.
     board.spawn_tic = tic
 
-    -- Advance the next index.
-    next_buffer.consume_next(board)
+    -- If we didn't force a piece, advance the next index.
+    if force_piece == nil then
+        next_buffer.consume_next(board)
+    end
+
+    -- Unlock the hold piece
+    board.hold_lock = false
 
     return true
 end
@@ -157,9 +176,42 @@ local function frame(state, gametic, inputs)
 
     -- Get our piece
     local piece = board.board:get_piece(BOARD_PIECE)
+    local piece_config = piece:config_name()
+
+    -- Handle hold piece.
+    if inputs:check_hold(1) then
+        if board.hold_lock == false then
+            if board.hold == nil then
+                -- Hold this piece
+                board.hold = mino_piece.new(piece_config)
+
+                -- We have no other held piece, so generate a new one
+                if not board_next_piece(board, gametic) then
+                    return STATE_RESULT_GAMEOVER
+                end
+            else
+                -- Hold this piece
+                local swapped_piece = board.hold
+                board.hold = mino_piece.new(piece_config)
+
+                -- Spawn the held piece
+                if not board_next_piece(board, gametic, swapped_piece) then
+                    return STATE_RESULT_GAMEOVER
+                end
+            end
+
+            -- Lock out holding until the next piece
+            board.hold_lock = true
+
+            -- Ensure that our piece variables are up to date
+            piece = board.board:get_piece(BOARD_PIECE)
+            piece_config = piece:config_name()
+        end
+    end
+
+    -- Grab the piece position and rotation
     local piece_pos = board.board:get_pos(BOARD_PIECE)
     local piece_rot = board.board:get_rot(BOARD_PIECE)
-    local piece_config = piece:config_name()
 
     -- Handle rotation.
     local drot = 0

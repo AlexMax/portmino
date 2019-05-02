@@ -249,7 +249,7 @@ static void softrender_draw_mainmenu_bg(void) {
  * Draw a piece at an arbitrary location
  */
 static void softrender_draw_piece(vec2i_t pos, const piece_config_t* piece) {
-    // We have no board, so...hardcode this?
+    // The presumed size of a single empty cell.
     int blockx = 8;
     int blocky = 8;
 
@@ -264,12 +264,12 @@ static void softrender_draw_piece(vec2i_t pos, const piece_config_t* piece) {
         picture_t* bpic = softblock_get(g_block, --btype);
 
         // What is the actual (x, y) coordinate of the block?
-        int ix = piece->spawn_pos.x + (j % piece->width);
-        int iy = 0 + (j / piece->width);
+        int ix = j % piece->width;
+        int iy = j / piece->width;
 
-        // Draw a block of the next piece.
+        // Draw a single block of the piece.
         picture_blit(&g_render_ctx.buffer,
-            vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
+            vec2i(pos.x + (ix * blockx), pos.y + (iy * blocky)),
             bpic, vec2i_zero());
     }
 }

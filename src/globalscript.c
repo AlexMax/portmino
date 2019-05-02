@@ -258,7 +258,7 @@ static int globalscript_require(lua_State* L) {
 
     // Turn the buffer into a runnable chunk.
     if (luaL_loadbufferx(L, (char*)file->data, file->size, file->filename, "t") != LUA_OK) {
-        lua_pushstring(L, name);
+        // Error was pushed to the stack
         goto fail;
     }
 
