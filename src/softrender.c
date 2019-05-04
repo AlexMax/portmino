@@ -59,11 +59,6 @@ static bool softrender_init(void) {
         goto fail;
     }
 
-    // Board picture has adjustable transparency.
-    for (size_t i = 0;i < g_board->size;i += MINO_SOFTRENDER_BPP) {
-        g_board->data[i + 3] = 192;
-    }
-
     if ((g_block = softblock_new("block/default/8px.png")) == NULL) {
         goto fail;
     }
@@ -126,7 +121,8 @@ static void softrender_draw_background(void) {
  * Draw a board and any attached pieces on the screen using the software renderer
  */
 static void softrender_draw_board(vec2i_t pos, const board_t* board) {
-    picture_blit(&g_render_ctx.buffer, vec2i(pos.x, pos.y), g_board, vec2i_zero());
+    // FIXME: Stop hardcoding the alpha value
+    picture_blit_alpha(&g_render_ctx.buffer, vec2i(pos.x, pos.y), g_board, vec2i_zero(), 192);
 
     // The presumed size of a single empty cell in the board.  I feel
     // precalculating these sizes has a better failure mode than relying
@@ -183,9 +179,17 @@ static void softrender_draw_board(vec2i_t pos, const board_t* board) {
                 }
 
                 // Draw a block.
-                picture_blit(&g_render_ctx.buffer,
-                    vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
-                    bpic, vec2i_zero());
+                if (bpiece->alpha == 255) {
+                    picture_blit(&g_render_ctx.buffer,
+                        vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
+                        bpic, vec2i_zero());
+                } else if (bpiece->alpha == 0) {
+                    // Not visible
+                } else {
+                    picture_blit_alpha(&g_render_ctx.buffer,
+                        vec2i(pos.x + (blockx * ix), pos.y + (blocky * iy)),
+                        bpic, vec2i_zero(), bpiece->alpha);
+                }
             }
         }
     }

@@ -53,7 +53,7 @@ typedef struct {
     /**
      * True if piece should be rendered as a ghost piece, otherwise false.
      */
-    bool render_ghost;
+    uint8_t alpha;
 } boardpiece_t;
 
 /**

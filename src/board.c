@@ -58,7 +58,14 @@ board_t* board_new(lua_State* L) {
     for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
         board->pieces[i].piece_ref = LUA_NOREF;
         board->pieces[i].piece = NULL;
+        board->pieces[i].pos = vec2i_zero();
+        board->pieces[i].rot = 0;
+        board->pieces[i].alpha = 255;
     }
+
+    // Ghost piece
+    // FIXME: Stop hardcoding this
+    board->pieces[1].alpha = 127;
 
     return board;
 

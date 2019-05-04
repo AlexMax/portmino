@@ -204,3 +204,53 @@ void picture_blit(picture_t* restrict dest, vec2i_t dstpos,
         dstcursor += dest->width * MINO_PICTURE_BPP;
     }
 }
+
+/**
+ * Blit one picture on top of another, with a third parameter that allows
+ * scaling the alpha of the source picture.
+ */
+void picture_blit_alpha(picture_t* restrict dest, vec2i_t dstpos,
+                        const picture_t* restrict source, vec2i_t srcpos,
+                        uint8_t srcalpha) {
+    // Where in the pixel data does our copying begin?
+    int srccursor = (srcpos.y * source->width * MINO_PICTURE_BPP) + (srcpos.x * MINO_PICTURE_BPP);
+    int dstcursor = (dstpos.y * dest->width * MINO_PICTURE_BPP) + (dstpos.x * MINO_PICTURE_BPP);
+
+    // Our destination buffer might be smaller than the source.
+    int copywidth, copyheight;
+    if (source->width - srcpos.x > dest->width - dstpos.x) {
+        copywidth = dest->width - dstpos.x;
+    } else {
+        copywidth = source->width - srcpos.x;
+    }
+    if (source->height - srcpos.y > dest->height - dstpos.y) {
+        copyheight = dest->height - dstpos.y;
+    } else {
+        copyheight = source->height - srcpos.y;
+    }
+
+    for (int y = 0;y < copyheight;y++) {
+        for (int xoff = 0;xoff < (copywidth * MINO_PICTURE_BPP);xoff += MINO_PICTURE_BPP) {
+            // https://stackoverflow.com/a/12016968/91642
+            //
+            // This blends a source pixel into a destination pixel given
+            // a specific alpha value.  This method uses only integers by
+            // doing the calculation in 8.8 fixed point.
+            uint_fast16_t srcfalpha = source->data[srccursor + xoff + 3] << 8;
+            uint_fast16_t srcfscale = srcalpha + 1;
+            uint_fast16_t alpha = ((srcfalpha * srcfscale) >> 16) + 1;
+            uint_fast16_t inverse = 256 - alpha;
+            uint8_t sb = source->data[srccursor + xoff];
+            uint8_t sg = source->data[srccursor + xoff + 1];
+            uint8_t sr = source->data[srccursor + xoff + 2];
+            uint8_t db = dest->data[dstcursor + xoff];
+            uint8_t dg = dest->data[dstcursor + xoff + 1];
+            uint8_t dr = dest->data[dstcursor + xoff + 2];
+            dest->data[dstcursor + xoff] = (alpha * sb + inverse * db) >> 8;
+            dest->data[dstcursor + xoff + 1] = (alpha * sg + inverse * dg) >> 8;
+            dest->data[dstcursor + xoff + 2] = (alpha * sr + inverse * dr) >> 8;
+        }
+        srccursor += source->width * MINO_PICTURE_BPP;
+        dstcursor += dest->width * MINO_PICTURE_BPP;
+    }
+}

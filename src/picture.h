@@ -48,3 +48,6 @@ void picture_copy(picture_t* restrict dest, vec2i_t dstpos,
                   const picture_t* restrict source, vec2i_t srcpos);
 void picture_blit(picture_t* restrict dest, vec2i_t dstpos,
                   const picture_t* restrict source, vec2i_t srcpos);
+void picture_blit_alpha(picture_t* restrict dest, vec2i_t dstpos,
+                        const picture_t* restrict source, vec2i_t srcpos,
+                        uint8_t srcalpha);
