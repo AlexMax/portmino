@@ -35,6 +35,8 @@ static void test_serialize(void** state) {
 
     buffer_delete(serialized);
 
+    lua_close(L);
+
     vfs_deinit();
     platform_deinit();
     frontend_deinit();

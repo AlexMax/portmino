@@ -16,4 +16,6 @@ foreach(TEST ${TESTS})
     add_sanitizers(${TEST})
     target_link_libraries(${TEST} portmino-core basemino cmocka-x)
     add_test(${TEST} ${TEST})
+    set_tests_properties(${TEST} PROPERTIES
+        ENVIRONMENT "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/lsansupp.txt")
 endforeach()
