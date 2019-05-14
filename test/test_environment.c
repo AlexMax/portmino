@@ -34,12 +34,20 @@ static void test_environment(void** state) {
     ok = environment_frame(env, &inputs);
     assert_true(ok == true);
 
+    fprintf(stderr, "size: %zu\ndata: ", env->states[0]->size);
+    for (size_t i = 0;i < env->states[0]->size;i++) {
+        fprintf(stderr, "%02X ", env->states[0]->data[i]);
+    }
+    fprintf(stderr, "\n");
+
     environment_delete(env);
     lua_close(L);
 
     vfs_deinit();
     platform_deinit();
     frontend_deinit();
+
+    assert_true(error_count() == 0);
 }
 
 int main(void) {

@@ -80,6 +80,9 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     env->state_ref = LUA_NOREF;
     env->gametic = 0;
     env->protos = protos;
+    for (size_t i;i < ARRAY_LEN(env->states);i++) {
+        env->states[i] = NULL;
+    }
 
     // Create an environment-specific registry table and push a ref to it
     // into the global registry.
@@ -185,6 +188,13 @@ void environment_delete(environment_t* env) {
         return;
     }
 
+    for (size_t i = 0;i < ARRAY_LEN(env->states);i++) {
+        if (env->states[i] != NULL) {
+            buffer_delete(env->states[i]);
+            env->states[i] = NULL;
+        }
+    }
+
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->state_ref);
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref);
     luaL_unref(env->lua, LUA_REGISTRYINDEX, env->env_ref);
@@ -261,6 +271,19 @@ bool environment_start(environment_t* env) {
         error_push("Lua error: %s", lua_tostring(env->lua, -1));
         goto fail;
     }
+
+    // Serialize our intial state
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {
+        error_push("State table reference has gone stale.");
+        goto fail;
+    }
+
+    buffer_t* state = script_to_serialized(env->lua, -1);
+    if (state == NULL) {
+        error_push("Initial state could not be serialized.");
+        goto fail;
+    }
+    env->states[0] = state;
 
     lua_settop(env->lua, top);
     return true;

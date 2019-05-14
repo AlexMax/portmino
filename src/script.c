@@ -26,10 +26,13 @@
 #include "mpack.h"
 
 #include "audioscript.h"
+#include "board.h"
 #include "boardscript.h"
+#include "entity.h"
 #include "error.h"
 #include "inputscript.h"
 #include "globalscript.h"
+#include "piece.h"
 #include "piecescript.h"
 #include "protoscript.h"
 #include "random.h"
@@ -134,12 +137,14 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
         break;
     }
     case LUA_TTABLE:
-        serialize_table(L, index, writer);
+        if (serialize_table(L, index, writer) == false) {
+            return false;
+        }
         break;
     case LUA_TUSERDATA: {
         random_t* random = luaL_testudata(L, index, "random_t");
         if (random != NULL) {
-            // Is this a random struct?  Serialize the random state...
+            // Is this a random struct?  Serialize random state.
             buffer_t* random_data = random_serialize(random);
             if (random_data == NULL) {
                 return false;
@@ -149,6 +154,42 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
             mpack_write_bytes(writer, "\x01", 1);
             mpack_write_bytes(writer, (const char*)(random_data->data), random_data->size);
             mpack_finish_bin(writer);
+
+            buffer_delete(random_data);
+            break;
+        }
+
+        entity_t* entity = luaL_testudata(L, index, "board_t");
+        if (entity != NULL) {
+            // Is this a board?  Serialize board state.
+            buffer_t* board_data = board_serialize(entity->data);
+            if (board_data == NULL) {
+                return false;
+            }
+
+            mpack_start_bin(writer, 1 + board_data->size);
+            mpack_write_bytes(writer, "\x02", 1);
+            mpack_write_bytes(writer, (const char*)(board_data->data), board_data->size);
+            mpack_finish_bin(writer);
+
+            buffer_delete(board_data);
+            break;
+        }
+
+        entity = luaL_testudata(L, index, "piece_t");
+        if (entity != NULL) {
+            // Is this a piece?  Serialize the piece.
+            buffer_t* piece_data = piece_serialize(entity->data);
+            if (piece_data == NULL) {
+                return false;
+            }
+
+            mpack_start_bin(writer, 1 + piece_data->size);
+            mpack_write_bytes(writer, "\x03", 1);
+            mpack_write_bytes(writer, (const char*)(piece_data->data), piece_data->size);
+            mpack_finish_bin(writer);
+
+            buffer_delete(piece_data);
             break;
         }
 
@@ -197,11 +238,17 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
         mpack_start_map(writer, length);
         lua_pushnil(L);
         while (lua_next(L, index) != 0) {
+            // Dupe key to safely string-convert it.
+            lua_pushvalue(L, -2); // dupe key
             size_t str_len = 0;
-            const char* str = lua_tolstring(L, -2, &str_len);
+            const char* str = lua_tolstring(L, -1, &str_len);
             mpack_write_str(writer, str, str_len);
-            serialize_index(L, -1, writer);
-            lua_pop(L, 1);
+            lua_pop(L, 1); // pop dupe key
+            if (serialize_index(L, -1, writer) == false) {
+                // Function pushes error
+                goto fail;
+            }
+            lua_pop(L, 1); // pop value
         }
         mpack_finish_map(writer);
     } else {
@@ -218,7 +265,10 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
         mpack_start_array(writer, length);
         for (uint32_t i = 1;i <= len;i++) {
             lua_rawgeti(L, index, i);
-            serialize_index(L, -1, writer);
+            if (serialize_index(L, -1, writer) == false) {
+                // Function pushes error
+                goto fail;
+            }
             lua_pop(L, 1);
         }
         mpack_finish_array(writer);

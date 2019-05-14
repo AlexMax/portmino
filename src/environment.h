@@ -62,6 +62,11 @@ typedef struct environment_s {
      * Prototypes loaded from Lua.
      */
     proto_container_t* protos;
+
+    /**
+     * Serialized states.
+     */
+    buffer_t* states[4];
 } environment_t;
 
 environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype);

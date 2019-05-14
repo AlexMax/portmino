@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "lauxlib.h"
+#include "mpack.h"
 
 #include "error.h"
 #include "piece.h"
@@ -368,4 +369,33 @@ uint8_t board_clear_lines(board_t* board) {
     }
 
     return lines;
+}
+
+/**
+ * Serialize board struct using msgpack
+ */
+buffer_t* board_serialize(board_t* board) {
+    buffer_t* buffer = NULL;
+    mpack_writer_t writer;
+
+    if ((buffer = calloc(1, sizeof(buffer_t))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    mpack_writer_init_growable(&writer, (char**)(&buffer->data), &buffer->size);
+    mpack_write_bin(&writer, board->data.data, board->data.size);
+
+    mpack_error_t err = mpack_writer_destroy(&writer);
+    if (err != mpack_ok) {
+        error_push("random_serialize error: %s", mpack_error_to_string(err));
+        goto fail;
+    }
+
+    return buffer;
+
+fail:
+    mpack_writer_destroy(&writer);
+    buffer_delete(buffer);
+    return NULL;
 }
