@@ -80,7 +80,7 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     env->state_ref = LUA_NOREF;
     env->gametic = 0;
     env->protos = protos;
-    for (size_t i;i < ARRAY_LEN(env->states);i++) {
+    for (size_t i = 0;i < ARRAY_LEN(env->states);i++) {
         env->states[i] = NULL;
     }
 

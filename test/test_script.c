@@ -73,6 +73,8 @@ static void test_wrap_cfuncs(void** state) {
     luaL_dostring(L, "return mino_test.first_upvalue()");
     assert_string_equal("_ENV", lua_tostring(L, -1));
 
+    lua_close(L);
+
     vfs_deinit();
     platform_deinit();
     frontend_deinit();
