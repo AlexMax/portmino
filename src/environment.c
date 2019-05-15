@@ -341,7 +341,15 @@ bool environment_frame(environment_t* env, const playerinputs_t* inputs) {
         goto fail;
     }
 
+    // Our environment is now officially in the next gametic
     env->gametic += 1;
+
+    // Result: If false, then the game should be shut down nicely
+    if (lua_toboolean(env->lua, -1) == 0) {
+        lua_settop(env->lua, top);
+        return false;
+    }
+
     lua_settop(env->lua, top);
     return true;
 

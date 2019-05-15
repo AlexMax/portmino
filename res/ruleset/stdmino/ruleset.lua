@@ -17,10 +17,6 @@ local next_buffer = require('next_buffer')
 local gametype = require('gametype')
 
 -- Stubbing out defines
-local STATE_RESULT_OK = 0
-local STATE_RESULT_ERROR = 1
-local STATE_RESULT_GAMEOVER = 2
-local STATE_RESULT_SUCCESS = 3
 
 local DEFAULT_DAS = 12
 local DEFAULT_DAS_PERIOD = 2
@@ -169,7 +165,7 @@ local function frame(state, gametic, inputs)
     -- Get the next piece if we don't have one at this point.
     if board.board:get_piece(BOARD_PIECE) == nil then
         if not board_next_piece(board, gametic) then
-            return STATE_RESULT_GAMEOVER
+            return false
         end
         mino_audio.playsound("piece0")
     end
@@ -187,7 +183,7 @@ local function frame(state, gametic, inputs)
 
                 -- We have no other held piece, so generate a new one
                 if not board_next_piece(board, gametic) then
-                    return STATE_RESULT_GAMEOVER
+                    return false
                 end
             else
                 -- Hold this piece
@@ -196,7 +192,7 @@ local function frame(state, gametic, inputs)
 
                 -- Spawn the held piece
                 if not board_next_piece(board, gametic, swapped_piece) then
-                    return STATE_RESULT_GAMEOVER
+                    return false
                 end
             end
 
@@ -438,7 +434,7 @@ local function frame(state, gametic, inputs)
 
             -- Again, piece lock is mutually exclusive with any other
             -- piece movement this tic.
-            return STATE_RESULT_OK
+            return true
         end
     else
         -- We are not in lock logic anymore.
@@ -502,7 +498,7 @@ local function frame(state, gametic, inputs)
 
             -- Again, doing a hard drop is mutually exclusive with any other
             -- piece movement this tic.
-            return STATE_RESULT_OK
+            return true
         end
     end
 
@@ -516,11 +512,8 @@ local function frame(state, gametic, inputs)
     board.board:set_pos(BOARD_GHOST, ghost_pos)
     board.board:set_rot(BOARD_GHOST, piece_rot)
 
-    -- Our gametype might want to end the game, so check it first.
-    -- TODO: Add this functionality
-
     -- We're done with this tic.
-    return STATE_RESULT_OK
+    return true
 end
 
 -- Run every frame to draw the game
