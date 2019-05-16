@@ -124,8 +124,8 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
 
     // For our new environment, set up links to the proper modules and globals.
     const char* modules[] = {
-        "mino_audio", "mino_board", "mino_input", "mino_piece", "mino_proto",
-        "mino_random", "mino_render", "string", "table"
+        "math", "mino_audio", "mino_board", "mino_input", "mino_piece",
+        "mino_proto", "mino_random", "mino_render", "string", "table"
     };
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     for (size_t i = 0;i < ARRAY_LEN(modules);i++) {
@@ -384,7 +384,11 @@ void environment_draw(environment_t* env) {
         goto fail;
     }
 
-    if (lua_pcall(env->lua, 1, 1, top + 1) != LUA_OK) {
+    // Parameter 2: Gametic
+    uint32_t gametic = env->gametic + 1;
+    lua_pushinteger(env->lua, gametic);
+
+    if (lua_pcall(env->lua, 2, 1, top + 1) != LUA_OK) {
         error_push("Lua error: %s", lua_tostring(env->lua, -1));
         goto fail;
     }

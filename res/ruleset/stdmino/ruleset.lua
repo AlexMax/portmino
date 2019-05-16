@@ -55,6 +55,9 @@ local function start(state)
             -- How many lines have been cleared in a row.
             combo = 0,
 
+            -- Current level of the player.
+            level = 0,
+
             -- Tic that EVENT_LEFT began on.  Set to 0 if released.
             left_tic = 0,
 
@@ -517,8 +520,8 @@ local function frame(state, gametic, inputs)
 end
 
 -- Run every frame to draw the game
-local function draw(state)
-    gametype.draw(state)
+local function draw(state, gametic)
+    gametype.draw(state, gametic)
 end
 
 return {

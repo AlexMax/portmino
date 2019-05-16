@@ -64,6 +64,7 @@ lua_State* script_newstate(void) {
         { "mino_proto", protoscript_openlib },
         { "mino_random", randomscript_openlib },
         { "mino_render", renderscript_openlib },
+        { LUA_MATHLIBNAME, luaopen_math },
         { LUA_STRLIBNAME, luaopen_string },
         { LUA_TABLIBNAME, luaopen_table },
         { NULL, NULL }

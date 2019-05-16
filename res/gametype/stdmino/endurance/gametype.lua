@@ -26,7 +26,16 @@ local NEXT_Y = (BOARD_Y - 20)
 local HOLD_X = 18
 local HOLD_Y = (NEXT_Y - 20)
 
-local function draw(state)
+-- Convert a gametic count to a time string
+local function tics_to_time(gametic)
+    local mins = math.floor(gametic / 60 / 60)
+    local secs = math.floor(gametic / 60) % 60
+    local tics = math.floor((gametic % 60) / 60 * 100)
+
+    return string.format("%02d:%02d.%02d", mins, secs, tics)
+end
+
+local function draw(state, gametic)
     local board = state.board[1]
 
     -- Draw the actual game
@@ -55,12 +64,12 @@ local function draw(state)
     mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 6)}, "Lines")
     mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 7)}, lines)
 
-    --local level = string.format("%d", state.player[1].level)
-    --mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 9)}, "Level")
-    --mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 10)}, level)
+    local level = string.format("%d", state.player[1].level)
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 9)}, "Level")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 10)}, level)
 
     mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 12)}, "Time")
-    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 13)}, "00:00.00")
+    mino_render.draw_font({x = TEXT_X, y = TEXT_Y + (8 * 13)}, tics_to_time(gametic))
 end
 
 return {
