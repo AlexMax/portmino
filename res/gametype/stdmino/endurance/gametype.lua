@@ -28,8 +28,8 @@ local HOLD_Y = (NEXT_Y - 20)
 
 -- Convert a gametic count to a time string
 local function tics_to_time(gametic)
-    local mins = math.floor(gametic / 60 / 60)
-    local secs = math.floor(gametic / 60) % 60
+    local mins = gametic // 60 // 60
+    local secs = gametic // 60 % 60
     local tics = math.floor((gametic % 60) / 60 * 100)
 
     return string.format("%02d:%02d.%02d", mins, secs, tics)
