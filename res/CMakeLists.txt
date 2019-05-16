@@ -12,6 +12,7 @@ set(RESOURCE_SOURCES
     gametype/stdmino/versus/gametype.cfg
     interface/default/board.png
     interface/default/font.png
+    ruleset/stdmino/gravity.lua
     ruleset/stdmino/next_buffer.lua
     ruleset/stdmino/pieces.cfg
     ruleset/stdmino/randomizer.lua
