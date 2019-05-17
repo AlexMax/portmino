@@ -85,6 +85,32 @@ static inputs_t retro_input_to_input(unsigned port) {
     if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
         ret |= INPUT_CW;
     }
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R)) {
+        ret |= INPUT_HOLD;
+    }
+    return ret;
+}
+
+static inputs_t retro_input_to_minput(unsigned port) {
+    input_t ret = 0;
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)) {
+        ret |= MINPUT_UP;
+    }
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN)) {
+        ret |= MINPUT_DOWN;
+    }
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)) {
+        ret |= MINPUT_LEFT;
+    }
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) {
+        ret |= MINPUT_RIGHT;
+    }
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
+        ret |= MINPUT_OK;
+    }
+    if (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)) {
+        ret |= MINPUT_CANCEL;
+    }
     return ret;
 }
 
@@ -180,7 +206,7 @@ RETRO_API void retro_run(void) {
     gameinputs_t inputs = { 0 };
     inputs.game.inputs[0] = retro_input_to_input(0);
     inputs.interface.inputs[0] = 0;
-    inputs.menu.inputs[0] = 0;
+    inputs.menu.inputs[0] = retro_input_to_minput(0);
 
     // Run the game simulation.
     game_frame(&inputs);
