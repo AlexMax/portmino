@@ -82,6 +82,26 @@ static int boardscript_delete(lua_State* L) {
 }
 
 /**
+ * Lua: Get the value of a specific x, y position on the board
+ */
+static int boardscript_get(lua_State* L) {
+    // Parameter 1: Our userdata
+    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    board_t* board = entity->data;
+
+    // Parameter 2: Position to check
+    vec2i_t pos = vec2i_zero();
+    if (script_to_vector(L, 2, &pos) == false) {
+        luaL_argerror(L, 2, "position is not a valid vector");
+        return 0;
+    }
+
+    // Return board data
+    lua_pushinteger(L, board_get(board, pos));
+    return 1;
+}
+
+/**
  * Lua: Get a board piece handle by index
  */
 static int boardscript_get_piece(lua_State* L) {
@@ -207,7 +227,7 @@ static int boardscript_set_pos(lua_State* L) {
     }
     vec2i_t pos = vec2i_zero();
     if (script_to_vector(L, 3, &pos) == false) {
-        luaL_error(L, "position is not a valid vector");
+        luaL_argerror(L, 3, "position is not a valid vector");
         return 0;
     }
     piece->pos = pos;
@@ -439,6 +459,7 @@ int boardscript_openlib(lua_State* L) {
 
     // Create the board_t type
     static const luaL_Reg boardtype[] = {
+        { "get", boardscript_get },
         { "get_piece", boardscript_get_piece },
         { "set_piece", boardscript_set_piece },
         { "unset_piece", boardscript_unset_piece },

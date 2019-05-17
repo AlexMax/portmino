@@ -101,6 +101,23 @@ void board_destruct(void* board) {
 }
 
 /**
+ * Get data from the board itself given a position vector
+ *
+ * Out-of-bounds is always 0xFF, otherwise it's the value at the position.
+ */
+uint8_t board_get(board_t* board, vec2i_t pos) {
+    if (pos.x < 0 || pos.x >= board->config.width) {
+        return 0xFF;
+    }
+    if (pos.y < 0 || pos.y >= board->config.height) {
+        return 0xFF;
+    }
+
+    size_t offset = pos.y * board->config.width + pos.x;
+    return board->data.data[offset];
+}
+
+/**
  * Get a piece reference from the board by index.
  */
 int board_get_piece_ref(board_t* board, size_t index) {
