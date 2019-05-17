@@ -163,11 +163,6 @@ local function board_next_piece(board, tic, force_piece)
     return true
 end
 
--- Our gravity depends on our current player's level
-local function player_to_gravity(player)
-
-end
-
 -- Run every frame
 local function frame(state, gametic, inputs)
     local player_id = 1
@@ -179,6 +174,10 @@ local function frame(state, gametic, inputs)
         if not board_next_piece(board, gametic) then
             return false
         end
+
+        -- Start gravity over
+        player.gravity_remain = 0
+
         mino_audio.playsound("piece0")
     end
 
@@ -197,6 +196,9 @@ local function frame(state, gametic, inputs)
                 if not board_next_piece(board, gametic) then
                     return false
                 end
+
+                -- Start gravity over
+                player.gravity_remain = 0
             else
                 -- Hold this piece
                 local swapped_piece = board.hold
@@ -206,6 +208,9 @@ local function frame(state, gametic, inputs)
                 if not board_next_piece(board, gametic, swapped_piece) then
                     return false
                 end
+
+                -- Start gravity over
+                player.gravity_remain = 0
             end
 
             -- Lock out holding until the next piece
