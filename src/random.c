@@ -53,26 +53,57 @@ static uint32_t random_next(random_t* random) {
 }
 
 /**
- * Initialize a new random number generator state inplace, without allocation.
+ * Allocate a new random number generator
  * 
- * Pass NULL for the second parameter if you want a completely random seed,
- * or pass a pointer to the seed for a specific seed.
+ * Pass NULL for the parameter if you want a completely random seed, or pass
+ * a pointer to the seed for a specific seed.
  * 
  * NOTE: This function is _not safe_ for any cryptographic use.  Half of
  *       the seed is hardcoded, the other half might be generated using
  *       libc rand as a fallback.
  */
-void random_init(random_t* random, uint32_t* seed) {
-    // Only half the seed is variable, so we can actually show it.
+random_t* random_new(uint32_t* seed) {
+    random_t* random = calloc(1, sizeof(random_t));
+    if (random == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    // Only half the seed is variable, so we can actually show it without
+    // driving people crazy.
     random->state[1] = 0x12EBE5E;
     if (seed == NULL) {
         if (!platform()->random_get_seed(&(random->state[0]))) {
             error_push("Unable to obtain a random seed.");
-            return;
+            goto fail;
         }
     } else {
         random->state[0] = *seed;
     }
+
+    return random;
+
+fail:
+    random_delete(random);
+    return NULL;
+}
+
+/**
+ * Free a random number generator
+ */
+void random_delete(random_t* random) {
+    if (random == NULL) {
+        return;
+    }
+
+    free(random);
+}
+
+/**
+ * Random number destructor, for entity
+ */
+void random_destruct(void* random) {
+    random_delete(random);
 }
 
 /**

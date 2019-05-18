@@ -143,10 +143,10 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
         }
         break;
     case LUA_TUSERDATA: {
-        random_t* random = luaL_testudata(L, index, "random_t");
-        if (random != NULL) {
+        entity_t* entity = luaL_testudata(L, index, "random_t");
+        if (entity != NULL) {
             // Is this a random struct?  Serialize random state.
-            buffer_t* random_data = random_serialize(random);
+            buffer_t* random_data = random_serialize(entity->data);
             if (random_data == NULL) {
                 return false;
             }
@@ -160,7 +160,7 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
             break;
         }
 
-        entity_t* entity = luaL_testudata(L, index, "board_t");
+        entity = luaL_testudata(L, index, "board_t");
         if (entity != NULL) {
             // Is this a board?  Serialize board state.
             buffer_t* board_data = board_serialize(entity->data);

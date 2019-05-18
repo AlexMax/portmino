@@ -24,6 +24,7 @@
  */
 typedef enum {
     MINO_ENTITY_NONE,
+    MINO_ENTITY_RANDOM,
     MINO_ENTITY_PIECE,
     MINO_ENTITY_BOARD
 } entity_type_t;

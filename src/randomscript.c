@@ -19,6 +19,7 @@
 
 #include "lauxlib.h"
 
+#include "entity.h"
 #include "random.h"
 
 /**
@@ -26,20 +27,54 @@
  */
 static int randomscript_new(lua_State* L) {
     // Parameter 1: Seed integer (or nil if we want a truly random seed)
-    int type = lua_type(L, 1);
-    luaL_argcheck(L, (type == LUA_TNUMBER || type == LUA_TNIL), 1, "invalid seed");
+    int seed_type = lua_type(L, 1);
+    luaL_argcheck(L, (seed_type == LUA_TNUMBER || seed_type == LUA_TNIL), 1, "invalid seed");
+
+    // Internal State 1: Registry reference
+    int type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
+    if (type != LUA_TNUMBER) {
+        luaL_error(L, "missing internal state (registry_ref)");
+        return 0;
+    }
+
+    // Internal State 2: Next ID
+    type = lua_getfield(L, lua_upvalueindex(1), "entity_next");
+    if (type != LUA_TNUMBER) {
+        luaL_error(L, "missing internal state (entity_next)");
+        return 0;
+    }
+
+    uint32_t entity_next = lua_tointeger(L, -1);
+    int registry_ref = lua_tointeger(L, -2);
 
     // Initialize (and return) random state
-    random_t* random = lua_newuserdata(L, sizeof(random_t));
-    if (type == LUA_TNUMBER) {
+    entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
+
+    random_t* random;
+    if (seed_type == LUA_TNUMBER) {
         uint32_t seed = (uint32_t)lua_tointeger(L, 1);
-        random_init(random, &seed);
+        random = random_new(&seed);
     } else {
-        random_init(random, NULL);
+        random = random_new(NULL);
     }
+    if (random == NULL) {
+        luaL_error(L, "Could not allocate new random state.");
+        return 0;
+    }
+
+    // Set our entity properties
+    entity->id = entity_next;
+    entity->registry_ref = registry_ref;
+    entity->type = MINO_ENTITY_RANDOM;
+    entity->data = random;
+    entity->destruct = random_destruct;
 
     // Apply methods to the userdata
     luaL_setmetatable(L, "random_t");
+
+    // Increment our next entity counter
+    lua_pushinteger(L, entity_next + 1);
+    lua_setfield(L, lua_upvalueindex(1), "entity_next");
 
     return 1;
 }
@@ -49,10 +84,10 @@ static int randomscript_new(lua_State* L) {
  */
 static int randomscript_delete(lua_State* L) {
     // Parameter 1: Our userdata
-    random_t* random = luaL_checkudata(L, 1, "random_t");
+    entity_t* entity = luaL_checkudata(L, 1, "random_t");
 
-    free(random);
-    random = NULL;
+    entity_deinit(entity);
+    entity = NULL;
 
     return 0;
 }
@@ -62,12 +97,13 @@ static int randomscript_delete(lua_State* L) {
  */
 static int randomscript_number(lua_State* L) {
     // Parameter 1: Our userdata
-    random_t* random = luaL_checkudata(L, 1, "random_t");
+    entity_t* entity = luaL_checkudata(L, 1, "random_t");
+    random_t* random = entity->data;
 
     // Parameter 2: Integer random number range
     lua_Integer range = luaL_checkinteger(L, 2);
 
-    // Actually product the random number.
+    // Actually return the random number.
     uint32_t number = random_number(random, (uint32_t)range);
     lua_pushinteger(L, number);
     return 1;
