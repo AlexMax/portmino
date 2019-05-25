@@ -196,6 +196,13 @@ static void softrender_draw_board(vec2i_t pos, const board_t* board) {
 }
 
 /**
+ * Draw a solid-color box to the screen using the software renderer
+ */
+static void softrender_draw_box(vec2i_t pos, vec2i_t len) {
+    picture_box(&g_render_ctx.buffer, pos, len);
+}
+
+/**
  * Draw text using the software renderer
  */
 static void softrender_draw_font(vec2i_t pos, const char* text) {
@@ -286,6 +293,7 @@ render_module_t softrender_module = {
     softrender_clear,
     softrender_draw_background,
     softrender_draw_board,
+    softrender_draw_box,
     softrender_draw_font,
     softrender_draw_mainmenu_bg,
     softrender_draw_piece,

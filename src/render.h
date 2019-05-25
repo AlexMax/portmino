@@ -64,6 +64,11 @@ typedef struct {
     void (*draw_board)(vec2i_t pos, const board_t* board);
 
     /**
+     * Draw a box to the screen.
+     */
+    void(*draw_box)(vec2i_t pos, vec2i_t len);
+
+    /**
      * Draw text on the screen.
      */
     void (*draw_font)(vec2i_t pos, const char* text);

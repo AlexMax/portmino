@@ -29,10 +29,12 @@ typedef enum {
     SCREEN_RULESETMENU,
     SCREEN_PLAYMENU,
     SCREEN_INGAME,
+    SCREEN_PAUSEMENU,
 } screentype_t;
 
 typedef struct ingame_s ingame_t;
 typedef struct mainmenu_s mainmenu_t;
+typedef struct pausemenu_s pausemenu_t;
 typedef struct playmenu_s playmenu_t;
 typedef struct rulesetmenu_s rulesetmenu_t;
 typedef struct screen_s screen_t;
@@ -91,6 +93,7 @@ struct screen_s {
      */
     union screen_u {
         mainmenu_t* mainmenu;
+        pausemenu_t* pausemenu;
         playmenu_t* playmenu;
         rulesetmenu_t* rulesetmenu;
         ingame_t* ingame;

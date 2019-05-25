@@ -19,6 +19,7 @@ set(GAME_SOURCES
     inputscript.c       inputscript.h
     mainmenu.c          mainmenu.h
     menu.c              menu.h
+    pausemenu.c         pausemenu.h
     picture.c           picture.h
     piece.c             piece.h
     piecescript.c       piecescript.h

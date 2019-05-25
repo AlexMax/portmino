@@ -131,6 +131,37 @@ void picture_delete(picture_t* pic) {
 }
 
 /**
+ * Blit a box of a solid color over an existing picture
+ */
+void picture_box(picture_t* dest, vec2i_t pos, vec2i_t len) {
+    // Where in the pixel data does our blitting begin?
+    int dstcursor = (pos.y * dest->width * MINO_PICTURE_BPP) + (pos.x * MINO_PICTURE_BPP);
+
+    // Our destination buffer might be smaller than the box dimensions.
+    int copywidth, copyheight;
+    if (len.x > dest->width - pos.x) {
+        copywidth = dest->width - pos.x;
+    } else {
+        copywidth = len.x;
+    }
+    if (len.y > dest->height - pos.y) {
+        copyheight = dest->height - pos.y;
+    } else {
+        copyheight = len.y;
+    }
+
+    // Draw the box
+    for (int y = 0;y < copyheight;y++) {
+        for (int xoff = 0;xoff < (copywidth * MINO_PICTURE_BPP);xoff += MINO_PICTURE_BPP) {
+            dest->data[dstcursor + xoff] = 0x00;
+            dest->data[dstcursor + xoff + 1] = 0x00;
+            dest->data[dstcursor + xoff + 2] = 0x00;
+        }
+        dstcursor += dest->width * MINO_PICTURE_BPP;
+    }
+}
+
+/**
  * Copy one picture on top of another.  Mostly useful for software rendering.
  */
 void picture_copy(picture_t* restrict dest, vec2i_t dstpos,

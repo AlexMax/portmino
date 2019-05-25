@@ -23,6 +23,7 @@
 #include "environment.h"
 #include "error.h"
 #include "gametype.h"
+#include "pausemenu.h"
 #include "ruleset.h"
 
 typedef struct ingame_s {
@@ -49,7 +50,8 @@ typedef struct ingame_s {
 typedef enum {
     INGAME_RESULT_OK,
     INGAME_RESULT_ERROR,
-    INGAME_RESULT_GAMEOVER
+    INGAME_RESULT_GAMEOVER,
+    INGAME_RESULT_PAUSE,
 } playmenu_result_t;
 
 /**
@@ -57,6 +59,17 @@ typedef enum {
  */
 static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
     ingame_t* ingame = screen->screen.ingame;
+
+    // TODO: We need to leave the door open for pausing in netgames.  This
+    //       requires running the game in the background of the pause menu.
+
+    // Check to see if we need to pause the game
+    for (size_t i = 0;i < MINO_MAX_PLAYERS;i++) {
+        if (inputs->interface.inputs[i] & IINPUT_PAUSE) {
+            return INGAME_RESULT_PAUSE;
+        }
+    }
+
     if (environment_frame(ingame->environment, &inputs->game) == false) {
         return INGAME_RESULT_ERROR;
     }
@@ -68,6 +81,8 @@ static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
  * Navigate to the proper destination
  */
 static void ingame_navigate(screens_t* screens, int result) {
+    screen_t* screen = screens_top(screens);
+
     switch ((playmenu_result_t)result) {
     case INGAME_RESULT_OK:
         // Do nothing
@@ -78,6 +93,9 @@ static void ingame_navigate(screens_t* screens, int result) {
     case INGAME_RESULT_GAMEOVER:
         screens_pop(screens);
         audio_playsound(g_sound_gameover);
+        break;
+    case INGAME_RESULT_PAUSE:
+        screens_push(screens, pausemenu_new(screen, 0));
         break;
     }
 }
