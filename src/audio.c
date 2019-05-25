@@ -93,7 +93,7 @@ static void audio_mixer_debug(void) {
         audio_mixer_channel_t* channel = &g_audio_mixer[i];
 
         if (channel->active) {
-            fprintf(stderr, " [%d] Playing %s (%lu/%lu)\n", i, channel->sound->name, channel->frame, channel->sound->framecount);
+            fprintf(stderr, " [%d] Playing %s (%zu/%zu)\n", i, channel->sound->name, channel->frame, channel->sound->framecount);
         } else {
             // fprintf(stderr, "Inactive.\n");
         }

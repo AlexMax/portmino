@@ -51,7 +51,7 @@ typedef struct pausemenu_s {
  * Process inputs on the pause menu
  */
 static int pausemenu_frame(screen_t* screen, const gameinputs_t* inputs) {
-    pausemenu_t* menu = screen->screen.mainmenu;
+    pausemenu_t* menu = screen->screen.pausemenu;
     playerinputs_t minputs = input_menu_filter(&menu->holds, inputs);
 
     if (minputs.inputs[0] & MINPUT_UP) {

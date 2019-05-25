@@ -13,6 +13,11 @@ if(MSVC)
     list(APPEND PORTMINO_COMPILE_OPTIONS "-D_CRT_NONSTDC_NO_DEPRECATE")
     list(APPEND PORTMINO_COMPILE_OPTIONS "-D_CRT_SECURE_NO_WARNINGS")
 
+    # Extra warnings for cl.exe
+    _checked_add_compile_option(/we4013 W_4013) # Implicit function declaration
+    _checked_add_compile_option(/we4133 W_4133) # Incompatible types
+    _checked_add_compile_option(/we4477 W_4477) # Format string mismatch
+
     # Extra warnings for clang-cl.exe
     _checked_add_compile_option(-Wno-pragma-pack W_NO_PACK)
 else()
