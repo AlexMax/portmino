@@ -29,9 +29,14 @@ typedef struct audio_context_s {
     int16_t* sampledata;
 
     /**
-     * The size of the data member in bytes.
+     * The size of sample data in bytes.
      */
     size_t bytesize;
+
+    /**
+     * The actual size of the data member in bytes.
+     */
+    size_t actualbytesize;
 
     /**
      * The number of frames in the data.  Should be 44100Hz / 60 fps.

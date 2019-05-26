@@ -127,7 +127,23 @@ static minput_t sdl_scancode_to_minput(int code) {
 }
 
 /**
- * Run one gametic worth of input, gameplay, video, and audio
+ * An SDL_AudioCallback function
+ */
+static void sdl_audio_cb(void* _, uint8_t* stream, int len) {
+    // Play audio for the buffer
+    audio_context_t* audio_ctx = audio_frame(len / sizeof(int16_t) / MINO_AUDIO_CHANNELS);
+    if (audio_ctx == NULL) {
+        // Audio context isn't available, play silence
+        memset(stream, 0x00, len);
+        return;
+    }
+
+    // Copy audio to the buffer
+    memcpy(stream, audio_ctx->sampledata, audio_ctx->bytesize);
+}
+
+/**
+ * Run one gametic worth of input, gameplay, and video
  */
 static void sdl_run(void) {
     // Performance counter
@@ -177,21 +193,9 @@ static void sdl_run(void) {
     SDL_RenderPresent(g_renderer);
     double render_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
 
-    // Play a tic worth of audio.
-    pcount = SDL_GetPerformanceCounter();
-    uint32_t bufsize = SDL_GetQueuedAudioSize(g_audio_device);
-    if (bufsize == 0) {
-        // printf("Audio Buffer underrun: tic %d\n", SDL_GetTicks());
-    } else {
-        // printf("Audio Buffer %u: tic %d\n", bufsize, SDL_GetTicks());
-    }
-    audio_context_t* audio_ctx = audio_frame(MINO_AUDIO_HZ / MINO_FPS);
-    SDL_QueueAudio(g_audio_device, audio_ctx->sampledata, audio_ctx->bytesize);
-    double audio_time = (SDL_GetPerformanceCounter() - pcount) / g_pfreq;
-
     if (false) {
-        SDL_Log("game %f, draw %f, render %f, audio %f\n", game_time, draw_time,
-                render_time, audio_time);
+        SDL_Log("game %f, draw %f, render %f\n", game_time, draw_time,
+                render_time);
     }
 
     return;
@@ -313,7 +317,7 @@ int main(int argc, char** argv) {
     s_expect.format = AUDIO_S16;
     s_expect.channels = 2;
     s_expect.samples = 512;
-    s_expect.callback = NULL;
+    s_expect.callback = sdl_audio_cb;
     g_audio_device = SDL_OpenAudioDevice(NULL, 0, &s_expect, &s_actual, 0);
     if (g_audio_device == 0) {
         frontend_fatalerror("SDL_OpenAudioDevice failure: %s\n", SDL_GetError());

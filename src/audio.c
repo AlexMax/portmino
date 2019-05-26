@@ -59,6 +59,7 @@ sound_t* g_sound_step;
 
 static audio_mixer_channel_t g_audio_mixer[MIXER_CHANNELS];
 static audio_context_t g_audio_ctx;
+static bool g_audio_init;
 
 /**
  * Reset a mixer channel.
@@ -111,11 +112,9 @@ bool audio_init(void) {
         audio_mixer_channel_reset(&g_audio_mixer[i]);
     }
 
-    // Initialize the context
-    g_audio_ctx.framecount = MINO_AUDIO_HZ / MINO_FPS;
-    g_audio_ctx.sizeofframe = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
-    g_audio_ctx.bytesize = g_audio_ctx.framecount * g_audio_ctx.sizeofframe;
-    if ((g_audio_ctx.sampledata = malloc(g_audio_ctx.bytesize)) == NULL) {
+    // Allocate our sample data buffer ahead of time, 0.25 of a second should be plenty
+    g_audio_ctx.actualbytesize = (MINO_AUDIO_HZ / 4) * sizeof(int16_t) * MINO_AUDIO_CHANNELS;
+    if ((g_audio_ctx.sampledata = malloc(g_audio_ctx.actualbytesize)) == NULL) {
         error_push_allocerr();
         goto fail;
     }
@@ -151,6 +150,7 @@ bool audio_init(void) {
         goto fail;
     }
 
+    g_audio_init = true;
     return true;
 
 fail:
@@ -162,6 +162,8 @@ fail:
  * Clean up the audio subsystem.
  */
 void audio_deinit(void) {
+    g_audio_init = false;
+
     // Clean up the mixer.
     for (int i = 0;i < MIXER_CHANNELS;i++) {
         audio_mixer_channel_reset(&g_audio_mixer[i]);
@@ -218,9 +220,19 @@ void audio_playsound(const sound_t* sound) {
  * for more to avoid audio buffer underruns.
  */
 audio_context_t* audio_frame(size_t frames) {
-    if (frames != MINO_AUDIO_HZ / MINO_FPS) {
-        error_push("Dynamic audio frame sizes aren't implemented yet.");
+    if (g_audio_init == false) {
         return NULL;
+    }
+
+    // Ensure our audio context is the correct size
+    if (g_audio_ctx.framecount != frames) {
+        g_audio_ctx.framecount = frames;
+        g_audio_ctx.sizeofframe = sizeof(int16_t) * MINO_AUDIO_CHANNELS;
+        g_audio_ctx.bytesize = g_audio_ctx.framecount * g_audio_ctx.sizeofframe;
+        if (g_audio_ctx.bytesize > g_audio_ctx.actualbytesize) {
+            // We overran our audio buffer, bail out.
+            return NULL;
+        }
     }
 
     // Start mixing our sounds.
