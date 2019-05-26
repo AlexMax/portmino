@@ -34,14 +34,14 @@ pieces = {
     'j_piece', 'l_piece', 's_piece', 'z_piece', 't_piece', 'i_piece', 'o_piece'
 }
 
+-- Load the seven basic pieces
+local pieces_cfg = doconfig('pieces')
+for _, value in ipairs(pieces) do
+    mino_proto.load('piece', value, pieces_cfg[value])
+end
+
 -- Run this on game start
 local function start(state)
-    -- Load the seven basic pieces
-    local pieces_cfg = doconfig('pieces')
-    for _, value in ipairs(pieces) do
-        mino_proto.load('piece', value, pieces_cfg[value])
-    end
-
     -- Player state
     state.player = {
         {

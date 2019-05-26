@@ -122,5 +122,6 @@ void screens_deinit(screens_t* screens);
 screen_t* screens_top(screens_t* screens);
 bool screens_push(screens_t* screens, screen_t screen);
 bool screens_pop(screens_t* screens);
+bool screens_pop_until(screens_t* screens, screentype_t type);
 void screens_frame(screens_t* screens, const gameinputs_t* inputs);
 void screens_render(screens_t* screens);

@@ -45,6 +45,16 @@ typedef struct ingame_s {
      * The complete environment of the game we're playing.
      */
     environment_t* environment;
+
+    /**
+     * Countdown until starting game, in frames.
+     */
+    int countdown;
+
+    /**
+     * Are we in the "game over" state?
+     */
+    bool gameover;
 } ingame_t;
 
 typedef enum {
@@ -60,6 +70,34 @@ typedef enum {
 static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
     ingame_t* ingame = screen->screen.ingame;
 
+    if (ingame->gameover == true) {
+        // Do nothing in our gameover state unless one of our players presses
+        // a key to return to the main menu.
+        for (size_t i = 0;i < MINO_MAX_PLAYERS;i++) {
+            if (inputs->menu.inputs[i] & MINPUT_OK) {
+                return INGAME_RESULT_GAMEOVER;
+            }
+            if (inputs->menu.inputs[i] & MINPUT_CANCEL) {
+                return INGAME_RESULT_GAMEOVER;
+            }
+        }
+
+        return INGAME_RESULT_OK;
+    } else if (ingame->countdown > 0) {
+        // Play some countdown sounds
+        if (ingame->countdown == MINO_FPS * 2) {
+            // Ready
+            audio_playsound(g_sound_ready);
+        } else if (ingame->countdown == MINO_FPS) {
+            // Go
+            audio_playsound(g_sound_go);
+        }
+
+        // Do nothing except keep the count running.
+        ingame->countdown -= 1;
+        return INGAME_RESULT_OK;
+    }
+
     // TODO: We need to leave the door open for pausing in netgames.  This
     //       requires running the game in the background of the pause menu.
 
@@ -71,7 +109,9 @@ static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
     }
 
     if (environment_frame(ingame->environment, &inputs->game) == false) {
-        return INGAME_RESULT_ERROR;
+        // Start our Game Over state
+        ingame->gameover = true;
+        audio_playsound(g_sound_gameover);
     }
 
     return INGAME_RESULT_OK;
@@ -88,11 +128,11 @@ static void ingame_navigate(screens_t* screens, int result) {
         // Do nothing
         break;
     case INGAME_RESULT_ERROR:
-        screens_pop(screens);
+        screens_pop_until(screens, SCREEN_MAINMENU);
         break;
     case INGAME_RESULT_GAMEOVER:
-        screens_pop(screens);
-        audio_playsound(g_sound_gameover);
+        // TODO: Handle high scores here.
+        screens_pop_until(screens, SCREEN_MAINMENU);
         break;
     case INGAME_RESULT_PAUSE:
         screens_push(screens, pausemenu_new(screen, 0));
@@ -107,6 +147,14 @@ static void ingame_render(screen_t* screen) {
     ingame_t* ingame = screen->screen.ingame;
 
     environment_draw(ingame->environment);
+
+    if (ingame->gameover == true) {
+        render()->draw_font(vec2i(100, 100), "GAME OVER");
+    } else if (ingame->countdown > MINO_FPS) {
+        render()->draw_font(vec2i(100, 100), "READY");
+    } else if (ingame->countdown > 0) {
+        render()->draw_font(vec2i(100, 100), " GO! ");
+    }
 }
 
 /**
@@ -160,8 +208,22 @@ screen_t ingame_new(ruleset_t* ruleset, gametype_t* gametype) {
     ingame->environment = environment;
     ingame->ruleset = ruleset;
     ingame->gametype = gametype;
+    ingame->countdown = MINO_FPS * 2;
+    ingame->gameover = false;
 
     screen.config = ingame_screen;
     screen.screen.ingame = ingame;
     return screen;
+}
+
+bool ingame_restart(screen_t* screen) {
+    ingame_t* ingame = screen->screen.ingame;
+
+    // Restart our environment
+    if (environment_start(ingame->environment) == false) {
+        return false;
+    }
+
+    ingame->countdown = MINO_FPS * 2;
+    ingame->gameover = false;
 }

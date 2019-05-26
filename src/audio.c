@@ -48,10 +48,12 @@ typedef struct {
 
 sound_t* g_sound_cursor;
 sound_t* g_sound_gameover;
+sound_t* g_sound_go;
 sound_t* g_sound_lock;
 sound_t* g_sound_move;
 sound_t* g_sound_ok;
 sound_t* g_sound_piece0;
+sound_t* g_sound_ready;
 sound_t* g_sound_rotate;
 sound_t* g_sound_step;
 
@@ -124,6 +126,9 @@ bool audio_init(void) {
     if ((g_sound_gameover = sound_new("sfx/default/gameover.wav")) == NULL) {
         goto fail;
     }
+    if ((g_sound_go = sound_new("sfx/default/go.wav")) == NULL) {
+        goto fail;
+    }
     if ((g_sound_lock = sound_new("sfx/default/lock.wav")) == NULL) {
         goto fail;
     }
@@ -134,6 +139,9 @@ bool audio_init(void) {
         goto fail;
     }
     if ((g_sound_piece0 = sound_new("sfx/default/piece0.wav")) == NULL) {
+        goto fail;
+    }
+    if ((g_sound_ready = sound_new("sfx/default/ready.wav")) == NULL) {
         goto fail;
     }
     if ((g_sound_rotate = sound_new("sfx/default/rotate.wav")) == NULL) {
@@ -164,6 +172,8 @@ void audio_deinit(void) {
     g_sound_cursor = NULL;
     sound_delete(g_sound_gameover);
     g_sound_gameover = NULL;
+    sound_delete(g_sound_go);
+    g_sound_go = NULL;
     sound_delete(g_sound_lock);
     g_sound_lock = NULL;
     sound_delete(g_sound_move);
@@ -172,6 +182,8 @@ void audio_deinit(void) {
     g_sound_ok = NULL;
     sound_delete(g_sound_piece0);
     g_sound_piece0 = NULL;
+    sound_delete(g_sound_ready);
+    g_sound_ready = NULL;
     sound_delete(g_sound_rotate);
     g_sound_rotate = NULL;
     sound_delete(g_sound_step);

@@ -159,13 +159,6 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
         goto fail;
     }
 
-    // Create a state table and push a ref to it into the registry.
-    lua_newtable(L);
-    if ((env->state_ref = luaL_ref(L, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop env table dupe
-        error_push_allocerr();
-        goto fail;
-    }
-
     // Always finish your Lua meddling with a clean stack.
     lua_pop(L, 2);
     if (lua_gettop(L) != top) {
@@ -243,12 +236,28 @@ fail:
 
 /**
  * Initialize our script environment for a new game
+ *
+ * Note that this function is called for both starting a new game and reusing
+ * an existing environment for a new game.
  */
 bool environment_start(environment_t* env) {
     int top = lua_gettop(env->lua);
 
     // Error message handler
     lua_pushcfunction(env->lua, db_traceback);
+
+    // Gametic must be zero, in case of restart.
+    env->gametic = 0;
+
+    // Garbage-collect any existing state table we have.
+    luaL_unref(env->lua, LUA_REGISTRYINDEX, env->state_ref);
+
+    // Create a fresh state table and push a ref to it into the registry.
+    lua_newtable(env->lua);
+    if ((env->state_ref = luaL_ref(env->lua, LUA_REGISTRYINDEX)) == LUA_REFNIL) { // pop env table
+        error_push_allocerr();
+        goto fail;
+   }
 
     // Try and call a function called "start" to initialize the game.
     if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->ruleset_ref) != LUA_TTABLE) {

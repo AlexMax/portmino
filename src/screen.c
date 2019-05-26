@@ -89,6 +89,22 @@ bool screens_pop(screens_t* screens) {
 }
 
 /**
+ * Pop screens until we get to the screen of the specific type
+ */
+bool screens_pop_until(screens_t* screens, screentype_t type) {
+    for (;;) {
+        // Pop screens until we hit the main menu
+        screen_t* screen = screens_top(screens);
+        if (screen == NULL || screen->config.type == type) {
+            return false;
+        }
+        screens_pop(screens);
+    }
+
+    return true;
+}
+
+/**
  * Run a single frame of the screen with priority
  */
 void screens_frame(screens_t* screens, const gameinputs_t* inputs) {

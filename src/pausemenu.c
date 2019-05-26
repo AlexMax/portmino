@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include "audio.h"
+#include "ingame.h"
 #include "screen.h"
 
 typedef enum {
@@ -79,10 +80,15 @@ static void pausemenu_navigate(screens_t* screens, int result) {
     switch (result) {
     case PAUSEMENU_RESULT_RESUME:
         screens_pop(screens);
+        audio_playsound(g_sound_ok);
         break;
     case PAUSEMENU_RESULT_RESTART:
+        screens_pop(screens);
+        ingame_restart(screens_top(screens));
         break;
     case PAUSEMENU_RESULT_QUIT:
+        screens_pop_until(screens, SCREEN_MAINMENU);
+        audio_playsound(g_sound_ok);
         break;
     }
 }

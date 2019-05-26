@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "define.h"
+
 #include "screen.h"
 
 // Forward declarations.
@@ -24,3 +26,4 @@ typedef struct gametype_s gametype_t;
 typedef struct ruleset_s ruleset_t;
 
 screen_t ingame_new(ruleset_t* ruleset, gametype_t* gametype);
+bool ingame_restart(screen_t* screen);
