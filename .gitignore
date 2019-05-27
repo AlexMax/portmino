@@ -2,3 +2,6 @@
 /.vscode
 /_vimrc_local.vim
 /build*
+/CMakeSettings.json
+/.vs
+/out
