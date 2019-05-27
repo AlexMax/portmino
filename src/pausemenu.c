@@ -57,11 +57,11 @@ static int pausemenu_frame(screen_t* screen, const gameinputs_t* inputs) {
 
     if (minputs.inputs[0] & MINPUT_UP) {
         menu->selected = (menu->selected + 2) % 3;
-        audio_playsound(g_sound_cursor);
+        audio_playsound("cursor");
     }
     if (minputs.inputs[0] & MINPUT_DOWN) {
         menu->selected = (menu->selected + 1) % 3;
-        audio_playsound(g_sound_cursor);
+        audio_playsound("cursor");
     }
     if (minputs.inputs[0] & MINPUT_OK) {
         return menu->selected + 1;
@@ -80,7 +80,7 @@ static void pausemenu_navigate(screens_t* screens, int result) {
     switch (result) {
     case PAUSEMENU_RESULT_RESUME:
         screens_pop(screens);
-        audio_playsound(g_sound_ok);
+        audio_playsound("ok");
         break;
     case PAUSEMENU_RESULT_RESTART:
         screens_pop(screens);
@@ -88,7 +88,7 @@ static void pausemenu_navigate(screens_t* screens, int result) {
         break;
     case PAUSEMENU_RESULT_QUIT:
         screens_pop_until(screens, SCREEN_MAINMENU);
-        audio_playsound(g_sound_ok);
+        audio_playsound("ok");
         break;
     }
 }

@@ -24,20 +24,8 @@
 static int audioscript_playsound(lua_State* L) {
     // Parameter 1: Sound name
     const char* sound = luaL_checkstring(L, 1);
-    if (strcmp(sound, "gameover") == 0) {
-        audio_playsound(g_sound_gameover);
-    } else if (strcmp(sound, "lock") == 0) {
-        audio_playsound(g_sound_lock);
-    } else if (strcmp(sound, "move") == 0) {
-        audio_playsound(g_sound_move);
-    } else if (strcmp(sound, "piece0") == 0) {
-        audio_playsound(g_sound_piece0);
-    } else if (strcmp(sound, "rotate") == 0) {
-        audio_playsound(g_sound_rotate);
-    } else if (strcmp(sound, "step") == 0) {
-        audio_playsound(g_sound_step);
-    }
 
+    audio_playsound(sound);
     return 0;
 }
 

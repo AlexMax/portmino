@@ -61,11 +61,11 @@ static int mainmenu_frame(screen_t* screen, const gameinputs_t* inputs) {
 
     if (minputs.inputs[0] & MINPUT_UP) {
         menu->selected = (menu->selected + 4) % 5;
-        audio_playsound(g_sound_cursor);
+        audio_playsound("cursor");
     }
     if (minputs.inputs[0] & MINPUT_DOWN) {
         menu->selected = (menu->selected + 1) % 5;
-        audio_playsound(g_sound_cursor);
+        audio_playsound("cursor");
     }
     if (minputs.inputs[0] & MINPUT_OK) {
         return menu->selected + 1;
@@ -83,13 +83,13 @@ static void mainmenu_navigate(screens_t* screens, int result) {
     switch ((mainmenu_result_t)result) {
     case MAINMENU_RESULT_PLAY:
         screens_push(screens, playmenu_new(menu->ruleset));
-        audio_playsound(g_sound_ok);
+        audio_playsound("ok");
         break;
     case MAINMENU_RESULT_RECORDS:
         break;
     case MAINMENU_RESULT_RULESET:
         screens_push(screens, rulesetmenu_new());
-        audio_playsound(g_sound_ok);
+        audio_playsound("ok");
         break;
     case MAINMENU_RESULT_OPTIONS:
         break;

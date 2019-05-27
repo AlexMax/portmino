@@ -12,7 +12,6 @@ set(GAME_SOURCES
     frontend.c          frontend.h
     gametype.c          gametype.h
     globalscript.c      globalscript.h
-    hmap.c              hmap.h
     game.c              game.h
     ingame.c            ingame.h
     input.c             input.h

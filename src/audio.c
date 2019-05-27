@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "khash.h"
+
 #include "error.h"
 #include "frontend.h"
 #include "sound.h"
@@ -46,16 +48,8 @@ typedef struct {
     size_t frame;
 } audio_mixer_channel_t;
 
-sound_t* g_sound_cursor;
-sound_t* g_sound_gameover;
-sound_t* g_sound_go;
-sound_t* g_sound_lock;
-sound_t* g_sound_move;
-sound_t* g_sound_ok;
-sound_t* g_sound_piece0;
-sound_t* g_sound_ready;
-sound_t* g_sound_rotate;
-sound_t* g_sound_step;
+KHASH_MAP_INIT_STR(g_sounds, sound_t*);
+khash_t(g_sounds)* g_sounds;
 
 static audio_mixer_channel_t g_audio_mixer[MIXER_CHANNELS];
 static audio_context_t g_audio_ctx;
@@ -119,34 +113,38 @@ bool audio_init(void) {
         goto fail;
     }
 
-    if ((g_sound_cursor = sound_new("sfx/default/cursor.wav")) == NULL) {
+    // Initialize our sound hashmap
+    g_sounds = kh_init_g_sounds();
+
+    // Add our base sounds
+    if (audio_loadsound("cursor") == false) {
         goto fail;
     }
-    if ((g_sound_gameover = sound_new("sfx/default/gameover.wav")) == NULL) {
+    if (audio_loadsound("gameover") == false) {
         goto fail;
     }
-    if ((g_sound_go = sound_new("sfx/default/go.wav")) == NULL) {
+    if (audio_loadsound("go") == false) {
         goto fail;
     }
-    if ((g_sound_lock = sound_new("sfx/default/lock.wav")) == NULL) {
+    if (audio_loadsound("lock") == false) {
         goto fail;
     }
-    if ((g_sound_move = sound_new("sfx/default/move.wav")) == NULL) {
+    if (audio_loadsound("move") == false) {
         goto fail;
     }
-    if ((g_sound_ok = sound_new("sfx/default/ok.wav")) == NULL) {
+    if (audio_loadsound("ok") == false) {
         goto fail;
     }
-    if ((g_sound_piece0 = sound_new("sfx/default/piece0.wav")) == NULL) {
+    if (audio_loadsound("piece0") == false) {
         goto fail;
     }
-    if ((g_sound_ready = sound_new("sfx/default/ready.wav")) == NULL) {
+    if (audio_loadsound("ready") == false) {
         goto fail;
     }
-    if ((g_sound_rotate = sound_new("sfx/default/rotate.wav")) == NULL) {
+    if (audio_loadsound("rotate") == false) {
         goto fail;
     }
-    if ((g_sound_step = sound_new("sfx/default/step.wav")) == NULL) {
+    if (audio_loadsound("step") == false) {
         goto fail;
     }
 
@@ -169,27 +167,13 @@ void audio_deinit(void) {
         audio_mixer_channel_reset(&g_audio_mixer[i]);
     }
 
-    // Delete all sounds
-    sound_delete(g_sound_cursor);
-    g_sound_cursor = NULL;
-    sound_delete(g_sound_gameover);
-    g_sound_gameover = NULL;
-    sound_delete(g_sound_go);
-    g_sound_go = NULL;
-    sound_delete(g_sound_lock);
-    g_sound_lock = NULL;
-    sound_delete(g_sound_move);
-    g_sound_move = NULL;
-    sound_delete(g_sound_ok);
-    g_sound_ok = NULL;
-    sound_delete(g_sound_piece0);
-    g_sound_piece0 = NULL;
-    sound_delete(g_sound_ready);
-    g_sound_ready = NULL;
-    sound_delete(g_sound_rotate);
-    g_sound_rotate = NULL;
-    sound_delete(g_sound_step);
-    g_sound_step = NULL;
+    // Destroy all sounds in the hashtable.
+    sound_t* sound = NULL;
+    kh_foreach_value(g_sounds, sound, sound_delete(sound));
+
+    // Destroy the sounds hashtable itself.
+    kh_destroy_g_sounds(g_sounds);
+    g_sounds = NULL;
 
     // Free the context.
     free(g_audio_ctx.sampledata);
@@ -197,17 +181,65 @@ void audio_deinit(void) {
 }
 
 /**
- * Insert a sound into the mixer.
+ * Add a sound by name
  */
-void audio_playsound(const sound_t* sound) {
+bool audio_loadsound(const char* name) {
+    char* path = NULL;
+    sound_t* sound = NULL;
+
+    int ok = asprintf(&path, "sfx/default/%s.wav", name);
+    if (ok < 0) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    sound = sound_new(path);
+    if (sound == NULL) {
+        // Error comes from the function
+        goto fail;
+    }
+
+    int ret;
+    khint_t key = kh_put_g_sounds(g_sounds, name, &ret);
+    if (ret == 0) {
+        // Key already exists
+        error_push("Sound \"%s\" is already loaded!", name);
+        goto fail;
+    } else if (ret == -1) {
+        // Operation failed
+        error_push_allocerr();
+        goto fail;
+    }
+    kh_val(g_sounds, key) = sound;
+
+    free(path);
+    return true;
+
+fail:
+    free(path);
+    sound_delete(sound);
+    return false;
+}
+
+/**
+ * Insert a sound into the mixer, by name.
+ */
+void audio_playsound(const char* name) {
     audio_mixer_channel_t* channel = NULL;
     if (!audio_mixer_find_empty(&channel)) {
         // No more room in the mixer.
         return;
     }
 
+    // Look up the sound we're trying to play.
+    khint_t key = kh_get_g_sounds(g_sounds, name);
+    if (key == kh_end(g_sounds)) {
+        // Can't find the sound.
+        return;
+    }
+
     channel->active = true;
-    channel->sound = sound;
+    channel->sound = kh_value(g_sounds, key);
     channel->frame = 0;
 }
 

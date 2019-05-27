@@ -1,5 +1,6 @@
 set(LIBRARY_SOURCES
     dr_wav.c        dr_wav.h
+                    khash.h
     miniz.c         miniz.h
     mpack.c         mpack.h
     stb_image.c     stb_image.h)

@@ -87,10 +87,10 @@ static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
         // Play some countdown sounds
         if (ingame->countdown == MINO_FPS * 2) {
             // Ready
-            audio_playsound(g_sound_ready);
+            audio_playsound("ready");
         } else if (ingame->countdown == MINO_FPS) {
             // Go
-            audio_playsound(g_sound_go);
+            audio_playsound("go");
         }
 
         // Do nothing except keep the count running.
@@ -111,7 +111,7 @@ static int ingame_frame(screen_t* screen, const gameinputs_t* inputs) {
     if (environment_frame(ingame->environment, &inputs->game) == false) {
         // Start our Game Over state
         ingame->gameover = true;
-        audio_playsound(g_sound_gameover);
+        audio_playsound("gameover");
     }
 
     return INGAME_RESULT_OK;
