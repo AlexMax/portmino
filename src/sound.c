@@ -68,7 +68,7 @@ sound_t* sound_new(const char* path) {
         &channels, &samplerate, &framecount);
 
     if (false) {
-        printf("Loading %s: size %zu, channels %u, samplerate %u, framecount %lu\n", path, file->size, channels, samplerate, framecount);
+        printf("Loading %s: size %zu, channels %u, samplerate %u, framecount %zu\n", path, file->size, channels, samplerate, framecount);
     }
 
     vfs_vfile_delete(file);
