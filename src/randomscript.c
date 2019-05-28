@@ -121,16 +121,20 @@ int randomscript_openlib(lua_State* L) {
     luaL_newlib(L, randomlib);
 
     // Create the random_t type
-    static const luaL_Reg randomtype[] = {
+    static const luaL_Reg random_meta[] = {
         { "__gc", randomscript_delete },
+        { NULL, NULL }
+    };
+    static const luaL_Reg random_methods[] = {
         { "number", randomscript_number },
         { NULL, NULL }
     };
 
-    luaL_newmetatable(L, "random_t");
-    luaL_newlib(L, randomtype);
-    lua_setfield(L, -2, "__index");
-    lua_pop(L, 1);
+    luaL_newmetatable(L, "random_t"); // push meta
+    luaL_setfuncs(L, random_meta, 0);
+    luaL_newlib(L, random_methods); // push methods table
+    lua_setfield(L, -2, "__index"); // pop methods table
+    lua_pop(L, 1); // pop meta
 
     return 1;
 }

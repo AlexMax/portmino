@@ -458,7 +458,11 @@ int boardscript_openlib(lua_State* L) {
     luaL_newlib(L, boardlib);
 
     // Create the board_t type
-    static const luaL_Reg boardtype[] = {
+    static const luaL_Reg board_meta[] = {
+        { "__gc", boardscript_delete },
+        { NULL, NULL }
+    };
+    static const luaL_Reg board_methods[] = {
         { "get", boardscript_get },
         { "get_piece", boardscript_get_piece },
         { "set_piece", boardscript_set_piece },
@@ -474,15 +478,11 @@ int boardscript_openlib(lua_State* L) {
         { NULL, NULL }
     };
 
-    luaL_newmetatable(L, "board_t");
-
-    luaL_newlib(L, boardtype);
-    lua_setfield(L, -2, "__index");
-
-    lua_pushcfunction(L, boardscript_delete);
-    lua_setfield(L, -2, "__gc");
-
-    lua_pop(L, 1);
+    luaL_newmetatable(L, "board_t"); // push meta
+    luaL_setfuncs(L, board_meta, 0);
+    luaL_newlib(L, board_methods); // push methods table
+    lua_setfield(L, -2, "__index"); // pop methods table
+    lua_pop(L, 1); // pop meta
 
     return 1;
 }

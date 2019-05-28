@@ -225,6 +225,11 @@ fail:
  * Insert a sound into the mixer, by name.
  */
 void audio_playsound(const char* name) {
+    if (g_audio_init == false) {
+        // Audio isn't enabled.
+        return;
+    }
+
     audio_mixer_channel_t* channel = NULL;
     if (!audio_mixer_find_empty(&channel)) {
         // No more room in the mixer.

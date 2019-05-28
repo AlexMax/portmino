@@ -159,7 +159,11 @@ int piecescript_openlib(lua_State* L) {
     luaL_newlib(L, piecelib);
 
     // Create the piece_t type
-    static const luaL_Reg piecetype[] = {
+    static const luaL_Reg piece_meta[] = {
+        { "__gc", piecescript_delete },
+        { NULL, NULL }
+    };
+    static const luaL_Reg piece_methods[] = {
         { "config_name", piecescript_config_name },
         { "config_spawn_pos", piecescript_config_spawn_pos },
         { "config_spawn_rot", piecescript_config_spawn_rot },
@@ -167,15 +171,11 @@ int piecescript_openlib(lua_State* L) {
         { NULL, NULL }
     };
 
-    luaL_newmetatable(L, "piece_t");
-
-    luaL_newlib(L, piecetype);
-    lua_setfield(L, -2, "__index");
-
-    lua_pushcfunction(L, piecescript_delete);
-    lua_setfield(L, -2, "__gc");
-
-    lua_pop(L, 1);
+    luaL_newmetatable(L, "piece_t"); // push meta
+    luaL_setfuncs(L, piece_meta, 0);
+    luaL_newlib(L, piece_methods); // push methods table
+    lua_setfield(L, -2, "__index"); // pop methods table
+    lua_pop(L, 1); // pop meta
 
     return 1;
 }
