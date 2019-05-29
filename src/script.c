@@ -161,8 +161,9 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
         }
 
         // Write serialized form as msgpack raw binary data
+        uint8_t type = entity->type;
         mpack_start_bin(writer, 1 + data->size);
-        mpack_write_int(writer, entity->type);
+        mpack_write_bytes(writer, &type, sizeof(type));
         mpack_write_bytes(writer, (const char*)(data->data), data->size);
         mpack_finish_bin(writer);
 
@@ -283,6 +284,93 @@ buffer_t* script_to_serialized(lua_State* L, int index) {
 fail:
     buffer_delete(msgpack);
     return NULL;
+}
+
+static void unserialize_node(lua_State* L, mpack_node_t* node) {
+    mpack_type_t type = mpack_node_type(*node);
+
+    // Unserialize depending on type
+    switch (type) {
+    case mpack_type_nil:
+        lua_pushnil(L);
+        break;
+    case mpack_type_bool: {
+        bool b = mpack_node_bool(*node);
+        lua_pushboolean(L, (int)b);
+        break;
+    }
+    case mpack_type_int: {
+        int64_t i = mpack_node_i64(*node);
+        lua_pushinteger(L, (lua_Integer)i);
+        break;
+    }
+    case mpack_type_uint: {
+        // Integers can exist as unsigned values in the message.  Since
+        // we are the only writer of the message, assume it is in-bounds. 
+        uint64_t i = mpack_node_u64(*node);
+        lua_pushinteger(L, (lua_Integer)i);
+        break;
+    }
+    case mpack_type_double: {
+        double d = mpack_node_double(*node);
+        lua_pushnumber(L, d);
+        break;
+    }
+    case mpack_type_str: {
+        // WARNING: str isn't null-terminated
+        const char* str = mpack_node_str(*node);
+        size_t len = mpack_node_strlen(*node);
+        lua_pushlstring(L, str, len);
+        break;
+    }
+    case mpack_type_bin: {
+        // TODO: Unserialize into entities
+        break;
+    }
+    case mpack_type_array: {
+        size_t len = mpack_node_array_length(*node);
+        lua_createtable(L, len, 0); // push table
+        for (size_t i = 0;i < len;i++) {
+            mpack_node_t value = mpack_node_array_at(*node, i);
+            unserialize_node(L, &value); // push unserialized value
+            lua_rawseti(L, -2, i); // pop value
+        }
+        break;
+	}
+    case mpack_type_map: {
+        size_t len = mpack_node_map_count(*node);
+        lua_createtable(L, 0, len); // push table
+        for (size_t i = 0;i < len;i++) {
+            mpack_node_t key = mpack_node_map_key_at(*node, i);
+            unserialize_node(L, &key); // push unserialized key
+            mpack_node_t value = mpack_node_map_value_at(*node, i);
+            unserialize_node(L, &value); // push unserialized value
+            lua_settable(L, -3); // pop key and value
+        }
+        break;
+    }
+    default:
+        fprintf(stderr, "default: %s\n", mpack_type_to_string(type));
+        lua_pushnil(L);
+        break;
+    }
+}
+
+/**
+ * Push a table to the stack with the contents of the given serialized buffer.
+ */
+void script_push_serialized(lua_State* L, const buffer_t* buffer) {
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, buffer->data, buffer->size);
+    mpack_tree_parse(&tree);
+
+    mpack_node_t root = mpack_tree_root(&tree);
+    unserialize_node(L, &root);
+
+    mpack_error_t error = mpack_tree_destroy(&tree);
+    if (error != mpack_ok) {
+        luaL_error(L, "Unserialization error.");
+    }
 }
 
 /**

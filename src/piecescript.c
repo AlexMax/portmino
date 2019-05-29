@@ -89,6 +89,7 @@ static int piecescript_new(lua_State* L) {
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_PIECE;
     entity->serialize = piecescript_wrapserialize;
+    entity->unserialize = NULL;
     entity->destruct = piecescript_wrapdelete;
 
     // Apply methods to the entity

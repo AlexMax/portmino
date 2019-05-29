@@ -35,9 +35,12 @@ typedef enum {
 typedef buffer_t*(*entity_serialize_t)(void* ptr);
 
 /**
+ * Unserialize function pointer.
+ */
+typedef void*(*entity_unserialize_t)(buffer_t* ptr);
+
+/**
  * Destructor function pointer.
- *
- * All prototype destructors must conform to this function type.
  */
 typedef void(*entity_destruct_t)(void* ptr);
 
@@ -69,6 +72,11 @@ typedef struct entity_s {
      * Entity serializer.
      */
     entity_serialize_t serialize;
+
+    /**
+     * Entity unserializer.
+     */
+    entity_unserialize_t unserialize;
 
     /**
      * Entity destructor.

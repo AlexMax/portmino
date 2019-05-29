@@ -71,6 +71,7 @@ static int boardscript_new(lua_State* L) {
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_BOARD;
     entity->serialize = boardscript_wrapserialize;
+    entity->unserialize = NULL;
     entity->destruct = boardscript_wrapdelete;
 
     // Apply methods to the entity

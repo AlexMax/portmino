@@ -27,6 +27,9 @@ static void test_serialize(void** state) {
     assert_true(error_count() == 0);
     assert_non_null(serialized);
 
+    script_push_serialized(L, serialized);
+    assert_true(error_count() == 0);
+
     //fprintf(stderr, "size: %zu\ndata: ", serialized->size);
     //for (size_t i = 0;i < serialized->size;i++) {
     //    fprintf(stderr, "%02X ", serialized->data[i]);

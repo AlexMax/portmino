@@ -146,3 +146,30 @@ fail:
     buffer_delete(buffer);
     return NULL;
 }
+
+random_t* random_unserialize(buffer_t* buffer) {
+    random_t* random = NULL;
+
+    if ((random = calloc(1, sizeof(*random))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    mpack_reader_t reader;
+    mpack_reader_init_data(&reader, buffer->data, buffer->size);
+    mpack_expect_array_match(&reader, 2);
+    random->state[0] = mpack_expect_u32(&reader);
+    random->state[1] = mpack_expect_u32(&reader);
+    mpack_done_array(&reader);
+
+    mpack_error_t error = mpack_reader_destroy(&reader);
+    if (error != mpack_ok) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    return random;
+
+fail:
+    return NULL;
+}

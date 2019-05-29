@@ -30,6 +30,13 @@ static buffer_t* randomscript_wrapserialize(void* ptr) {
 }
 
 /**
+ * Wrap unserialize with void* function.
+ */
+static void* randomscript_wrapunserialize(buffer_t* buffer) {
+    return random_unserialize(buffer);
+}
+
+/**
  * Wrap delete with void* function.
  */
 static void randomscript_wrapdelete(void* ptr) {
@@ -82,6 +89,7 @@ static int randomscript_new(lua_State* L) {
     entity->type = MINO_ENTITY_RANDOM;
     entity->data = random;
     entity->serialize = randomscript_wrapserialize;
+    entity->unserialize = randomscript_wrapunserialize;
     entity->destruct = randomscript_wrapdelete;
 
     // Apply methods to the userdata
