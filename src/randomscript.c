@@ -23,6 +23,20 @@
 #include "random.h"
 
 /**
+ * Wrap serialize with void* function.
+ */
+static buffer_t* randomscript_wrapserialize(void* ptr) {
+    return random_serialize(ptr);
+}
+
+/**
+ * Wrap delete with void* function.
+ */
+static void randomscript_wrapdelete(void* ptr) {
+    random_delete(ptr);
+}
+
+/**
  * Lua: Initialize new random state.
  */
 static int randomscript_new(lua_State* L) {
@@ -67,7 +81,8 @@ static int randomscript_new(lua_State* L) {
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_RANDOM;
     entity->data = random;
-    entity->destruct = random_destruct;
+    entity->serialize = randomscript_wrapserialize;
+    entity->destruct = randomscript_wrapdelete;
 
     // Apply methods to the userdata
     luaL_setmetatable(L, "random_t");

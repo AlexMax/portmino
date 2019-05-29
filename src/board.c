@@ -94,13 +94,6 @@ void board_delete(board_t* board) {
 }
 
 /**
- * A generic destructor for the board
- */
-void board_destruct(void* board) {
-    board_delete(board);
-}
-
-/**
  * Get data from the board itself given a position vector
  *
  * Out-of-bounds is always 0xFF, otherwise it's the value at the position.

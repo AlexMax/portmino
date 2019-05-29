@@ -169,13 +169,6 @@ void piece_delete(piece_t* piece) {
 }
 
 /**
- * A generic destructor for the piece
- */
-void piece_destruct(void* piece) {
-    piece_delete(piece);
-}
-
-/**
  * Serialize piece struct using msgpack
  */
 buffer_t* piece_serialize(piece_t* piece) {

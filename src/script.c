@@ -143,60 +143,31 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
         }
         break;
     case LUA_TUSERDATA: {
-        entity_t* entity = luaL_testudata(L, index, "random_t");
-        if (entity != NULL) {
-            // Is this a random struct?  Serialize random state.
-            buffer_t* random_data = random_serialize(entity->data);
-            if (random_data == NULL) {
-                return false;
-            }
+        entity_t* entity = NULL;
+        buffer_t* data = NULL;
 
-            mpack_start_bin(writer, 1 + random_data->size);
-            mpack_write_bytes(writer, "\x01", 1);
-            mpack_write_bytes(writer, (const char*)(random_data->data), random_data->size);
-            mpack_finish_bin(writer);
-
-            buffer_delete(random_data);
-            break;
+        // Assume userdata is an entity of some sort
+        entity = lua_touserdata(L, index);
+        if (entity == NULL) {
+            error_push("Data is not serializable.");
+            return false;
         }
 
-        entity = luaL_testudata(L, index, "board_t");
-        if (entity != NULL) {
-            // Is this a board?  Serialize board state.
-            buffer_t* board_data = board_serialize(entity->data);
-            if (board_data == NULL) {
-                return false;
-            }
-
-            mpack_start_bin(writer, 1 + board_data->size);
-            mpack_write_bytes(writer, "\x02", 1);
-            mpack_write_bytes(writer, (const char*)(board_data->data), board_data->size);
-            mpack_finish_bin(writer);
-
-            buffer_delete(board_data);
-            break;
+        // Serialize the entity
+        data = entity_serialize(entity);
+        if (data == NULL) {
+            error_push("Data is not serializable.");
+            return false;
         }
 
-        entity = luaL_testudata(L, index, "piece_t");
-        if (entity != NULL) {
-            // Is this a piece?  Serialize the piece.
-            buffer_t* piece_data = piece_serialize(entity->data);
-            if (piece_data == NULL) {
-                return false;
-            }
+        // Write serialized form as msgpack raw binary data
+        mpack_start_bin(writer, 1 + data->size);
+        mpack_write_int(writer, entity->type);
+        mpack_write_bytes(writer, (const char*)(data->data), data->size);
+        mpack_finish_bin(writer);
 
-            mpack_start_bin(writer, 1 + piece_data->size);
-            mpack_write_bytes(writer, "\x03", 1);
-            mpack_write_bytes(writer, (const char*)(piece_data->data), piece_data->size);
-            mpack_finish_bin(writer);
-
-            buffer_delete(piece_data);
-            break;
-        }
-
-        // No clue what this is then...
-        error_push("Data is not serializable.");
-        return false;
+        buffer_delete(data);
+        break;
     }
     case LUA_TFUNCTION:
     case LUA_TTHREAD:

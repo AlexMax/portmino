@@ -28,6 +28,5 @@ typedef struct random_s {
 
 random_t* random_new(uint32_t* seed);
 void random_delete(random_t* random);
-void random_destruct(void* random);
 uint32_t random_number(random_t* random, uint32_t range);
 buffer_t* random_serialize(random_t* random);

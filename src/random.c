@@ -100,13 +100,6 @@ void random_delete(random_t* random) {
 }
 
 /**
- * Random number destructor, for entity
- */
-void random_destruct(void* random) {
-    random_delete(random);
-}
-
-/**
  * Get a random number in a given range, without bias.
  * 
  * Taken from OpenBSD.  Would rather not introduce any fencepost errors or

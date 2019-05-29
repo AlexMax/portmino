@@ -23,6 +23,20 @@
 #include "script.h"
 
 /**
+ * Wrap serialize with void* function.
+ */
+static buffer_t* piecescript_wrapserialize(void* ptr) {
+    return piece_serialize(ptr);
+}
+
+/**
+ * Wrap delete with void* function.
+ */
+static void piecescript_wrapdelete(void* ptr) {
+    piece_delete(ptr);
+}
+
+/**
  * Lua: Initialize new board state.
  */
 static int piecescript_new(lua_State* L) {
@@ -74,7 +88,8 @@ static int piecescript_new(lua_State* L) {
     entity->id = entity_next;
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_PIECE;
-    entity->destruct = piece_destruct;
+    entity->serialize = piecescript_wrapserialize;
+    entity->destruct = piecescript_wrapdelete;
 
     // Apply methods to the entity
     luaL_setmetatable(L, "piece_t");

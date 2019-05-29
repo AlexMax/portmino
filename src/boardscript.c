@@ -24,6 +24,20 @@
 #include "proto.h"
 #include "script.h"
 
+/**
+ * Wrap serialize with void* function.
+ */
+static buffer_t* boardscript_wrapserialize(void* ptr) {
+    return board_serialize(ptr);
+}
+
+/**
+ * Wrap delete with void* function.
+ */
+static void boardscript_wrapdelete(void* ptr) {
+    board_delete(ptr);
+}
+
  /**
   * Lua: Initialize new board state.
   */
@@ -56,7 +70,8 @@ static int boardscript_new(lua_State* L) {
     entity->id = entity_next;
     entity->registry_ref = registry_ref;
     entity->type = MINO_ENTITY_BOARD;
-    entity->destruct = board_destruct;
+    entity->serialize = boardscript_wrapserialize;
+    entity->destruct = boardscript_wrapdelete;
 
     // Apply methods to the entity
     luaL_setmetatable(L, "board_t");

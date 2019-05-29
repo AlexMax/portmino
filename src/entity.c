@@ -22,6 +22,13 @@
 #include "error.h"
 
 /**
+ * Serialize an entity
+ */
+buffer_t* entity_serialize(entity_t* entity) {
+    return entity->serialize(entity->data);
+}
+
+/**
  * Deinitialize an entity
  */
 void entity_deinit(entity_t* entity) {
