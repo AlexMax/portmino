@@ -40,9 +40,6 @@
 #include "renderscript.h"
 #include "vfs.h"
 
-// Forward declarations.
-static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer);
-
 /**
  * Create a lua state that contains all of our libraries
  */
@@ -108,10 +105,16 @@ void script_push_vector(lua_State* L, const vec2i_t* vec) {
     lua_setfield(L, -2, "y");
 }
 
-static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
+static bool serialize_flat_value(lua_State* L, int flat, int index, mpack_writer_t* writer) {
+    int top = lua_gettop(L);
+
+    if (flat < 0) {
+        // Translate into absolute index
+        flat = top + flat + 1;
+    }
     if (index < 0) {
-        // First translate into absolute index
-        index = lua_gettop(L) + index + 1;
+        // Translate into absolute index
+        index = top + index + 1;
     }
 
     // Serialization depends on type
@@ -138,11 +141,38 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
         break;
     }
     case LUA_TTABLE:
-        if (serialize_table(L, index, writer) == false) {
-            return false;
-        }
-        break;
     case LUA_TUSERDATA: {
+        // Serialize a reference to the table or userdata.  Since things are
+        // completely flat at this point, we can use an array for this.
+        lua_pushvalue(L, index); // push table key to look up
+        lua_rawget(L, flat); // pop table
+        mpack_start_array(writer, 1);
+        mpack_write_i64(writer, lua_tointeger(L, -1));
+        mpack_finish_array(writer);
+        lua_pop(L, 1);
+        break;
+    }
+    case LUA_TFUNCTION:
+    case LUA_TTHREAD:
+    case LUA_TLIGHTUSERDATA:
+        error_push("Data is not serializable.");
+        return false;
+    }
+
+    return true;
+}
+
+static bool serialize_flat(lua_State* L, int flat, int index, mpack_writer_t* writer) {
+    int top = lua_gettop(L);
+
+    if (index < 0) {
+        // First translate into absolute index
+        index = top + index + 1;
+    }
+
+    // Flat data can either be userdata or table
+    int type = lua_type(L, index);
+    if (type == LUA_TUSERDATA) {
         entity_t* entity = NULL;
         buffer_t* data = NULL;
 
@@ -168,28 +198,9 @@ static bool serialize_index(lua_State* L, int index, mpack_writer_t* writer) {
         mpack_finish_bin(writer);
 
         buffer_delete(data);
-        break;
-    }
-    case LUA_TFUNCTION:
-    case LUA_TTHREAD:
-    case LUA_TLIGHTUSERDATA:
-        error_push("Data is not serializable.");
-        return false;
-    }
-
-    return true;
-}
-
-static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
-    int top = lua_gettop(L);
-
-    if (index < 0) {
-        // First translate into absolute index
-        index = lua_gettop(L) + index + 1;
-    }
-
-    if (lua_type(L, index) != LUA_TTABLE) {
-        error_push("Tried to serialize a non-table as a table.");
+        return true;
+    } else if (type != LUA_TTABLE) {
+        error_push("Flat data is something other than a table or userdata.");
         return false;
     }
 
@@ -217,7 +228,7 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
             const char* str = lua_tolstring(L, -1, &str_len);
             mpack_write_str(writer, str, str_len);
             lua_pop(L, 1); // pop dupe key
-            if (serialize_index(L, -1, writer) == false) {
+            if (serialize_flat_value(L, flat, -1, writer) == false) {
                 // Function pushes error
                 goto fail;
             }
@@ -238,7 +249,7 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
         mpack_start_array(writer, length);
         for (uint32_t i = 1;i <= len;i++) {
             lua_rawgeti(L, index, i);
-            if (serialize_index(L, -1, writer) == false) {
+            if (serialize_flat_value(L, flat, -1, writer) == false) {
                 // Function pushes error
                 goto fail;
             }
@@ -255,6 +266,114 @@ fail:
 }
 
 /**
+ * Find all table and userdata references at a sepcific index and flatten
+ * them into a single output table for ease of serialization.
+ */
+static bool flatten_table(lua_State* L, int index, int out, int* id) {
+    int top = lua_gettop(L);
+
+    if (index < 0) {
+        // Translate into absolute index
+        index = top + index + 1;
+    }
+    if (out < 0) {
+        // Translate into absolute index
+        out = top + out + 1;
+    }
+
+    if (lua_type(L, index) != LUA_TTABLE) {
+        error_push("Tried to flatten a non-table.");
+        return false;
+    }
+
+    // First check to see if the table is already a part of the output.
+    lua_pushvalue(L, index);
+    if (lua_rawget(L, out) != LUA_TNIL) {
+        // Table already exists, we don't need to flatten it again.
+        lua_settop(L, top);
+        return true;
+    }
+
+    // Ensure that whatever we're pointing at is added to the output table
+    lua_pushvalue(L, index);
+    lua_pushinteger(L, *id);
+    lua_rawset(L, out);
+
+    // Future additions use the next id
+    *id += 1;
+
+    // Iterate the table we're currently pointing at looking for other tables
+    // and userdata.
+    lua_pushnil(L);
+    while (lua_next(L, index) != 0) {
+        int type = lua_type(L, -1);
+        switch (type) {
+        case LUA_TTABLE:
+            // Recursive call on the table
+            flatten_table(L, -1, out, id);
+            break;
+        case LUA_TUSERDATA:
+            // Add the userdata to the table directly.
+            lua_pushinteger(L, *id);
+            lua_rawset(L, out);
+            *id += 1;
+
+            // We already popped the value
+            continue;
+        default:
+            // Do nothing.
+            break;
+        }
+
+        lua_pop(L, 1); // pop value
+    }
+
+    lua_settop(L, top);
+    return true;
+}
+
+static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
+    int top = lua_gettop(L);
+
+    if (index < 0) {
+        // Translate into absolute index
+        index = top + index + 1;
+    }
+
+    // Push a serialization table.  This table keeps track of tables and
+    // userdata that we've already serialized, and is discarded at the end.
+    lua_newtable(L);
+    int scratch = lua_gettop(L);
+
+    // Flatten the table into an array of table and userdata references.
+    int id = 1;
+    if (!flatten_table(L, index, scratch, &id)) {
+        // Error comes from function
+        goto fail;
+    }
+
+    // Now that it's flat, serialize it.
+    mpack_start_map(writer, id - 1);
+    lua_pushnil(L);
+    while (lua_next(L, scratch) != 0) {
+        // Value contains the unique ID, key contains our table.
+        mpack_write_int(writer, lua_tointeger(L, -1));
+        if (serialize_flat(L, scratch, -2, writer) == false) {
+            // Error comes from function
+            goto fail;
+        }
+        lua_pop(L, 1);
+    }
+    mpack_finish_map(writer);
+
+    return true;
+
+fail:
+    lua_settop(L, top);
+    return false;
+}
+
+/**
  * Serialize the data at the given index into a buffer
  *
  * The return value is allocated by this function, and the caller is expected
@@ -262,6 +381,7 @@ fail:
  */
 buffer_t* script_to_serialized(lua_State* L, int index) {
     buffer_t* msgpack = NULL;
+    int top = lua_gettop(L);
 
     // Allocate our return buffer
     if ((msgpack = calloc(1, sizeof(buffer_t))) == NULL) {
@@ -272,6 +392,7 @@ buffer_t* script_to_serialized(lua_State* L, int index) {
     mpack_writer_t writer;
     mpack_writer_init_growable(&writer, (char**)(&msgpack->data), &msgpack->size);
     if (serialize_table(L, index, &writer) == false) {
+        error_push("Serialization error.");
         goto fail;
     }
     if (mpack_writer_destroy(&writer) != mpack_ok) {
@@ -279,9 +400,11 @@ buffer_t* script_to_serialized(lua_State* L, int index) {
         goto fail;
     }
 
+    lua_settop(L, top);
     return msgpack;
 
 fail:
+    lua_settop(L, top);
     buffer_delete(msgpack);
     return NULL;
 }
@@ -336,7 +459,7 @@ static void unserialize_node(lua_State* L, mpack_node_t* node) {
             lua_rawseti(L, -2, i); // pop value
         }
         break;
-	}
+    }
     case mpack_type_map: {
         size_t len = mpack_node_map_count(*node);
         lua_createtable(L, 0, len); // push table
