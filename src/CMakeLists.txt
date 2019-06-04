@@ -34,6 +34,7 @@ set(GAME_SOURCES
     rulesetmenu.c       rulesetmenu.h
     screen.c            screen.h
     script.c            script.h
+    serialize.c         serialize.h
     softblock.c         softblock.h
     softfont.c          softfont.h
     softrender.c        softrender.h

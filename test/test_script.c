@@ -12,39 +12,6 @@
 #include "script.h"
 #include "vfs.h"
 
-static void test_serialize(void** state) {
-    frontend_init(&g_frontend_module);
-    platform_init();
-    assert_true(vfs_init(NULL) == true);
-
-    lua_State* L = script_newstate();
-    assert_non_null(L);
-
-    int ok = luaL_dostring(L, "return {true, 1, 2.5, 'string', {123, 456}, {x=123, y=456}}");
-    assert_true(ok == LUA_OK);
-
-    buffer_t* serialized = script_to_serialized(L, -1);
-    assert_true(error_count() == 0);
-    assert_non_null(serialized);
-
-    fprintf(stderr, "size: %zu\ndata: ", serialized->size);
-    for (size_t i = 0; i < serialized->size; i++) {
-        fprintf(stderr, "%02X ", serialized->data[i]);
-    }
-    fprintf(stderr, "\n");
-
-    script_push_serialized(L, serialized);
-    assert_true(error_count() == 0);
-
-    buffer_delete(serialized);
-
-    lua_close(L);
-
-    vfs_deinit();
-    platform_deinit();
-    frontend_deinit();
-}
-
 /**
  * A lua cfunction that returns its first upvalue.
  */
@@ -85,7 +52,6 @@ static void test_wrap_cfuncs(void** state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_serialize),
         cmocka_unit_test(test_wrap_cfuncs),
     };
 

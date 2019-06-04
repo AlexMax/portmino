@@ -5,6 +5,7 @@ set(TESTS
     test_protoscript
     test_ruleset
     test_script
+    test_serialize
     test_softblock
     test_vfs)
 if(UNIX)

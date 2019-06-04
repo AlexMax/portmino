@@ -25,6 +25,7 @@
 #include "inputscript.h"
 #include "proto.h"
 #include "script.h"
+#include "serialize.h"
 
 static lua_State *getthread (lua_State *L, int *arg) {
     if (lua_isthread(L, 1)) {
@@ -287,7 +288,7 @@ bool environment_start(environment_t* env) {
         goto fail;
     }
 
-    buffer_t* state = script_to_serialized(env->lua, -1);
+    buffer_t* state = serialize_to_serialized(env->lua, -1);
     if (state == NULL) {
         error_push("Initial state could not be serialized.");
         goto fail;
@@ -306,8 +307,10 @@ fail:
  * Rewind the environment to a specific past frame
  */
 bool environment_rewind(environment_t* env, uint32_t frame) {
-    (void)env;
     (void)frame;
+    int top = lua_gettop(env->lua);
+
+    serialize_push_serialized(env->lua, env->states[0]);
 
     return true;
 }
