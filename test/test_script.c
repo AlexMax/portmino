@@ -33,8 +33,8 @@ static void test_serialize(void** state) {
     }
     fprintf(stderr, "\n");
 
-    //script_push_serialized(L, serialized);
-    //assert_true(error_count() == 0);
+    script_push_serialized(L, serialized);
+    assert_true(error_count() == 0);
 
     buffer_delete(serialized);
 

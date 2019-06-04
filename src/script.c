@@ -162,7 +162,7 @@ static bool serialize_flat_value(lua_State* L, int flat, int index, mpack_writer
     return true;
 }
 
-static bool serialize_flat(lua_State* L, int flat, int index, mpack_writer_t* writer) {
+static bool serialize_flat_index(lua_State* L, int flat, int index, mpack_writer_t* writer) {
     int top = lua_gettop(L);
 
     if (index < 0) {
@@ -332,7 +332,7 @@ static bool flatten_table(lua_State* L, int index, int out, int* id) {
     return true;
 }
 
-static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
+static bool serialize_flat(lua_State* L, int index, mpack_writer_t* writer) {
     int top = lua_gettop(L);
 
     if (index < 0) {
@@ -358,7 +358,7 @@ static bool serialize_table(lua_State* L, int index, mpack_writer_t* writer) {
     while (lua_next(L, scratch) != 0) {
         // Value contains the unique ID, key contains our table.
         mpack_write_int(writer, lua_tointeger(L, -1));
-        if (serialize_flat(L, scratch, -2, writer) == false) {
+        if (serialize_flat_index(L, scratch, -2, writer) == false) {
             // Error comes from function
             goto fail;
         }
@@ -391,7 +391,7 @@ buffer_t* script_to_serialized(lua_State* L, int index) {
 
     mpack_writer_t writer;
     mpack_writer_init_growable(&writer, (char**)(&msgpack->data), &msgpack->size);
-    if (serialize_table(L, index, &writer) == false) {
+    if (serialize_flat(L, index, &writer) == false) {
         error_push("Serialization error.");
         goto fail;
     }
@@ -409,7 +409,8 @@ fail:
     return NULL;
 }
 
-static void unserialize_node(lua_State* L, mpack_node_t* node) {
+static void unserialize_flat_value(lua_State* L, mpack_node_t* node) {
+    int top = lua_gettop(L);
     mpack_type_t type = mpack_node_type(*node);
 
     // Unserialize depending on type
@@ -446,30 +447,16 @@ static void unserialize_node(lua_State* L, mpack_node_t* node) {
         lua_pushlstring(L, str, len);
         break;
     }
-    case mpack_type_bin: {
-        // TODO: Unserialize into entities
-        break;
-    }
     case mpack_type_array: {
-        size_t len = mpack_node_array_length(*node);
-        lua_createtable(L, len, 0); // push table
-        for (size_t i = 0;i < len;i++) {
-            mpack_node_t value = mpack_node_array_at(*node, i);
-            unserialize_node(L, &value); // push unserialized value
-            lua_rawseti(L, -2, i); // pop value
-        }
-        break;
-    }
-    case mpack_type_map: {
-        size_t len = mpack_node_map_count(*node);
-        lua_createtable(L, 0, len); // push table
-        for (size_t i = 0;i < len;i++) {
-            mpack_node_t key = mpack_node_map_key_at(*node, i);
-            unserialize_node(L, &key); // push unserialized key
-            mpack_node_t value = mpack_node_map_value_at(*node, i);
-            unserialize_node(L, &value); // push unserialized value
-            lua_settable(L, -3); // pop key and value
-        }
+        // This isn't actually an array, it's a stand-in value for an entity.
+        // We can't resolve the entity at this juncture, so instead we store
+        // the entity ID as the memory address of a light userdata.  It might
+        // seem gross, but it's an integer value that doesn't allocate and
+        // is distinct from a "real" number, so it's the best we've got.
+        mpack_node_t entity = mpack_node_array_at(*node, 0);
+        int64_t id = mpack_node_i64(entity);
+        // FIXME: Pointers might be 32-bits.
+        lua_pushlightuserdata(L, (void*)id);
         break;
     }
     default:
@@ -477,6 +464,102 @@ static void unserialize_node(lua_State* L, mpack_node_t* node) {
         lua_pushnil(L);
         break;
     }
+}
+
+static void unflatten_table(lua_State* L, int flat, int index) {
+    int top = lua_gettop(L);
+
+    if (flat < 0) {
+        // Translate into absolute index
+        flat = top + flat + 1;
+    }
+    if (index < 0) {
+        // Translate into absolute index
+        index = top + index + 1;
+    }
+
+    // Fix up all instances of entity ID's so they point at their actual contents.
+    lua_pushnil(L);
+    while (lua_next(L, index) != 0) {
+        if (lua_type(L, -1) != LUA_TLIGHTUSERDATA) {
+            // Not a table or a userdata, not interesting.
+            lua_pop(L, 1);
+            continue;
+        }
+
+        // Light userdata contains ID of original table or entity.
+        lua_Integer id = (lua_Integer)lua_touserdata(L, -1);
+        lua_pop(L, 1); // pop loop value
+        lua_pushvalue(L, -1); // push loop key dupe
+        lua_rawgeti(L, flat, id); // push flat entity
+        if (lua_type(L, -1) == LUA_TTABLE) {
+            unflatten_table(L, flat, -1); // Unflatten this subtable too
+        }
+        lua_rawset(L, index); // pop key and flat entity
+    }
+}
+
+static bool unserialize_flat(lua_State* L, mpack_node_t* node) {
+    int top = lua_gettop(L);
+
+    // Despite being a map, the keys in the map start at 1 and end at the
+    // item count - they're just in random order.
+    size_t count = mpack_node_map_count(*node);
+
+    // Push an output flat table to the top of the stack.
+    lua_createtable(L, count, 0);
+
+    // Loop over our keys.
+    for (size_t i = 1;i <= count;i++) {
+        mpack_node_t flatitem = mpack_node_map_uint(*node, i);
+        mpack_type_t type = mpack_node_type(flatitem);
+        switch (type) {
+        case mpack_type_map: {
+            // Normal Table
+            size_t count = mpack_node_map_count(flatitem);
+            lua_createtable(L, 0, count);
+            for (size_t j = 0;j < count;j++) {
+                mpack_node_t key = mpack_node_map_key_at(flatitem, j);
+                unserialize_flat_value(L, &key); // push key
+                mpack_node_t value = mpack_node_map_value_at(flatitem, j);
+                unserialize_flat_value(L, &value); // push value
+                lua_rawset(L, -3);
+            }
+            break;
+        }
+        case mpack_type_array: {
+            // Table shaped like an array
+            size_t count = mpack_node_array_length(flatitem);
+            lua_createtable(L, count, 0);
+            for (size_t j = 0;j < count;j++) {
+                mpack_node_t value = mpack_node_array_at(flatitem, j);
+                unserialize_flat_value(L, &value); // push value
+                lua_rawseti(L, -2, j + 1);
+            }
+            break;
+        }
+        case mpack_type_bin:
+            // Userdata
+            break;
+        default:
+            error_push("Unexpected flat item type.");
+            goto fail;
+        }
+
+        lua_rawseti(L, -2, i); // pop value
+    }
+
+    // Now we have a flattened table of tables and userdatas.  Start at the
+    // first entry and walk recursively until all our flat entities are
+    // resolved.
+    lua_rawgeti(L, -1, 1); // push root table
+    unflatten_table(L, -2, -1);
+
+    return true;
+
+fail:
+    lua_settop(L, top);
+    return false;
 }
 
 /**
@@ -488,7 +571,9 @@ void script_push_serialized(lua_State* L, const buffer_t* buffer) {
     mpack_tree_parse(&tree);
 
     mpack_node_t root = mpack_tree_root(&tree);
-    unserialize_node(L, &root);
+    if (unserialize_flat(L, &root) == false) {
+        luaL_error(L, "Unserialization error.");
+    }
 
     mpack_error_t error = mpack_tree_destroy(&tree);
     if (error != mpack_ok) {
