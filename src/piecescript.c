@@ -64,6 +64,10 @@ static int piecescript_new(lua_State* L) {
         return 0;
     }
 
+    // Get our entity data
+    uint32_t entity_next = lua_tointeger(L, -1);
+    int registry_ref = lua_tointeger(L, -2);
+
     // Get the piece configuration
     lua_getfield(L, -3, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
@@ -72,10 +76,6 @@ static int piecescript_new(lua_State* L) {
         return 0;
     }
     piece_config_t* config = proto->data;
-
-    // Get our other entity data
-    uint32_t entity_next = lua_tointeger(L, -1);
-    int registry_ref = lua_tointeger(L, -2);
 
     // Initialize (and return) board state
     entity_t* entity = lua_newuserdata(L, sizeof(entity_t));

@@ -22,6 +22,8 @@
 #include "entity.h"
 #include "random.h"
 
+#include "script.h"
+
 /**
  * Wrap serialize with void* function.
  */

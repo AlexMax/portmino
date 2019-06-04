@@ -23,6 +23,7 @@
 
 #include "entity.h"
 #include "error.h"
+#include "script.h"
 
 static bool serialize_flat_value(lua_State* L, int flat, int index, mpack_writer_t* writer) {
     int top = lua_gettop(L);
@@ -457,13 +458,18 @@ static bool unserialize_flat(lua_State* L, mpack_node_t* node) {
             }
             break;
         }
-        case mpack_type_bin:
+        case mpack_type_bin: {
             // Userdata
+            size_t size = mpack_node_bin_size(flatitem);
+            const char* data = mpack_node_bin_data(flatitem);
             break;
+        }
         default:
             error_push("Unexpected flat item type.");
             goto fail;
         }
+
+        script_debug_stack(L);
 
         lua_rawseti(L, -2, i); // pop value
     }

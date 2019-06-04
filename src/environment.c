@@ -82,7 +82,9 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     env->gametic = 0;
     env->protos = protos;
     for (size_t i = 0;i < ARRAY_LEN(env->states);i++) {
-        env->states[i] = NULL;
+        env->states[i].serialized = NULL;
+        env->states[i].entity_next = 0;
+        env->states[i].gametic = 0;
     }
 
     // Create an environment-specific registry table and push a ref to it
@@ -183,9 +185,11 @@ void environment_delete(environment_t* env) {
     }
 
     for (size_t i = 0;i < ARRAY_LEN(env->states);i++) {
-        if (env->states[i] != NULL) {
-            buffer_delete(env->states[i]);
-            env->states[i] = NULL;
+        if (env->states[i].serialized != NULL) {
+            buffer_delete(env->states[i].serialized);
+            env->states[i].serialized = NULL;
+            env->states[i].entity_next = 0;
+            env->states[i].gametic = 0;
         }
     }
 
@@ -282,18 +286,51 @@ bool environment_start(environment_t* env) {
         goto fail;
     }
 
-    // Serialize our intial state
+    environment_save(env);
+
+    lua_settop(env->lua, top);
+    return true;
+
+fail:
+    lua_settop(env->lua, top);
+    return false;
+}
+
+/**
+ * Save the current state of the environment to the state table
+ */
+bool environment_save(environment_t* env) {
+    int top = lua_gettop(env->lua);
+
+    // We need our next entity ID
+    if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->registry_ref) != LUA_TTABLE) {
+        error_push("Registry reference has gone stale.");
+        goto fail;
+    }
+
+    if (lua_getfield(env->lua, -1, "entity_next") != LUA_TNUMBER) {
+        error_push("Missing internal state (entity_next)");
+        return 0;
+    }
+
+    uint32_t entity_next = lua_tointeger(env->lua, -1);
+
+    // Serialize our state
     if (lua_rawgeti(env->lua, LUA_REGISTRYINDEX, env->state_ref) != LUA_TTABLE) {
         error_push("State table reference has gone stale.");
         goto fail;
     }
 
-    buffer_t* state = serialize_to_serialized(env->lua, -1);
-    if (state == NULL) {
-        error_push("Initial state could not be serialized.");
+    buffer_t* serialized = serialize_to_serialized(env->lua, -1);
+    if (serialized == NULL) {
+        error_push("State could not be serialized.");
         goto fail;
     }
-    env->states[0] = state;
+
+    // Now we have everything we need.  Write it.
+    env->states[0].serialized = serialized;
+    env->states[0].entity_next = entity_next;
+    env->states[0].gametic = env->gametic;
 
     lua_settop(env->lua, top);
     return true;
@@ -310,7 +347,8 @@ bool environment_rewind(environment_t* env, uint32_t frame) {
     (void)frame;
     int top = lua_gettop(env->lua);
 
-    serialize_push_serialized(env->lua, env->states[0]);
+    serialize_push_serialized(env->lua, env->states[0].serialized);
+    env->gametic = env->states[0].gametic;
 
     return true;
 }
