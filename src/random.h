@@ -19,6 +19,9 @@
 
 #include "define.h"
 
+// Forward declarations.
+typedef struct entity_s entity_t;
+
 typedef struct random_s {
     /**
      * The current state of the random number generator.
@@ -31,3 +34,4 @@ void random_delete(random_t* random);
 uint32_t random_number(random_t* random, uint32_t range);
 buffer_t* random_serialize(random_t* random);
 random_t* random_unserialize(buffer_t* buffer);
+void random_entity_init(entity_t* entity);

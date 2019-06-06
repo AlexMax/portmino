@@ -45,28 +45,18 @@ typedef void*(*entity_unserialize_t)(buffer_t* ptr);
 typedef void(*entity_destruct_t)(void* ptr);
 
 /**
- * Generic entity.
+ * Configuration of entity.
  */
-typedef struct entity_s {
-    /**
-     * Entity unique id.
-     */
-    uint32_t id;
-
-    /**
-     * Registry reference for entity.
-     */
-    int registry_ref;
-
+typedef struct entity_config_s {
     /**
      * Type of entity.
      */
     entity_type_t type;
 
     /**
-     * Opaque data member.
+     * Metatable used for userdata.
      */
-    void* data;
+    const char* metatable;
 
     /**
      * Entity serializer.
@@ -82,7 +72,33 @@ typedef struct entity_s {
      * Entity destructor.
      */
     entity_destruct_t destruct;
+} entity_config_t;
+
+/**
+ * Generic entity.
+ */
+typedef struct entity_s {
+    /**
+     * Entity configuration.
+     */
+    entity_config_t config;
+
+    /**
+     * Entity unique id.
+     */
+    uint32_t id;
+
+    /**
+     * Registry reference for entity.
+     */
+    int registry_ref;
+
+    /**
+     * Opaque data member.
+     */
+    void* data;
 } entity_t;
 
 buffer_t* entity_serialize(entity_t* entity);
+bool entity_unserialize(entity_t* entity, const buffer_t* buffer);
 void entity_deinit(entity_t* entity);

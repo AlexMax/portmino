@@ -24,20 +24,6 @@
 #include "proto.h"
 #include "script.h"
 
-/**
- * Wrap serialize with void* function.
- */
-static buffer_t* boardscript_wrapserialize(void* ptr) {
-    return board_serialize(ptr);
-}
-
-/**
- * Wrap delete with void* function.
- */
-static void boardscript_wrapdelete(void* ptr) {
-    board_delete(ptr);
-}
-
  /**
   * Lua: Initialize new board state.
   */
@@ -61,6 +47,7 @@ static int boardscript_new(lua_State* L) {
 
     // Initialize (and return) board state
     entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
+    board_entity_init(entity);
     if ((entity->data = board_new(L)) == NULL) {
         luaL_error(L, "Could not allocate new board.");
         return 0;
@@ -69,13 +56,9 @@ static int boardscript_new(lua_State* L) {
     // Set our entity properties
     entity->id = entity_next;
     entity->registry_ref = registry_ref;
-    entity->type = MINO_ENTITY_BOARD;
-    entity->serialize = boardscript_wrapserialize;
-    entity->unserialize = NULL;
-    entity->destruct = boardscript_wrapdelete;
 
     // Apply methods to the entity
-    luaL_setmetatable(L, "board_t");
+    luaL_setmetatable(L, entity->config.metatable);
 
     // Increment our next entity counter
     lua_pushinteger(L, entity_next + 1);

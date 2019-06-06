@@ -23,6 +23,7 @@
 #include "lauxlib.h"
 #include "mpack.h"
 
+#include "entity.h"
 #include "error.h"
 #include "piece.h"
 #include "ruleset.h"
@@ -408,4 +409,31 @@ fail:
     mpack_writer_destroy(&writer);
     buffer_delete(buffer);
     return NULL;
+}
+
+/**
+ * Wrap serialize with void* function.
+ */
+static buffer_t* wrapserialize(void* ptr) {
+    return board_serialize(ptr);
+}
+
+/**
+ * Wrap delete with void* function.
+ */
+static void wrapdelete(void* ptr) {
+    board_delete(ptr);
+}
+
+/**
+ * Initialize an entity with random config
+ */
+void board_entity_init(entity_t* entity) {
+    memset(entity, 0x00, sizeof(*entity));
+
+    entity->config.type = MINO_ENTITY_BOARD;
+    entity->config.metatable = "board_t";
+    entity->config.serialize = wrapserialize;
+    entity->config.unserialize = NULL;
+    entity->config.destruct = wrapdelete;
 }

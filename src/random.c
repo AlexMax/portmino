@@ -24,6 +24,7 @@
 
 #include "mpack.h"
 
+#include "entity.h"
 #include "error.h"
 #include "frontend.h"
 #include "platform.h"
@@ -172,4 +173,38 @@ random_t* random_unserialize(buffer_t* buffer) {
 
 fail:
     return NULL;
+}
+
+/**
+ * Wrap serialize with void* function.
+ */
+static buffer_t* wrapserialize(void* ptr) {
+    return random_serialize(ptr);
+}
+
+/**
+ * Wrap unserialize with void* function.
+ */
+static void* wrapunserialize(buffer_t* buffer) {
+    return random_unserialize(buffer);
+}
+
+/**
+ * Wrap delete with void* function.
+ */
+static void wrapdelete(void* ptr) {
+    random_delete(ptr);
+}
+
+/**
+ * Initialize an entity with random config
+ */
+void random_entity_init(entity_t* entity) {
+    memset(entity, 0x00, sizeof(*entity));
+
+    entity->config.type = MINO_ENTITY_RANDOM;
+    entity->config.metatable = "random_t";
+    entity->config.serialize = wrapserialize;
+    entity->config.unserialize = wrapunserialize;
+    entity->config.destruct = wrapdelete;
 }

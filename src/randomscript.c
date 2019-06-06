@@ -25,27 +25,6 @@
 #include "script.h"
 
 /**
- * Wrap serialize with void* function.
- */
-static buffer_t* randomscript_wrapserialize(void* ptr) {
-    return random_serialize(ptr);
-}
-
-/**
- * Wrap unserialize with void* function.
- */
-static void* randomscript_wrapunserialize(buffer_t* buffer) {
-    return random_unserialize(buffer);
-}
-
-/**
- * Wrap delete with void* function.
- */
-static void randomscript_wrapdelete(void* ptr) {
-    random_delete(ptr);
-}
-
-/**
  * Lua: Initialize new random state.
  */
 static int randomscript_new(lua_State* L) {
@@ -72,6 +51,7 @@ static int randomscript_new(lua_State* L) {
 
     // Initialize (and return) random state
     entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
+    random_entity_init(entity);
 
     random_t* random;
     if (seed_type == LUA_TNUMBER) {
@@ -88,14 +68,10 @@ static int randomscript_new(lua_State* L) {
     // Set our entity properties
     entity->id = entity_next;
     entity->registry_ref = registry_ref;
-    entity->type = MINO_ENTITY_RANDOM;
     entity->data = random;
-    entity->serialize = randomscript_wrapserialize;
-    entity->unserialize = randomscript_wrapunserialize;
-    entity->destruct = randomscript_wrapdelete;
 
     // Apply methods to the userdata
-    luaL_setmetatable(L, "random_t");
+    luaL_setmetatable(L, entity->config.metatable);
 
     // Increment our next entity counter
     lua_pushinteger(L, entity_next + 1);

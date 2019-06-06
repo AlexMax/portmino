@@ -20,6 +20,7 @@
 #include "define.h"
 
 // Forward declarations.
+typedef struct entity_s entity_t;
 typedef struct lua_State lua_State;
 typedef struct piece_s piece_t;
 typedef struct piece_config_s piece_config_t;
@@ -138,3 +139,4 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
 void board_lock_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 uint8_t board_clear_lines(board_t* board);
 buffer_t* board_serialize(board_t* board);
+void board_entity_init(entity_t* entity);

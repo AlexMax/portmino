@@ -111,7 +111,7 @@ static bool serialize_flat_index(lua_State* L, int flat, int index, mpack_writer
         }
 
         // Write serialized form as msgpack raw binary data
-        uint8_t type = entity->type;
+        uint8_t type = entity->config.type;
         mpack_start_bin(writer, 1 + data->size);
         mpack_write_bytes(writer, &type, sizeof(type));
         mpack_write_bytes(writer, (const char*)(data->data), data->size);
@@ -460,16 +460,25 @@ static bool unserialize_flat(lua_State* L, mpack_node_t* node) {
         }
         case mpack_type_bin: {
             // Userdata
-            size_t size = mpack_node_bin_size(flatitem);
-            const char* data = mpack_node_bin_data(flatitem);
+            buffer_t buffer;
+            buffer.data = (uint8_t*)mpack_node_bin_data(flatitem);
+            buffer.size = mpack_node_bin_size(flatitem);
+
+            // Unserialize the data into a userdata.
+            entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
+            if (entity_unserialize(entity, &buffer) == false) {
+                error_push("Could not unserialize entity.");
+                goto fail;
+            }
+
+            // We use a different metatable for every possible entity type.
+            luaL_setmetatable(L, entity->config.metatable);
             break;
         }
         default:
             error_push("Unexpected flat item type.");
             goto fail;
         }
-
-        script_debug_stack(L);
 
         lua_rawseti(L, -2, i); // pop value
     }

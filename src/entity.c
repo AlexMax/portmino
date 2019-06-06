@@ -18,6 +18,7 @@
 #include "entity.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "error.h"
 
@@ -25,7 +26,22 @@
  * Serialize an entity
  */
 buffer_t* entity_serialize(entity_t* entity) {
-    return entity->serialize(entity->data);
+    return entity->config.serialize(entity->data);
+}
+
+/**
+ * Unserialize an entity
+ */
+bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
+    // FIXME: entity doesn't exist yet, putting the cart before the horse here...
+    __debugbreak();
+
+    entity->data = entity->config.unserialize(buffer);
+    if (entity->data == NULL) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -36,8 +52,6 @@ void entity_deinit(entity_t* entity) {
         return;
     }
 
-    entity->destruct(entity->data);
-    entity->type = MINO_ENTITY_NONE;
-    entity->destruct = NULL;
-    entity->data = NULL;
+    entity->config.destruct(entity->data);
+    memset(entity, 0x00, sizeof(*entity));
 }
