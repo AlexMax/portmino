@@ -64,6 +64,15 @@
 #define ARRAY_LEN(a) (sizeof(a) / sizeof((a)[0]))
 
 /**
+ * Kill the program in an abnormal way.
+ */
+#ifdef _MSC_VER
+#define DEBUG_BREAK __debugbreak()
+#else
+#define DEBUG_BREAK __builtin_trap()
+#endif
+
+/**
  * Vector type of two integers
  */
 typedef struct {

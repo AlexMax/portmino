@@ -34,7 +34,7 @@ buffer_t* entity_serialize(entity_t* entity) {
  */
 bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
     // FIXME: entity doesn't exist yet, putting the cart before the horse here...
-    __debugbreak();
+    DEBUG_BREAK;
 
     entity->data = entity->config.unserialize(buffer);
     if (entity->data == NULL) {
