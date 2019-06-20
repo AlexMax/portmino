@@ -1,7 +1,8 @@
 *.swp
 /.vscode
 /_vimrc_local.vim
-/build*
+/build*/
 /CMakeSettings.json
 /.vs
 /out
+/zig-cache
