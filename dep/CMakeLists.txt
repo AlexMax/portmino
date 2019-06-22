@@ -53,8 +53,8 @@ else()
     set(PHYSFS_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/local/lib/${CMAKE_STATIC_LIBRARY_PREFIX}physfs${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 ExternalProject_Add(physfs
-    URL "https://hg.icculus.org/icculus/physfs/archive/5ebf7cddf502.tar.gz"
-    URL_HASH "SHA256=0e3704646e58913980b632ec0d771a8ceafa331b014eb36c6bfb09d5c7bca437"
+    URL "https://hg.icculus.org/icculus/physfs/archive/de1ea3b2cfc4.tar.gz"
+    URL_HASH "SHA256=eb3f6530fe6eb59145094a8cadc88268c633733e6cd32ec033516f320024d655"
     CMAKE_ARGS
         "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
         "-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/local"
