@@ -1,9 +1,9 @@
-include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 
 set(PORTMINO_COMPILE_OPTIONS "")
 
 function(_checked_add_compile_option FLAG VAR)
-    check_c_compiler_flag(${FLAG} ${VAR})
+    check_cxx_compiler_flag(${FLAG} ${VAR})
     if(${VAR})
         set(PORTMINO_COMPILE_OPTIONS ${PORTMINO_COMPILE_OPTIONS} ${FLAG} PARENT_SCOPE)
     endif()
@@ -23,6 +23,9 @@ if(MSVC)
 else()
     # Extra warnings for GCC
     _checked_add_compile_option(-Wrestrict W_RESTRICT)
+
+    # Permissive C++, we need this for now
+    _checked_add_compile_option(-fpermissive F_PERMISSIVE)
 endif()
 
 # These warnings exist in both GCC and Clang
@@ -34,6 +37,7 @@ _checked_add_compile_option(-Wnull-dereference W_NULL_DEREF)
 
 function(add_portmino_settings)
     foreach(target ${ARGN})
+        set_target_properties(${target} PROPERTIES CXX_STANDARD 98)
         target_compile_options(${target} PRIVATE ${PORTMINO_COMPILE_OPTIONS})
     endforeach()
 endfunction()

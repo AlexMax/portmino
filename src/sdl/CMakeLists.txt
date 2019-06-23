@@ -4,7 +4,6 @@ set(SDL_SOURCES
 add_executable(portmino ${SDL_SOURCES})
 add_portmino_settings(portmino)
 add_sanitizers(portmino)
-set_property(TARGET portmino APPEND PROPERTY COMPILE_OPTIONS "-fpermissive")
 if(EMSCRIPTEN)
     if(PORTMINO_EMBED_RESOURCE)
         message(WARNING "Emscripten already embeds resource file using its own mechanism.")
