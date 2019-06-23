@@ -17,22 +17,26 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "define.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+typedef struct sound_s {
+    /**
+     * Filename of the sound.
+     */
+    char* name;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+    /**
+     * Sound data.
+     * 
+     * PCM-encoded, 2-channel, 44,100hz.
+     */
+    int16_t* sampledata;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
+    /**
+     * Number of frames in the sound data.
+     */
+    size_t framecount;
+} sound_t;
 
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+sound_t* sound_new(const char* path);
+void sound_delete(sound_t* sound);

@@ -15,24 +15,39 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "render.hpp"
 
-#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+#include "error.hpp"
+#include "softrender.hpp"
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+static render_module_t g_render_module;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
+/**
+ * Initialize the renderer.
+ */
+bool render_init(renderer_type_t renderer) {
+    switch (renderer) {
+    case RENDERER_SOFTWARE:
+        memcpy(&g_render_module, &softrender_module, sizeof(render_module_t));
+        break;
+    }
 
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+    return g_render_module.init();
+}
+
+/**
+ * Destroy the active renderer.
+ */
+void render_deinit(void) {
+   g_render_module.deinit();
+}
+
+/**
+ * Return a pointer to the current render module.
+ */
+render_module_t* render(void) {
+    return &g_render_module;
+}

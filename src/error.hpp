@@ -17,22 +17,19 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "define.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+/**
+ * Push a generic memory allocation error
+ * 
+ * These are needed in a number of spots, to the point where we need some
+ * way to disambiguate them.
+ */
+#define error_push_allocerr() \
+    error_push("%s:%d Memory allocation error.", __FILE__, __LINE__)
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
-
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+ATTRIB_PRINTF(1, 2)
+void error_push(const char* fmt, ...);
+char* error_pop(void);
+size_t error_count(void);
+void error_debug(void);

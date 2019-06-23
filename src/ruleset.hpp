@@ -17,22 +17,34 @@
 
 #pragma once
 
-#include <stddef.h>
+// Forward declarations.
+typedef struct lua_State lua_State;
+typedef struct menulist_s menulist_t;
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+typedef struct ruleset_s {
+    /**
+     * Lua interpreter state
+     * 
+     * This is not an owning reference.  Do not free it.
+     */
+    lua_State* lua;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+    /**
+     * Name of the ruleset
+     */
+    char* name;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
+    /**
+     * Ruleset label (from config)
+     */
+    char* label;
 
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+    /**
+     * Ruleset help (from config)
+     */
+    char* help;
+} ruleset_t;
+
+ruleset_t* ruleset_new(lua_State* L, const char* name);
+void ruleset_delete(ruleset_t* ruleset);
+menulist_t* ruleset_get_gametypes(ruleset_t* ruleset);

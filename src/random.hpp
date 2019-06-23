@@ -17,22 +17,21 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "define.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+// Forward declarations.
+typedef struct entity_s entity_t;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+typedef struct random_s {
+    /**
+     * The current state of the random number generator.
+     */
+    uint32_t state[2];
+} random_t;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+random_t* random_new(uint32_t* seed);
+void random_delete(random_t* random);
+uint32_t random_number(random_t* random, uint32_t range);
+buffer_t* random_serialize(random_t* random);
+random_t* random_unserialize(buffer_t* buffer);
+void random_entity_init(entity_t* entity);

@@ -15,24 +15,26 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <string.h>
 
-#include <stddef.h>
+#include "lua.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+#include "audio.hpp"
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+static int audioscript_playsound(lua_State* L) {
+    // Parameter 1: Sound name
+    const char* sound = luaL_checkstring(L, 1);
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
+    audio_playsound(sound);
+    return 0;
+}
 
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+int audioscript_openlib(lua_State* L) {
+    static const luaL_Reg audiolib[] = {
+        { "playsound", audioscript_playsound },
+        { NULL, NULL }
+    };
+
+    luaL_newlib(L, audiolib);
+    return 1;
+}

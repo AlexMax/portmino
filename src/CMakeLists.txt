@@ -1,52 +1,52 @@
 include(Portmino)
 
 set(GAME_SOURCES
-    audio.c             audio.h
-    audioscript.c       audioscript.h
-    board.c             board.h
-    boardscript.c       boardscript.h
-    define.c            define.h
-    entity.c            entity.h
-    environment.c       environment.h
-    error.c             error.h
-    frontend.c          frontend.h
-    gametype.c          gametype.h
-    globalscript.c      globalscript.h
-    game.c              game.h
-    ingame.c            ingame.h
-    input.c             input.h
-    inputscript.c       inputscript.h
-    mainmenu.c          mainmenu.h
-    menu.c              menu.h
-    pausemenu.c         pausemenu.h
-    picture.c           picture.h
-    piece.c             piece.h
-    piecescript.c       piecescript.h
-    proto.c             proto.h
-    protoscript.c       protoscript.h
-    platform.c          platform.h
-    playmenu.c          playmenu.h
-    random.c            random.h
-    randomscript.c      randomscript.h
-    render.c            render.h
-    renderscript.c      renderscript.h
-    ruleset.c           ruleset.h
-    rulesetmenu.c       rulesetmenu.h
-    screen.c            screen.h
-    script.c            script.h
-    serialize.c         serialize.h
-    softblock.c         softblock.h
-    softfont.c          softfont.h
-    softrender.c        softrender.h
-    sound.c             sound.h
-    vfs.c               vfs.h)
+    audio.cpp           audio.hpp
+    audioscript.cpp     audioscript.hpp
+    board.cpp           board.hpp
+    boardscript.cpp     boardscript.hpp
+    define.cpp          define.hpp
+    entity.cpp          entity.hpp
+    environment.cpp     environment.hpp
+    error.cpp           error.hpp
+    frontend.cpp        frontend.hpp
+    gametype.cpp        gametype.hpp
+    globalscript.cpp    globalscript.hpp
+    game.cpp            game.hpp
+    ingame.cpp          ingame.hpp
+    input.cpp           input.hpp
+    inputscript.cpp     inputscript.hpp
+    mainmenu.cpp        mainmenu.hpp
+    menu.cpp            menu.hpp
+    pausemenu.cpp       pausemenu.hpp
+    picture.cpp         picture.hpp
+    piece.cpp           piece.hpp
+    piecescript.cpp     piecescript.hpp
+    proto.cpp           proto.hpp
+    protoscript.cpp     protoscript.hpp
+    platform.cpp        platform.hpp
+    playmenu.cpp        playmenu.hpp
+    random.cpp          random.hpp
+    randomscript.cpp    randomscript.hpp
+    render.cpp          render.hpp
+    renderscript.cpp    renderscript.hpp
+    ruleset.cpp         ruleset.hpp
+    rulesetmenu.cpp     rulesetmenu.hpp
+    screen.cpp          screen.hpp
+    script.cpp          script.hpp
+    serialize.cpp       serialize.hpp
+    softblock.cpp       softblock.hpp
+    softfont.cpp        softfont.hpp
+    softrender.cpp      softrender.hpp
+    sound.cpp           sound.hpp
+    vfs.cpp             vfs.hpp)
 
 if(EMSCRIPTEN)
-    set(PLATFORM_SOURCES platform_emscripten.c)
+    set(PLATFORM_SOURCES platform_emscripten.cpp)
 elseif(UNIX)
-    set(PLATFORM_SOURCES platform_unix.c)
+    set(PLATFORM_SOURCES platform_unix.cpp)
 elseif(WIN32)
-    set(PLATFORM_SOURCES platform_win32.c)
+    set(PLATFORM_SOURCES platform_win32.cpp)
 else()
     message(FATAL_ERROR "Platform implementation missing")
 endif()
@@ -54,7 +54,9 @@ endif()
 add_library(portmino-core STATIC ${GAME_SOURCES} ${LIBRARY_SOURCES} ${PLATFORM_SOURCES})
 add_portmino_settings(portmino-core)
 add_sanitizers(portmino-core)
+set_property(TARGET portmino-core PROPERTY CXX_STANDARD 98)
 set_property(TARGET portmino-core PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET portmino-core APPEND PROPERTY COMPILE_OPTIONS "-fpermissive")
 if(UNIX)
     target_compile_definitions(portmino-core PRIVATE _GNU_SOURCE)
 endif()

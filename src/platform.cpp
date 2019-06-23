@@ -15,24 +15,27 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "platform.hpp"
 
-#include <stddef.h>
+extern platform_module_t g_platform_module;
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+/**
+ * Initialize any platform-specific functionality.
+ */
+bool platform_init(void) {
+    return g_platform_module.init();
+}
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+/**
+ * Cleanup any platform-specific functionality.
+ */
+void platform_deinit(void) {
+   g_platform_module.deinit();
+}
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+/**
+ * Return a pointer to the current platform module.
+ */
+platform_module_t* platform(void) {
+    return &g_platform_module;
+}

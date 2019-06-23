@@ -17,22 +17,20 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "define.hpp"
+#include "picture.hpp"
+#include "render.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+#define MINO_SOFTRENDER_WIDTH 320
+#define MINO_SOFTRENDER_HEIGHT 240
+#define MINO_SOFTRENDER_BPP 4
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+typedef struct {
+    /**
+     * The actual buffer of pixels to draw to.  It's in ARGB format, which
+     * on little-endian machines is actually BGRA.
+     */
+    picture_t buffer;
+} softrender_context_t;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+extern render_module_t softrender_module;

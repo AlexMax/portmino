@@ -17,22 +17,20 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "define.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+// Forward declarations.
+typedef struct lua_State lua_State;
+typedef struct vfile_s vfile_t;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+lua_State* script_newstate(void);
+bool script_to_vector(lua_State* L, int index, vec2i_t* vec);
+void script_push_vector(lua_State* L, const vec2i_t* vec);
+void script_wrap_cfuncs(lua_State* L, int index);
+bool script_load_config(lua_State* L, vfile_t* file);
+void script_push_paths(lua_State* L, const char* ruleset, const char* gametype);
+void script_push_cpaths(lua_State* L, const char* ruleset, const char* gametype);
+void script_debug(lua_State* L, int index);
+void script_debug_stack(lua_State* L);
+void script_debug_table(lua_State* L, int index);
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif

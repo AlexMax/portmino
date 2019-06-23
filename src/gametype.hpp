@@ -17,22 +17,35 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "define.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+// Forward declarations.
+typedef struct lua_State lua_State;
+typedef struct ruleset_s ruleset_t;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+typedef struct gametype_s {
+    /**
+     * Lua interpreter state
+     * 
+     * This is not an owning reference.  Do not free it.
+     */
+    lua_State* lua;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
+    /**
+     * Name of the gametype
+     */
+    char* name;
 
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+    /**
+     * Gametype label (from config)
+     */
+    char* label;
+
+    /**
+     * Gametype help (from config)
+     */
+    char* help;
+} gametype_t;
+
+gametype_t* gametype_new(lua_State* L, ruleset_t* ruleset, const char* name);
+void gametype_delete(gametype_t* gametype);

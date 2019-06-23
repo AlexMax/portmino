@@ -50,7 +50,7 @@ endforeach()
 add_library(lua STATIC ${LUA_DIR_SOURCES})
 set_target_properties(lua PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    PUBLIC_HEADER "src/lua.h;src/lualib.h;src/lauxlib.h;src/luaconf.h")
+    PUBLIC_HEADER "src/lua.h;src/lualib.h;src/lauxlib.h;src/luaconf.h;src/lua.hpp")
 target_include_directories(lua PUBLIC src)
 
 install(TARGETS lua

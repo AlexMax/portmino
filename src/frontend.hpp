@@ -15,24 +15,27 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "define.hpp"
 
-#include <stddef.h>
+#include <stdarg.h>
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+/**
+ * Contains functionality that is specific to a frontend (libretro, SDL).
+ */
+typedef struct frontend_module_s {
+    /**
+     * Call this to get a buffer containing basemino.pk3 if it has been compiled
+     * in, otherwise NULL.
+     */
+    buffer_t* (*basemino)(void);
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+    /**
+     * Call this when an unrecoverable error has occurred.
+     */
+    void (*fatalerror)(const char *fmt, va_list va);
+} frontend_module_t;
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+bool frontend_init(const frontend_module_t* module);
+void frontend_deinit(void);
+buffer_t* frontend_basemino(void);
+void frontend_fatalerror(const char *fmt, ...);

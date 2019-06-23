@@ -17,22 +17,11 @@
 
 #pragma once
 
-#include <stddef.h>
+#include "picture.hpp"
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+// Forward declarations.
+typedef struct softfont_s softfont_t;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
-
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+softfont_t* softfont_new(const char* path);
+void softfont_delete(softfont_t* font);
+void softfont_render(softfont_t* font, picture_t* dst, vec2i_t dstpos, const char* text);

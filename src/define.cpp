@@ -15,24 +15,18 @@
  * along with Portmino.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "define.hpp"
 
-#include <stddef.h>
+#include <stdlib.h>
 
-// These are only available with C99 compilers or modern MSVC
-#include <stdbool.h>
-#include <stdint.h>
+void buffer_delete(buffer_t* buf) {
+    if (buf == NULL) {
+        return;
+    }
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define restrict __restrict
-#else
-#error "unknown compiler - please define restrict"
-#endif
+    if (buf->data != NULL) {
+        free(buf->data);
+    }
 
-#if !defined(HAVE_ASPRINTF)
-int asprintf(char** ret, const char* format, ...);
-#endif
-
-#if !defined(HAVE_REALLOCARRAY)
-void* reallocarray(void* optr, size_t nmemb, size_t size);
-#endif
+    free(buf);
+}
