@@ -1,3 +1,4 @@
+include(CheckIncludeFile)
 include(CheckSymbolExists)
 
 set(COMPAT_SOURCES compat.h null.c)
@@ -11,6 +12,10 @@ check_symbol_exists(reallocarray "stdlib.h" HAVE_REALLOCARRAY)
 if(NOT HAVE_REALLOCARRAY)
     list(APPEND COMPAT_SOURCES "reallocarray.c")
 endif()
+check_include_file("stdint.h" HAVE_STDINT)
+if(NOT HAVE_STDINT)
+    list(APPEND COMPAT_SOURCES "stdint/stdint.h")
+endif()
 
 add_library(portmino-compat STATIC ${COMPAT_SOURCES})
 add_portmino_settings(portmino-compat)
@@ -22,3 +27,7 @@ endif()
 if(HAVE_REALLOCARRAY)
     target_compile_definitions(portmino-compat PUBLIC HAVE_REALLOCARRAY _GNU_SOURCE)
 endif()
+if(NOT HAVE_STDINT)
+    target_include_directories(portmino-compat PUBLIC stdint)
+endif()
+

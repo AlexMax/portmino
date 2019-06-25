@@ -1,5 +1,8 @@
 include(CheckCXXCompilerFlag)
 
+# Force colored output with GCC/Clang.  This ensures that we get colored output with Ninja.
+option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." ON)
+
 set(PORTMINO_COMPILE_OPTIONS "")
 
 function(_checked_add_compile_option FLAG VAR)
@@ -21,6 +24,14 @@ if(MSVC)
     # Extra warnings for clang-cl.exe
     _checked_add_compile_option(-Wno-pragma-pack W_NO_PACK)
 else()
+    # Ensure colored output
+    if(${FORCE_COLORED_OUTPUT})
+        _checked_add_compile_option(-fdiagnostics-color=always F_DIAG_COLOR)
+        if (NOT F_DIAG_COLOR)
+            _checked_add_compile_option(-fcolor-diagnostics F_COLOR_DIAG)
+        endif()
+    endif()
+
     # Extra warnings for GCC
     _checked_add_compile_option(-Wrestrict W_RESTRICT)
 

@@ -11,16 +11,6 @@ set(PORTMINO_EMBED_RESOURCE OFF
 # Use folders in Visual Studio.  This helps us hide irrelevant targets in subprojects.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Force colored output with GCC/Clang.  This ensures that we get colored output with Ninja.
-option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." ON)
-if(${FORCE_COLORED_OUTPUT})
-    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-        add_compile_options(-fdiagnostics-color=always)
-    elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-        add_compile_options(-fcolor-diagnostics)
-    endif()
-endif()
-
 # Dependencies
 find_package(Sanitizers)
 if(NOT EMSCRIPTEN)
