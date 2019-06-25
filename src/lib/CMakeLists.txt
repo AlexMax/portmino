@@ -1,9 +1,9 @@
 set(LIBRARY_SOURCES
-    dr_wav.c        dr_wav.h
+    dr_wav.cpp      dr_wav.h
                     khash.h
-    miniz.c         miniz.h
-    mpack.c         mpack.h
-    stb_image.c     stb_image.h)
+    miniz.cpp       miniz.h
+    mpack.cpp       mpack.h
+    stb_image.cpp   stb_image.h)
 add_library(portmino-lib STATIC ${LIBRARY_SOURCES})
 add_portmino_settings(portmino-lib)
 set_property(TARGET portmino-lib PROPERTY POSITION_INDEPENDENT_CODE ON)
