@@ -221,6 +221,5 @@ void piece_entity_init(entity_t* entity) {
     entity->config.type = MINO_ENTITY_PIECE;
     entity->config.metatable = "piece_t";
     entity->config.serialize = wrapserialize;
-    entity->config.unserialize = NULL;
     entity->config.destruct = wrapdelete;
 }

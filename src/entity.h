@@ -64,11 +64,6 @@ typedef struct entity_config_s {
     entity_serialize_t serialize;
 
     /**
-     * Entity unserializer.
-     */
-    entity_unserialize_t unserialize;
-
-    /**
      * Entity destructor.
      */
     entity_destruct_t destruct;

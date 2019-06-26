@@ -434,6 +434,5 @@ void board_entity_init(entity_t* entity) {
     entity->config.type = MINO_ENTITY_BOARD;
     entity->config.metatable = "board_t";
     entity->config.serialize = wrapserialize;
-    entity->config.unserialize = NULL;
     entity->config.destruct = wrapdelete;
 }

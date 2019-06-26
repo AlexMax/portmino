@@ -470,6 +470,8 @@ static bool unserialize_flat(lua_State* L, mpack_node_t* node) {
                 error_push("Could not unserialize entity.");
                 goto fail;
             }
+            // FIXME: How to get the registry ref?
+            // entity->registry_ref = ...
 
             // We use a different metatable for every possible entity type.
             luaL_setmetatable(L, entity->config.metatable);

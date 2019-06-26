@@ -148,7 +148,10 @@ fail:
     return NULL;
 }
 
-random_t* random_unserialize(buffer_t* buffer) {
+/**
+ * Unserialize random struct using msgpack
+ */
+random_t* random_unserialize(mpack_reader_t* reader, buffer_t* buffer) {
     random_t* random = NULL;
 
     if ((random = calloc(1, sizeof(*random))) == NULL) {
@@ -156,18 +159,10 @@ random_t* random_unserialize(buffer_t* buffer) {
         goto fail;
     }
 
-    mpack_reader_t reader;
-    mpack_reader_init_data(&reader, buffer->data, buffer->size);
-    mpack_expect_array_match(&reader, 2);
-    random->state[0] = mpack_expect_u32(&reader);
-    random->state[1] = mpack_expect_u32(&reader);
-    mpack_done_array(&reader);
-
-    mpack_error_t error = mpack_reader_destroy(&reader);
-    if (error != mpack_ok) {
-        error_push_allocerr();
-        goto fail;
-    }
+    mpack_expect_array_match(reader, 2);
+    random->state[0] = mpack_expect_u32(reader);
+    random->state[1] = mpack_expect_u32(reader);
+    mpack_done_array(reader);
 
     return random;
 
@@ -180,13 +175,6 @@ fail:
  */
 static buffer_t* wrapserialize(void* ptr) {
     return random_serialize(ptr);
-}
-
-/**
- * Wrap unserialize with void* function.
- */
-static void* wrapunserialize(buffer_t* buffer) {
-    return random_unserialize(buffer);
 }
 
 /**
@@ -205,6 +193,5 @@ void random_entity_init(entity_t* entity) {
     entity->config.type = MINO_ENTITY_RANDOM;
     entity->config.metatable = "random_t";
     entity->config.serialize = wrapserialize;
-    entity->config.unserialize = wrapunserialize;
     entity->config.destruct = wrapdelete;
 }

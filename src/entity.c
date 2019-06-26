@@ -20,24 +20,84 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mpack.h"
+
 #include "error.h"
 
 /**
  * Serialize an entity
  */
 buffer_t* entity_serialize(entity_t* entity) {
-    return entity->config.serialize(entity->data);
+    buffer_t* buffer = NULL;
+    mpack_writer_t writer;
+    mpack_writer_init_growable(&writer, (char**)(&buffer->data), &buffer->size);
+
+    // entity->config.serialize(entity->data);
+
+    mpack_error_t err = mpack_writer_destroy(&writer);
+    if (err != mpack_ok) {
+        error_push("random_serialize error: %s", mpack_error_to_string(err));
+        goto fail;
+    }
+
+    return buffer;
+
+fail:
+    mpack_writer_destroy(&writer);
+    buffer_delete(buffer);
+    return NULL;
 }
 
+//
+// FORWARD DECLARATIONS FOR UNSERIALIZE
+//
+// We need these here because including our various entities' header's would
+// introduce a circular dependency.
+//
+
+typedef struct random_s random_t;
+extern void random_entity_init(entity_t* entity);
+extern random_t* random_unserialize(mpack_reader_t* reader, buffer_t* buffer);
+
 /**
- * Unserialize an entity
+ * Unserialize to an entity
+ * 
+ * The first parameter should be an already-allocated entity that will have
+ * its data overwritten by the new entity.  The resulting entity does not
+ * have a registry reference set, that has to be supplied by the caller.
  */
 bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
-    // FIXME: entity doesn't exist yet, putting the cart before the horse here...
-    DEBUG_BREAK;
+    mpack_reader_t reader;
+    mpack_reader_init_data(&reader, buffer->data, buffer->size);
 
-    entity->data = entity->config.unserialize(buffer);
-    if (entity->data == NULL) {
+    // Serialized data is an array that starts with the entity id and the type id
+    mpack_expect_array_match(&reader, 3);
+    uint8_t id = mpack_expect_u32(&reader);
+    uint8_t type = mpack_expect_u8(&reader);
+
+    switch (type) {
+    case MINO_ENTITY_RANDOM:
+        random_entity_init(entity);
+        entity->id = id;
+        entity->data = random_unserialize(&reader, buffer);
+        break;
+    case MINO_ENTITY_PIECE:
+        DEBUG_BREAK;
+        break;
+    case MINO_ENTITY_BOARD:
+        DEBUG_BREAK;
+        break;
+    default:
+        error_push("entity_unserialize: Unknown entity ID (%u)", type);
+        mpack_reader_destroy(&reader);
+        return false;
+    }
+
+    mpack_done_array(&reader);
+
+    mpack_error_t error = mpack_reader_destroy(&reader);
+    if (error != mpack_ok) {
+        error_push("entity_unserialize: MPack error (%s)", mpack_error_to_string(error));
         return false;
     }
 
