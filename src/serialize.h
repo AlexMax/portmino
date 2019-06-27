@@ -23,4 +23,4 @@
 typedef struct lua_State lua_State;
 
 buffer_t* serialize_to_serialized(lua_State* L, int index);
-void serialize_push_serialized(lua_State* L, const buffer_t* buffer);
+void serialize_push_serialized(lua_State* L, int registry_ref, const buffer_t* buffer);

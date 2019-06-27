@@ -30,13 +30,23 @@
 buffer_t* entity_serialize(entity_t* entity) {
     buffer_t* buffer = NULL;
     mpack_writer_t writer;
+
+    if ((buffer = calloc(1, sizeof(buffer_t))) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    // Serialized data is an array that starts with the entity id and the
+    // type id, followed by actual serialized data.
     mpack_writer_init_growable(&writer, (char**)(&buffer->data), &buffer->size);
-
-    // entity->config.serialize(entity->data);
-
+    mpack_start_array(&writer, 3);
+    mpack_write_u32(&writer, entity->id);
+    mpack_write_u8(&writer, entity->config.type);
+    entity->config.serialize(entity->data, &writer);
+    mpack_finish_array(&writer);
     mpack_error_t err = mpack_writer_destroy(&writer);
     if (err != mpack_ok) {
-        error_push("random_serialize error: %s", mpack_error_to_string(err));
+        error_push("entity_serialize error: %s", mpack_error_to_string(err));
         goto fail;
     }
 
@@ -57,7 +67,13 @@ fail:
 
 typedef struct random_s random_t;
 extern void random_entity_init(entity_t* entity);
-extern random_t* random_unserialize(mpack_reader_t* reader, buffer_t* buffer);
+extern random_t* random_unserialize(mpack_reader_t* reader);
+typedef struct piece_s piece_t;
+extern void piece_entity_init(entity_t* entity);
+extern piece_t* piece_unserialize(mpack_reader_t* reader);
+typedef struct board_s board_t;
+extern void board_entity_init(entity_t* entity);
+extern board_t* board_unserialize(mpack_reader_t* reader);
 
 /**
  * Unserialize to an entity
@@ -70,25 +86,30 @@ bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
     mpack_reader_t reader;
     mpack_reader_init_data(&reader, buffer->data, buffer->size);
 
-    // Serialized data is an array that starts with the entity id and the type id
+    // Serialized data is an array that starts with the entity id and the
+    // type id, followed by actual serialized data.
     mpack_expect_array_match(&reader, 3);
-    uint8_t id = mpack_expect_u32(&reader);
+    uint32_t id = mpack_expect_u32(&reader);
     uint8_t type = mpack_expect_u8(&reader);
 
     switch (type) {
     case MINO_ENTITY_RANDOM:
         random_entity_init(entity);
         entity->id = id;
-        entity->data = random_unserialize(&reader, buffer);
+        entity->data = random_unserialize(&reader);
         break;
     case MINO_ENTITY_PIECE:
-        DEBUG_BREAK;
+        piece_entity_init(entity);
+        entity->id = id;
+        entity->data = piece_unserialize(&reader);
         break;
     case MINO_ENTITY_BOARD:
-        DEBUG_BREAK;
+        board_entity_init(entity);
+        entity->id = id;
+        entity->data = board_unserialize(&reader);
         break;
     default:
-        error_push("entity_unserialize: Unknown entity ID (%u)", type);
+        error_push("Unknown entity ID (%u)", type);
         mpack_reader_destroy(&reader);
         return false;
     }
@@ -97,7 +118,7 @@ bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
 
     mpack_error_t error = mpack_reader_destroy(&reader);
     if (error != mpack_ok) {
-        error_push("entity_unserialize: MPack error (%s)", mpack_error_to_string(error));
+        error_push("MPack error (%s)", mpack_error_to_string(error));
         return false;
     }
 

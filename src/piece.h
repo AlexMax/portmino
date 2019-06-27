@@ -22,6 +22,7 @@
 // Forward declarations.
 typedef struct entity_s entity_t;
 typedef struct lua_State lua_State;
+typedef struct mpack_writer_t mpack_writer_t;
 
 typedef struct piece_config_s {
     /**
@@ -82,5 +83,5 @@ void piece_config_destruct(void* piece_config);
 uint8_t* piece_config_get_rot(const piece_config_t* piece, uint8_t rot);
 piece_t* piece_new(const piece_config_t* config);
 void piece_delete(piece_t* piece);
-buffer_t* piece_serialize(piece_t* piece);
+void piece_serialize(piece_t* piece, mpack_writer_t* writer);
 void piece_entity_init(entity_t* entity);

@@ -1,5 +1,3 @@
-include(Portmino)
-
 set(GAME_SOURCES
     audio.c             audio.h
     audioscript.c       audioscript.h

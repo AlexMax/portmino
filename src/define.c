@@ -18,6 +18,7 @@
 #include "define.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 void buffer_delete(buffer_t* buf) {
     if (buf == NULL) {
@@ -29,4 +30,12 @@ void buffer_delete(buffer_t* buf) {
     }
 
     free(buf);
+}
+
+void buffer_debug(const buffer_t* buf) {
+    fprintf(stderr, "ptr: %p, size: %zu\ndata: ", buf, buf->size);
+    for (size_t i = 0;i < buf->size;i++) {
+        fprintf(stderr, "%02X ", buf->data[i]);
+    }
+    fprintf(stderr, "\n");
 }

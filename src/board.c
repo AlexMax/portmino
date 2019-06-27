@@ -385,37 +385,36 @@ uint8_t board_clear_lines(board_t* board) {
 /**
  * Serialize board struct using msgpack
  */
-buffer_t* board_serialize(board_t* board) {
-    buffer_t* buffer = NULL;
-    mpack_writer_t writer;
+void board_serialize(board_t* board, mpack_writer_t* writer) {
+    mpack_write_bin(writer, board->data.data, board->data.size);
+}
 
-    if ((buffer = calloc(1, sizeof(buffer_t))) == NULL) {
+/**
+ * Unserialize random struct using msgpack
+ */
+board_t* board_unserialize(mpack_reader_t* reader) {
+    board_t* board = NULL;
+
+    if ((board = calloc(1, sizeof(*board))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
 
-    mpack_writer_init_growable(&writer, (char**)(&buffer->data), &buffer->size);
-    mpack_write_bin(&writer, board->data.data, board->data.size);
+    uint32_t size = mpack_expect_bin(reader);
+    mpack_read_bytes(reader, board->data.data, board->data.size);
 
-    mpack_error_t err = mpack_writer_destroy(&writer);
-    if (err != mpack_ok) {
-        error_push("random_serialize error: %s", mpack_error_to_string(err));
-        goto fail;
-    }
-
-    return buffer;
+    return board;
 
 fail:
-    mpack_writer_destroy(&writer);
-    buffer_delete(buffer);
     return NULL;
 }
+
 
 /**
  * Wrap serialize with void* function.
  */
-static buffer_t* wrapserialize(void* ptr) {
-    return board_serialize(ptr);
+static void wrapserialize(void* ptr, mpack_writer_t* writer) {
+    board_serialize(ptr, writer);
 }
 
 /**

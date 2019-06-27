@@ -347,7 +347,7 @@ bool environment_rewind(environment_t* env, uint32_t frame) {
     (void)frame;
     int top = lua_gettop(env->lua);
 
-    serialize_push_serialized(env->lua, env->states[0].serialized);
+    serialize_push_serialized(env->lua, env->registry_ref, env->states[0].serialized);
     env->gametic = env->states[0].gametic;
 
     return true;

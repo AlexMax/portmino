@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.7.2)
 project(Portmino C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(Portmino)
 
 # Global cache values - these are settings that are actually germane to the build process.
 set(PORTMINO_EMBED_RESOURCE OFF

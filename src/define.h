@@ -105,3 +105,4 @@ typedef struct {
 } buffer_t;
 
 void buffer_delete(buffer_t* buf);
+void buffer_debug(const buffer_t* buf);

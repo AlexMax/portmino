@@ -112,8 +112,7 @@ static bool serialize_flat_index(lua_State* L, int flat, int index, mpack_writer
 
         // Write serialized form as msgpack raw binary data
         uint8_t type = entity->config.type;
-        mpack_start_bin(writer, 1 + data->size);
-        mpack_write_bytes(writer, &type, sizeof(type));
+        mpack_start_bin(writer, data->size);
         mpack_write_bytes(writer, (const char*)(data->data), data->size);
         mpack_finish_bin(writer);
 
@@ -315,8 +314,9 @@ buffer_t* serialize_to_serialized(lua_State* L, int index) {
         error_push("Serialization error.");
         goto fail;
     }
-    if (mpack_writer_destroy(&writer) != mpack_ok) {
-        error_push("Serialization error.");
+    mpack_error_t error = mpack_writer_destroy(&writer);
+    if (error != mpack_ok) {
+        error_push("MPack error (%s)", mpack_error_to_string(error));
         goto fail;
     }
 
@@ -419,7 +419,7 @@ static void unflatten_table(lua_State* L, int flat, int index) {
     }
 }
 
-static bool unserialize_flat(lua_State* L, mpack_node_t* node) {
+static bool unserialize_flat(lua_State* L, int registry_ref, mpack_node_t* node) {
     int top = lua_gettop(L);
 
     // Despite being a map, the keys in the map start at 1 and end at the
@@ -470,8 +470,7 @@ static bool unserialize_flat(lua_State* L, mpack_node_t* node) {
                 error_push("Could not unserialize entity.");
                 goto fail;
             }
-            // FIXME: How to get the registry ref?
-            // entity->registry_ref = ...
+            entity->registry_ref = registry_ref;
 
             // We use a different metatable for every possible entity type.
             luaL_setmetatable(L, entity->config.metatable);
@@ -501,18 +500,28 @@ fail:
 /**
  * Push a table to the stack with the contents of the given serialized buffer.
  */
-void serialize_push_serialized(lua_State* L, const buffer_t* buffer) {
+void serialize_push_serialized(lua_State* L, int registry_ref, const buffer_t* buffer) {
+    int top = lua_gettop(L);
+
     mpack_tree_t tree;
     mpack_tree_init_data(&tree, buffer->data, buffer->size);
     mpack_tree_parse(&tree);
 
     mpack_node_t root = mpack_tree_root(&tree);
-    if (unserialize_flat(L, &root) == false) {
-        luaL_error(L, "Unserialization error.");
+    if (unserialize_flat(L, registry_ref, &root) == false) {
+        error_push("Unserialization error.");
+        goto fail;
     }
 
     mpack_error_t error = mpack_tree_destroy(&tree);
     if (error != mpack_ok) {
-        luaL_error(L, "Unserialization error.");
+        error_push("MPack error (%s)", mpack_error_to_string(error));
+        goto fail;
     }
+
+    return;
+
+fail:
+    lua_settop(L, top);
+    return;
 }

@@ -19,6 +19,9 @@
 
 #include "define.h"
 
+// Forward declarations
+typedef struct mpack_writer_t mpack_writer_t;
+
 /**
  * Type of entity.
  */
@@ -32,12 +35,7 @@ typedef enum {
 /**
  * Serialize function pointer.
  */
-typedef buffer_t*(*entity_serialize_t)(void* ptr);
-
-/**
- * Unserialize function pointer.
- */
-typedef void*(*entity_unserialize_t)(buffer_t* ptr);
+typedef void(*entity_serialize_t)(void* ptr, mpack_writer_t* writer);
 
 /**
  * Destructor function pointer.

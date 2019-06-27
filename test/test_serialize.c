@@ -34,7 +34,10 @@ static void test_serialize(void** state) {
     }
     fprintf(stderr, "\n");
 
-    serialize_push_serialized(L, serialized);
+    lua_newtable(L); // push table
+    int ref = luaL_ref(L, LUA_REGISTRYINDEX); // pop table
+
+    serialize_push_serialized(L, ref, serialized);
     assert_true(error_count() == 0);
 
     buffer_delete(serialized);

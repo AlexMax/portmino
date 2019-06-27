@@ -172,37 +172,35 @@ void piece_delete(piece_t* piece) {
 /**
  * Serialize piece struct using msgpack
  */
-buffer_t* piece_serialize(piece_t* piece) {
-    buffer_t* buffer = NULL;
-    mpack_writer_t writer;
+void piece_serialize(piece_t* piece, mpack_writer_t* writer) {
+    mpack_write_str(writer, piece->config->name, strlen(piece->config->name));
+}
 
-    if ((buffer = calloc(1, sizeof(buffer_t))) == NULL) {
+/**
+ * Unserialize random struct using msgpack
+ */
+piece_t* piece_unserialize(mpack_reader_t* reader) {
+    piece_t* piece = NULL;
+
+    if ((piece = calloc(1, sizeof(*piece))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
 
-    mpack_writer_init_growable(&writer, (char**)(&buffer->data), &buffer->size);
-    mpack_write_str(&writer, piece->config->name, strlen(piece->config->name));
+    uint32_t size = mpack_expect_str(reader);
+    // TODO: How do we figure out which piece config to use?
 
-    mpack_error_t err = mpack_writer_destroy(&writer);
-    if (err != mpack_ok) {
-        error_push("random_serialize error: %s", mpack_error_to_string(err));
-        goto fail;
-    }
-
-    return buffer;
+    return piece;
 
 fail:
-    mpack_writer_destroy(&writer);
-    buffer_delete(buffer);
     return NULL;
 }
 
 /**
  * Wrap serialize with void* function.
  */
-static buffer_t* wrapserialize(void* ptr) {
-    return piece_serialize(ptr);
+static void wrapserialize(void* ptr, mpack_writer_t* writer) {
+    piece_serialize(ptr, writer);
 }
 
 /**

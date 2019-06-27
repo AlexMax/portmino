@@ -14,6 +14,7 @@ endif()
 
 foreach(TEST ${TESTS})
     add_executable(${TEST} "${TEST}.c")
+    add_portmino_settings(${TEST})
     add_sanitizers(${TEST})
     target_link_libraries(${TEST} portmino-core basemino cmocka-x)
     add_test(${TEST} ${TEST})

@@ -21,6 +21,7 @@
 
 // Forward declarations.
 typedef struct entity_s entity_t;
+typedef struct mpack_writer_t mpack_writer_t;
 
 typedef struct random_s {
     /**
@@ -32,5 +33,5 @@ typedef struct random_s {
 random_t* random_new(uint32_t* seed);
 void random_delete(random_t* random);
 uint32_t random_number(random_t* random, uint32_t range);
-buffer_t* random_serialize(random_t* random);
+void random_serialize(random_t* random, mpack_writer_t* writer);
 void random_entity_init(entity_t* entity);
