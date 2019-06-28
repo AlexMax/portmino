@@ -321,7 +321,8 @@ bool environment_save(environment_t* env) {
         goto fail;
     }
 
-    buffer_t* serialized = serialize_to_serialized(env->lua, -1);
+    serialize_t ser = { env->lua, env->registry_ref };
+    buffer_t* serialized = serialize_to_serialized(&ser, -1);
     if (serialized == NULL) {
         error_push("State could not be serialized.");
         goto fail;
@@ -347,7 +348,8 @@ bool environment_rewind(environment_t* env, uint32_t frame) {
     (void)frame;
     int top = lua_gettop(env->lua);
 
-    serialize_push_serialized(env->lua, env->registry_ref, env->states[0].serialized);
+    serialize_t ser = { env->lua, env->registry_ref };
+    serialize_push_serialized(&ser, env->states[0].serialized);
     env->gametic = env->states[0].gametic;
 
     return true;

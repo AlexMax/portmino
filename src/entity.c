@@ -23,6 +23,7 @@
 #include "mpack.h"
 
 #include "error.h"
+#include "serialize.h"
 
 /**
  * Serialize an entity
@@ -67,13 +68,13 @@ fail:
 
 typedef struct random_s random_t;
 extern void random_entity_init(entity_t* entity);
-extern random_t* random_unserialize(mpack_reader_t* reader);
+extern random_t* random_unserialize(serialize_t* ser, mpack_reader_t* reader);
 typedef struct piece_s piece_t;
 extern void piece_entity_init(entity_t* entity);
-extern piece_t* piece_unserialize(mpack_reader_t* reader);
+extern piece_t* piece_unserialize(serialize_t* ser, mpack_reader_t* reader);
 typedef struct board_s board_t;
 extern void board_entity_init(entity_t* entity);
-extern board_t* board_unserialize(mpack_reader_t* reader);
+extern board_t* board_unserialize(serialize_t* ser, mpack_reader_t* reader);
 
 /**
  * Unserialize to an entity
@@ -82,9 +83,9 @@ extern board_t* board_unserialize(mpack_reader_t* reader);
  * its data overwritten by the new entity.  The resulting entity does not
  * have a registry reference set, that has to be supplied by the caller.
  */
-bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
+bool entity_unserialize(entity_t* entity, serialize_t* ser, const buffer_t* buffer) {
     mpack_reader_t reader;
-    mpack_reader_init_data(&reader, buffer->data, buffer->size);
+    mpack_reader_init_data(&reader, (const char*)buffer->data, buffer->size);
 
     // Serialized data is an array that starts with the entity id and the
     // type id, followed by actual serialized data.
@@ -96,23 +97,25 @@ bool entity_unserialize(entity_t* entity, const buffer_t* buffer) {
     case MINO_ENTITY_RANDOM:
         random_entity_init(entity);
         entity->id = id;
-        entity->data = random_unserialize(&reader);
+        entity->data = random_unserialize(ser, &reader);
         break;
     case MINO_ENTITY_PIECE:
         piece_entity_init(entity);
         entity->id = id;
-        entity->data = piece_unserialize(&reader);
+        entity->data = piece_unserialize(ser, &reader);
         break;
     case MINO_ENTITY_BOARD:
         board_entity_init(entity);
         entity->id = id;
-        entity->data = board_unserialize(&reader);
+        entity->data = board_unserialize(ser, &reader);
         break;
     default:
         error_push("Unknown entity ID (%u)", type);
         mpack_reader_destroy(&reader);
         return false;
     }
+
+    entity->registry_ref = ser->registry_ref;
 
     mpack_done_array(&reader);
 

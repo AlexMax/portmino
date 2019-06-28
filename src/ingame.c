@@ -226,4 +226,6 @@ bool ingame_restart(screen_t* screen) {
 
     ingame->countdown = MINO_FPS * 2;
     ingame->gameover = false;
+
+    return true;
 }

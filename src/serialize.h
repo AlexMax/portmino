@@ -22,5 +22,17 @@
 // Forward declarations
 typedef struct lua_State lua_State;
 
-buffer_t* serialize_to_serialized(lua_State* L, int index);
-void serialize_push_serialized(lua_State* L, int registry_ref, const buffer_t* buffer);
+typedef struct serialize_s {
+    /**
+     * Lua instance used by serialization.
+     */
+    lua_State* lua;
+
+    /**
+     * Registry reference used by serialization.
+     */
+    int registry_ref;
+} serialize_t;
+
+buffer_t* serialize_to_serialized(serialize_t* ser, int index);
+void serialize_push_serialized(serialize_t* ser, const buffer_t* buffer);

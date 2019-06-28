@@ -129,7 +129,7 @@ void random_serialize(random_t* random, mpack_writer_t* writer) {
 /**
  * Unserialize random struct using msgpack
  */
-random_t* random_unserialize(mpack_reader_t* reader) {
+random_t* random_unserialize(serialize_t* ser, mpack_reader_t* reader) {
     random_t* random = NULL;
 
     if ((random = calloc(1, sizeof(*random))) == NULL) {

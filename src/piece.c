@@ -25,7 +25,9 @@
 #include "error.h"
 #include "frontend.h"
 #include "piece.h"
+#include "proto.h"
 #include "script.h"
+#include "serialize.h"
 
 /**
  * Allocates a piece configuration from the table at the top of the Lua stack
@@ -179,20 +181,54 @@ void piece_serialize(piece_t* piece, mpack_writer_t* writer) {
 /**
  * Unserialize random struct using msgpack
  */
-piece_t* piece_unserialize(mpack_reader_t* reader) {
+piece_t* piece_unserialize(serialize_t* ser, mpack_reader_t* reader) {
+    int top = lua_gettop(ser->lua);
     piece_t* piece = NULL;
 
-    if ((piece = calloc(1, sizeof(*piece))) == NULL) {
+    uint32_t config_name_size = mpack_expect_str(reader);
+    const char* config_name = mpack_read_bytes_inplace(reader, config_name_size);
+
+    // push registry table
+    if (lua_rawgeti(ser->lua, LUA_REGISTRYINDEX, ser->registry_ref) != LUA_TTABLE) {
+        error_push("Registry reference is stale.");
+        goto fail;
+    }
+
+    // push prototype table
+    if (lua_getfield(ser->lua, -1, "proto_hash") != LUA_TTABLE) {
+        error_push("Prototype hash is missing from registry.");
+        goto fail;
+    } 
+
+    lua_pushlstring(ser->lua, config_name, config_name_size); // push prototype key
+
+    // push prototype
+    if (lua_rawget(ser->lua, -2) != LUA_TLIGHTUSERDATA) {
+        error_push("Unknown piece prototype.");
+        goto fail;
+    }
+
+    proto_t* proto = lua_touserdata(ser->lua, -1);
+    if (proto == NULL) {
+        error_push("Piece prototype is NULL.");
+        goto fail;
+    } else if (proto->type != MINO_PROTO_PIECE) {
+        error_push("Prototype is not a piece.");
+        goto fail;
+    }
+
+    // Now that we have the prototype, create a new piece.
+    piece_config_t* config = proto->data;
+    if ((piece = piece_new(config)) == NULL) {
         error_push_allocerr();
         goto fail;
     }
 
-    uint32_t size = mpack_expect_str(reader);
-    // TODO: How do we figure out which piece config to use?
-
+    lua_settop(ser->lua, top);
     return piece;
 
 fail:
+    lua_settop(ser->lua, top);
     return NULL;
 }
 

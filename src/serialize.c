@@ -298,9 +298,9 @@ fail:
  * The return value is allocated by this function, and the caller is expected
  * to free it.
  */
-buffer_t* serialize_to_serialized(lua_State* L, int index) {
+buffer_t* serialize_to_serialized(serialize_t* ser, int index) {
     buffer_t* msgpack = NULL;
-    int top = lua_gettop(L);
+    int top = lua_gettop(ser->lua);
 
     // Allocate our return buffer
     if ((msgpack = calloc(1, sizeof(buffer_t))) == NULL) {
@@ -310,7 +310,7 @@ buffer_t* serialize_to_serialized(lua_State* L, int index) {
 
     mpack_writer_t writer;
     mpack_writer_init_growable(&writer, (char**)(&msgpack->data), &msgpack->size);
-    if (serialize_flat(L, index, &writer) == false) {
+    if (serialize_flat(ser->lua, index, &writer) == false) {
         error_push("Serialization error.");
         goto fail;
     }
@@ -320,11 +320,11 @@ buffer_t* serialize_to_serialized(lua_State* L, int index) {
         goto fail;
     }
 
-    lua_settop(L, top);
+    lua_settop(ser->lua, top);
     return msgpack;
 
 fail:
-    lua_settop(L, top);
+    lua_settop(ser->lua, top);
     buffer_delete(msgpack);
     return NULL;
 }
@@ -419,15 +419,15 @@ static void unflatten_table(lua_State* L, int flat, int index) {
     }
 }
 
-static bool unserialize_flat(lua_State* L, int registry_ref, mpack_node_t* node) {
-    int top = lua_gettop(L);
+static bool unserialize_flat(serialize_t* ser, mpack_node_t* node) {
+    int top = lua_gettop(ser->lua);
 
     // Despite being a map, the keys in the map start at 1 and end at the
     // item count - they're just in random order.
     size_t count = mpack_node_map_count(*node);
 
     // Push an output flat table to the top of the stack.
-    lua_createtable(L, count, 0);
+    lua_createtable(ser->lua, count, 0);
 
     // Loop over our keys.
     for (size_t i = 1;i <= count;i++) {
@@ -437,24 +437,24 @@ static bool unserialize_flat(lua_State* L, int registry_ref, mpack_node_t* node)
         case mpack_type_map: {
             // Normal Table
             size_t count = mpack_node_map_count(flatitem);
-            lua_createtable(L, 0, count);
+            lua_createtable(ser->lua, 0, count);
             for (size_t j = 0;j < count;j++) {
                 mpack_node_t key = mpack_node_map_key_at(flatitem, j);
-                unserialize_flat_value(L, &key); // push key
+                unserialize_flat_value(ser->lua, &key); // push key
                 mpack_node_t value = mpack_node_map_value_at(flatitem, j);
-                unserialize_flat_value(L, &value); // push value
-                lua_rawset(L, -3);
+                unserialize_flat_value(ser->lua, &value); // push value
+                lua_rawset(ser->lua, -3);
             }
             break;
         }
         case mpack_type_array: {
             // Table shaped like an array
             size_t count = mpack_node_array_length(flatitem);
-            lua_createtable(L, count, 0);
+            lua_createtable(ser->lua, count, 0);
             for (size_t j = 0;j < count;j++) {
                 mpack_node_t value = mpack_node_array_at(flatitem, j);
-                unserialize_flat_value(L, &value); // push value
-                lua_rawseti(L, -2, j + 1);
+                unserialize_flat_value(ser->lua, &value); // push value
+                lua_rawseti(ser->lua, -2, j + 1);
             }
             break;
         }
@@ -465,15 +465,14 @@ static bool unserialize_flat(lua_State* L, int registry_ref, mpack_node_t* node)
             buffer.size = mpack_node_bin_size(flatitem);
 
             // Unserialize the data into a userdata.
-            entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
-            if (entity_unserialize(entity, &buffer) == false) {
+            entity_t* entity = lua_newuserdata(ser->lua, sizeof(entity_t));
+            if (entity_unserialize(entity, ser, &buffer) == false) {
                 error_push("Could not unserialize entity.");
                 goto fail;
             }
-            entity->registry_ref = registry_ref;
 
             // We use a different metatable for every possible entity type.
-            luaL_setmetatable(L, entity->config.metatable);
+            luaL_setmetatable(ser->lua, entity->config.metatable);
             break;
         }
         default:
@@ -481,34 +480,34 @@ static bool unserialize_flat(lua_State* L, int registry_ref, mpack_node_t* node)
             goto fail;
         }
 
-        lua_rawseti(L, -2, i); // pop value
+        lua_rawseti(ser->lua, -2, i); // pop value
     }
 
     // Now we have a flattened table of tables and userdatas.  Start at the
     // first entry and walk recursively until all our flat entities are
     // resolved.
-    lua_rawgeti(L, -1, 1); // push root table
-    unflatten_table(L, -2, -1);
+    lua_rawgeti(ser->lua, -1, 1); // push root table
+    unflatten_table(ser->lua, -2, -1);
 
     return true;
 
 fail:
-    lua_settop(L, top);
+    lua_settop(ser->lua, top);
     return false;
 }
 
 /**
  * Push a table to the stack with the contents of the given serialized buffer.
  */
-void serialize_push_serialized(lua_State* L, int registry_ref, const buffer_t* buffer) {
-    int top = lua_gettop(L);
+void serialize_push_serialized(serialize_t* ser, const buffer_t* buffer) {
+    int top = lua_gettop(ser->lua);
 
     mpack_tree_t tree;
-    mpack_tree_init_data(&tree, buffer->data, buffer->size);
+    mpack_tree_init_data(&tree, (const char*)buffer->data, buffer->size);
     mpack_tree_parse(&tree);
 
     mpack_node_t root = mpack_tree_root(&tree);
-    if (unserialize_flat(L, registry_ref, &root) == false) {
+    if (unserialize_flat(ser, &root) == false) {
         error_push("Unserialization error.");
         goto fail;
     }
@@ -522,6 +521,6 @@ void serialize_push_serialized(lua_State* L, int registry_ref, const buffer_t* b
     return;
 
 fail:
-    lua_settop(L, top);
+    lua_settop(ser->lua, top);
     return;
 }

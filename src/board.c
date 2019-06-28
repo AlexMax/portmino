@@ -386,13 +386,13 @@ uint8_t board_clear_lines(board_t* board) {
  * Serialize board struct using msgpack
  */
 void board_serialize(board_t* board, mpack_writer_t* writer) {
-    mpack_write_bin(writer, board->data.data, board->data.size);
+    mpack_write_bin(writer, (const char*)board->data.data, board->data.size);
 }
 
 /**
  * Unserialize random struct using msgpack
  */
-board_t* board_unserialize(mpack_reader_t* reader) {
+board_t* board_unserialize(serialize_t* ser, mpack_reader_t* reader) {
     board_t* board = NULL;
 
     if ((board = calloc(1, sizeof(*board))) == NULL) {
@@ -401,7 +401,7 @@ board_t* board_unserialize(mpack_reader_t* reader) {
     }
 
     uint32_t size = mpack_expect_bin(reader);
-    mpack_read_bytes(reader, board->data.data, board->data.size);
+    mpack_read_bytes(reader, (char*)board->data.data, board->data.size);
 
     return board;
 

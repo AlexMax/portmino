@@ -21,6 +21,7 @@
 
 // Forward declarations
 typedef struct mpack_writer_t mpack_writer_t;
+typedef struct serialize_s serialize_t;
 
 /**
  * Type of entity.
@@ -93,5 +94,5 @@ typedef struct entity_s {
 } entity_t;
 
 buffer_t* entity_serialize(entity_t* entity);
-bool entity_unserialize(entity_t* entity, const buffer_t* buffer);
+bool entity_unserialize(entity_t* entity, serialize_t* ser, const buffer_t* buffer);
 void entity_deinit(entity_t* entity);
