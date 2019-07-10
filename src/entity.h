@@ -20,6 +20,7 @@
 #include "define.h"
 
 // Forward declarations
+typedef struct entity_manager_s entity_manager_t;
 typedef struct mpack_writer_t mpack_writer_t;
 typedef struct serialize_s serialize_t;
 
@@ -96,3 +97,5 @@ typedef struct entity_s {
 buffer_t* entity_serialize(entity_t* entity);
 bool entity_unserialize(entity_t* entity, serialize_t* ser, const buffer_t* buffer);
 void entity_deinit(entity_t* entity);
+entity_manager_t* entity_manager_new(void);
+void entity_manager_delete(entity_manager_t* manager);

@@ -22,6 +22,7 @@
 #include "input.h"
 
 // Forward declarations.
+typedef struct entity_manager_s entity_manager_t;
 typedef struct lua_State lua_State;
 typedef struct proto_container_s proto_container_t;
 
@@ -82,6 +83,11 @@ typedef struct environment_s {
      * Prototypes loaded from Lua.
      */
     proto_container_t* protos;
+
+    /**
+     * Entities for the given environment.
+     */
+    entity_manager_t* entities;
 
     /**
      * Serialized states.

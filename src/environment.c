@@ -21,6 +21,7 @@
 
 #include "lauxlib.h"
 
+#include "entity.h"
 #include "error.h"
 #include "inputscript.h"
 #include "proto.h"
@@ -60,6 +61,8 @@ static int db_traceback(lua_State *L) {
 environment_t* environment_new(lua_State* L, const char* ruleset, const char* gametype) {
     environment_t* env = NULL;
     proto_container_t* protos = NULL;
+    entity_manager_t* entities = NULL;
+
     int top = lua_gettop(L);
 
     // Allocate our scripting environment
@@ -74,6 +77,12 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
         goto fail;
     }
 
+    // Allocate our entity manager
+    if ((entities = entity_manager_new()) == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
     env->lua = L;
     env->registry_ref = LUA_NOREF;
     env->env_ref = LUA_NOREF;
@@ -81,6 +90,7 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     env->state_ref = LUA_NOREF;
     env->gametic = 0;
     env->protos = protos;
+    env->entities = entities;
     for (size_t i = 0;i < ARRAY_LEN(env->states);i++) {
         env->states[i].serialized = NULL;
         env->states[i].entity_next = 0;
@@ -200,6 +210,9 @@ void environment_delete(environment_t* env) {
 
     proto_container_delete(env->protos);
     env->protos = NULL;
+
+    entity_manager_delete(env->entities);
+    env->entities = NULL;
 
     free(env);
 }

@@ -20,10 +20,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "khash.h"
 #include "mpack.h"
 
 #include "error.h"
 #include "serialize.h"
+
+KHASH_MAP_INIT_INT64(entities, entity_t);
+
+/**
+ * Entity manager instance
+ */
+typedef struct entity_manager_s {
+    /**
+     * Primary entity hashmap
+     *
+     * Keyed by a 64-bit ID, value is an allocated entity.
+     */
+    khash_t(entities)* entities;
+} entity_manager_t;
 
 /**
  * Serialize an entity
@@ -138,4 +153,44 @@ void entity_deinit(entity_t* entity) {
 
     entity->config.destruct(entity->data);
     memset(entity, 0x00, sizeof(*entity));
+}
+
+/**
+ * Allocate an entity manager
+ */
+entity_manager_t* entity_manager_new(void) {
+    entity_manager_t* manager = NULL;
+    khash_t(entities)* entities = NULL;
+
+    manager = calloc(1, sizeof(*manager));
+    if (manager == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    manager->entities = kh_init(entities);
+    if (manager->entities == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    return manager;
+
+fail:
+    entity_manager_delete(manager);
+    return NULL;
+}
+
+/**
+ * Free the passed entity manager
+ */
+void entity_manager_delete(entity_manager_t* manager) {
+    if (manager == NULL) {
+        return;
+    }
+
+    kh_destroy(entities, manager->entities);
+    manager->entities = NULL;
+
+    free(manager);
 }
