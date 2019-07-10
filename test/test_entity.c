@@ -49,6 +49,9 @@ static void test_entity_manager(void** state) {
     assert_non_null(other);
     assert_true(second_entity == other);
 
+    // Test that double-deletion doesn't break anything - should trigger ASan
+    entity_manager_destroy(manager, 1);
+
     entity_manager_delete(manager);
 
     vfs_deinit();

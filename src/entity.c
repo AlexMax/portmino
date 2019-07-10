@@ -156,7 +156,11 @@ void entity_deinit(entity_t* entity) {
         return;
     }
 
-    entity->config.destruct(entity->data);
+    // If we have a destructor, use it
+    if (entity->config.destruct != NULL) {
+        entity->config.destruct(entity->data);
+    }
+
     memset(entity, 0x00, sizeof(*entity));
 }
 
@@ -197,6 +201,16 @@ void entity_manager_delete(entity_manager_t* manager) {
         return;
     }
 
+    // Delete all entities in the manager
+    for (khint_t it = kh_begin(manager->entities);it != kh_end(manager->entities);it++) {
+        if (kh_exist(manager->entities, it) == 1) {
+            entity_t* entity = kh_val(manager->entities, it);
+            entity_deinit(entity);
+            free(entity);
+            entity = NULL;
+        }
+    }
+
     kh_destroy(entities, manager->entities);
     manager->entities = NULL;
 
@@ -219,23 +233,24 @@ entity_t* entity_manager_create(entity_manager_t* manager) {
     entity->id = manager->next_id;
 
     int ret;
-    khint_t key = kh_put(entities, manager->entities, manager->next_id, &ret);
+    khint_t it = kh_put(entities, manager->entities, manager->next_id, &ret);
     if (ret == -1) {
         // Operation failed
-        kh_del(entities, manager->entities, key);
+        kh_del(entities, manager->entities, it);
         goto fail;
     } else if (ret == 0) {
         // Key exists - how did this happen?
         goto fail;
     }
 
-    kh_value(manager->entities, key) = entity;
+    kh_value(manager->entities, it) = entity;
 
     manager->next_id += 1;
     return entity;
 
 fail:
     entity_deinit(entity);
+    free(entity);
     return NULL;
 }
 
@@ -243,18 +258,27 @@ fail:
  * Get an entity from the entity manager by entity id
  */
 entity_t* entity_manager_get(entity_manager_t* manager, uint64_t id) {
-    khint_t key = kh_get(entities, manager->entities, id);
-    if (key == kh_end(manager->entities)) {
+    khint_t it = kh_get(entities, manager->entities, id);
+    if (it == kh_end(manager->entities)) {
         // Key does not exist in hashtable
         return NULL;
     }
 
-    return kh_value(manager->entities, key);
+    return kh_val(manager->entities, it);
 }
 
 /**
  * Destroy an entity inside the entity manager by entity id
  */
 void entity_manager_destroy(entity_manager_t* manager, uint64_t id) {
+    // Find the entity
+    entity_t* entity = entity_manager_get(manager, id);
+
+    // Delete the entity - NULL entities are ignored
+    entity_deinit(entity);
+    free(entity);
+    entity = NULL;
+
+    // Delete the hashtable entry
     kh_del(entities, manager->entities, id);
 }
