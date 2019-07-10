@@ -26,7 +26,7 @@
 #include "error.h"
 #include "serialize.h"
 
-KHASH_MAP_INIT_INT64(entities, entity_t);
+KHASH_MAP_INIT_INT64(entities, entity_t*);
 
 /**
  * Entity manager instance
@@ -38,6 +38,11 @@ typedef struct entity_manager_s {
      * Keyed by a 64-bit ID, value is an allocated entity.
      */
     khash_t(entities)* entities;
+
+    /**
+     * Next available entity ID
+     */
+    uint64_t next_id;
 } entity_manager_t;
 
 /**
@@ -174,6 +179,9 @@ entity_manager_t* entity_manager_new(void) {
         goto fail;
     }
 
+    // The first entity is id 1
+    manager->next_id = 1;
+
     return manager;
 
 fail:
@@ -193,4 +201,60 @@ void entity_manager_delete(entity_manager_t* manager) {
     manager->entities = NULL;
 
     free(manager);
+}
+
+/**
+ * Create a new entity in the entity manager
+ */
+entity_t* entity_manager_create(entity_manager_t* manager) {
+    entity_t* entity = NULL;
+
+    entity = calloc(1, sizeof(*entity));
+    if (entity == NULL) {
+        error_push_allocerr();
+        goto fail;
+    }
+
+    // Ensure that our entity is prepopulated with the proper id
+    entity->id = manager->next_id;
+
+    int ret;
+    khint_t key = kh_put(entities, manager->entities, manager->next_id, &ret);
+    if (ret == -1) {
+        // Operation failed
+        kh_del(entities, manager->entities, key);
+        goto fail;
+    } else if (ret == 0) {
+        // Key exists - how did this happen?
+        goto fail;
+    }
+
+    kh_value(manager->entities, key) = entity;
+
+    manager->next_id += 1;
+    return entity;
+
+fail:
+    entity_deinit(entity);
+    return NULL;
+}
+
+/**
+ * Get an entity from the entity manager by entity id
+ */
+entity_t* entity_manager_get(entity_manager_t* manager, uint64_t id) {
+    khint_t key = kh_get(entities, manager->entities, id);
+    if (key == kh_end(manager->entities)) {
+        // Key does not exist in hashtable
+        return NULL;
+    }
+
+    return kh_value(manager->entities, key);
+}
+
+/**
+ * Destroy an entity inside the entity manager by entity id
+ */
+void entity_manager_destroy(entity_manager_t* manager, uint64_t id) {
+    kh_del(entities, manager->entities, id);
 }

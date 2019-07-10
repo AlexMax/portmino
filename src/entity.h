@@ -99,3 +99,6 @@ bool entity_unserialize(entity_t* entity, serialize_t* ser, const buffer_t* buff
 void entity_deinit(entity_t* entity);
 entity_manager_t* entity_manager_new(void);
 void entity_manager_delete(entity_manager_t* manager);
+entity_t* entity_manager_create(entity_manager_t* manager);
+entity_t* entity_manager_get(entity_manager_t* manager, uint64_t id);
+void entity_manager_destroy(entity_manager_t* manager, uint64_t id);

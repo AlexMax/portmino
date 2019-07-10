@@ -1,4 +1,5 @@
 set(TESTS
+    test_entity
     test_environment
     test_globalscript
     test_proto
