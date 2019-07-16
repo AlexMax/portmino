@@ -27,7 +27,7 @@
 /**
  * Lua: Initialize new random state.
  */
-static int randomscript_new(lua_State* L) {
+static int randomscript_create(lua_State* L) {
     // Parameter 1: Seed integer (or nil if we want a truly random seed)
     int seed_type = lua_type(L, 1);
     luaL_argcheck(L, (seed_type == LUA_TNUMBER || seed_type == LUA_TNIL), 1, "invalid seed");
@@ -39,66 +39,66 @@ static int randomscript_new(lua_State* L) {
         return 0;
     }
 
-    // Internal State 2: Next ID
-    type = lua_getfield(L, lua_upvalueindex(1), "entity_next");
-    if (type != LUA_TNUMBER) {
-        luaL_error(L, "missing internal state (entity_next)");
+    // Internal State 2: Entity manager
+    type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
+    if (type != LUA_TLIGHTUSERDATA) {
+        luaL_error(L, "missing internal state (entity_manager)");
         return 0;
     }
 
-    uint32_t entity_next = lua_tointeger(L, -1);
-    int registry_ref = lua_tointeger(L, -2);
+    entity_manager_t* manager = lua_touserdata(L, -1);
 
-    // Initialize (and return) random state
-    entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
-    random_entity_init(entity);
+    // Allocate the entity
+    entity_t* entity = entity_manager_create(manager);
+    if (entity == NULL) {
+        luaL_error(L, "could not allocate new entity");
+        return 0;
+    }
 
-    random_t* random;
+    // Initialize the entity with random state
+    bool ok;
     if (seed_type == LUA_TNUMBER) {
-        uint32_t seed = (uint32_t)lua_tointeger(L, 1);
-        random = random_new(&seed);
+        uint32_t state = (uint32_t)lua_tointeger(L, 1);
+        ok = random_entity_init(entity, &state);
     } else {
-        random = random_new(NULL);
+        ok = random_entity_init(entity, NULL);
     }
-    if (random == NULL) {
-        luaL_error(L, "Could not allocate new random state.");
+    if (ok == false) {
+        luaL_error(L, "could not initialize entity");
         return 0;
     }
 
-    // Set our entity properties
-    entity->id = entity_next;
-    entity->registry_ref = registry_ref;
-    entity->data = random;
+    // Allocate a handle for our entity
+    uint64_t* id = lua_newuserdata(L, sizeof(uint64_t));
+    *id = entity->id;
 
-    // Apply methods to the userdata
-    luaL_setmetatable(L, entity->config.metatable);
-
-    // Increment our next entity counter
-    lua_pushinteger(L, entity_next + 1);
-    lua_setfield(L, lua_upvalueindex(1), "entity_next");
-
+    // Designate as an entity handle
+    luaL_setmetatable(L, "handle_t");
     return 1;
-}
-
-/**
- * Lua: random_t finalizer
- */
-static int randomscript_delete(lua_State* L) {
-    // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "random_t");
-
-    entity_deinit(entity);
-    entity = NULL;
-
-    return 0;
 }
 
 /**
  * Lua: Get a random number with a maximum value
  */
 static int randomscript_number(lua_State* L) {
-    // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "random_t");
+    // Internal State 1: Entity manager
+    int type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
+    if (type != LUA_TLIGHTUSERDATA) {
+        luaL_error(L, "missing internal state (entity_manager)");
+        return 0;
+    }
+    entity_manager_t* manager = lua_touserdata(L, -1);
+
+    // Parameter 1: Our handle
+    uint64_t* id = luaL_checkudata(L, 1, "handle_t");
+    entity_t* entity = entity_manager_get(manager, *id);
+    if (entity == NULL) {
+        luaL_error(L, "entity not found");
+        return 0;
+    } else if (entity->config.type != MINO_ENTITY_RANDOM) {
+        luaL_error(L, "entity is not a random entity");
+        return 0;
+    }
     random_t* random = entity->data;
 
     // Parameter 2: Integer random number range
@@ -115,27 +115,11 @@ static int randomscript_number(lua_State* L) {
  */
 int randomscript_openlib(lua_State* L) {
     static const luaL_Reg randomlib[] = {
-        { "new", randomscript_new },
-        { NULL, NULL }
-    };
-
-    luaL_newlib(L, randomlib);
-
-    // Create the random_t type
-    static const luaL_Reg random_meta[] = {
-        { "__gc", randomscript_delete },
-        { NULL, NULL }
-    };
-    static const luaL_Reg random_methods[] = {
+        { "create", randomscript_create },
         { "number", randomscript_number },
         { NULL, NULL }
     };
 
-    luaL_newmetatable(L, "random_t"); // push meta
-    luaL_setfuncs(L, random_meta, 0);
-    luaL_newlib(L, random_methods); // push methods table
-    lua_setfield(L, -2, "__index"); // pop methods table
-    lua_pop(L, 1); // pop meta
-
+    luaL_newlib(L, randomlib);
     return 1;
 }

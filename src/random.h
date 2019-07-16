@@ -34,4 +34,4 @@ random_t* random_new(uint32_t* seed);
 void random_delete(random_t* random);
 uint32_t random_number(random_t* random, uint32_t range);
 void random_serialize(random_t* random, mpack_writer_t* writer);
-void random_entity_init(entity_t* entity);
+bool random_entity_init(entity_t* entity, uint32_t* seed);

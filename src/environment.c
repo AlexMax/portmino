@@ -117,6 +117,8 @@ environment_t* environment_new(lua_State* L, const char* ruleset, const char* ga
     lua_setfield(L, -2, "loaded");
     lua_pushlightuserdata(L, env->protos);
     lua_setfield(L, -2, "proto_container");
+    lua_pushlightuserdata(L, env->entities);
+    lua_setfield(L, -2, "entity_manager");
     lua_newtable(L); // prototype lookup table
     lua_setfield(L, -2, "proto_hash");
     lua_pushinteger(L, 1); // next entity id

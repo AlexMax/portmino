@@ -165,11 +165,20 @@ static void wrapdelete(void* ptr) {
 /**
  * Initialize an entity with random config
  */
-void random_entity_init(entity_t* entity) {
-    memset(entity, 0x00, sizeof(*entity));
+bool random_entity_init(entity_t* entity, uint32_t* seed) {
+    random_t* random = random_new(seed);
+    if (random == NULL) {
+        return false;
+    }
 
+    // Configuration
     entity->config.type = MINO_ENTITY_RANDOM;
     entity->config.metatable = "random_t";
     entity->config.serialize = wrapserialize;
     entity->config.destruct = wrapdelete;
+
+    // Setup the entity
+    entity->data = random;
+
+    return true;
 }
