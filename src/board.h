@@ -21,7 +21,7 @@
 
 // Forward declarations.
 typedef struct entity_s entity_t;
-typedef struct lua_State lua_State;
+typedef struct entity_manager_s entity_manager_t;
 typedef struct mpack_writer_t mpack_writer_t;
 typedef struct piece_s piece_t;
 typedef struct piece_config_s piece_config_t;
@@ -32,14 +32,9 @@ typedef struct ruleset_s ruleset_t;
 
 typedef struct {
     /**
-     * A reference to the piece entity
+     * Piece entity handle
      */
-    int piece_ref;
-
-    /**
-     * The cached piece entity
-     */
-    piece_t* piece;
+    handle_t handle;
 
     /**
      * Current position of the piece, origin is at the top-left.  Can be off
@@ -92,11 +87,12 @@ typedef struct {
 
 typedef struct board_s {
     /**
-     * Lua state.
+     * Entity manager
      *
-     * Necessary for deleting piece references.
+     * Necessary for looking up piece handles.  This is not an owning pointer,
+     * so don't free it.
      */
-    lua_State* lua;
+    entity_manager_t* manager;
 
     /**
      * Unique id of the board.
@@ -127,11 +123,11 @@ typedef struct board_s {
     size_t piece_count;
 } board_t;
 
-board_t* board_new(lua_State* L);
+board_t* board_new(void);
 void board_delete(board_t* board);
 uint8_t board_get(board_t* board, vec2i_t pos);
-int board_get_piece_ref(board_t* board, size_t index);
-bool board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref);
+handle_t board_get_piece_ref(board_t* board, size_t index);
+bool board_set_piece(board_t* board, size_t index, handle_t handle);
 bool board_unset_piece(board_t* board, size_t index);
 boardpiece_t* board_get_boardpiece(board_t* board, size_t index);
 bool board_test_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
@@ -140,4 +136,4 @@ vec2i_t board_test_piece_between(const board_t* board, const piece_config_t* pie
 void board_lock_piece(const board_t* board, const piece_config_t* piece, vec2i_t pos, uint8_t rot);
 uint8_t board_clear_lines(board_t* board);
 void board_serialize(board_t* board, mpack_writer_t* writer);
-void board_entity_init(entity_t* entity);
+bool board_entity_init(entity_t* entity, entity_manager_t* manager);

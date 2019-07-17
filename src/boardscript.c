@@ -21,63 +21,43 @@
 
 #include "board.h"
 #include "entity.h"
+#include "entityscript.h"
 #include "proto.h"
 #include "script.h"
 
  /**
   * Lua: Initialize new board state.
   */
-static int boardscript_new(lua_State* L) {
-    // Internal State 1: Registry reference
-    int type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
-    if (type != LUA_TNUMBER) {
-        luaL_error(L, "missing internal state (registry_ref)");
+static int boardscript_create(lua_State* L) {
+    // Internal State 1: Entity manager
+    int type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
+    if (type != LUA_TLIGHTUSERDATA) {
+        luaL_error(L, "missing internal state (entity_manager)");
+        return 0;
+    }
+    entity_manager_t* manager = lua_touserdata(L, -1);
+
+    // Allocate the entity
+    entity_t* entity = entity_manager_create(manager);
+    if (entity == NULL) {
+        luaL_error(L, "could not allocate new entity");
         return 0;
     }
 
-    // Internal State 2: Next ID
-    type = lua_getfield(L, lua_upvalueindex(1), "entity_next");
-    if (type != LUA_TNUMBER) {
-        luaL_error(L, "missing internal state (entity_next)");
+    // Initialize the entity with random state
+    bool ok = board_entity_init(entity, manager);
+    if (ok == false) {
+        luaL_error(L, "could not initialize entity");
         return 0;
     }
 
-    uint32_t entity_next = lua_tointeger(L, -1);
-    int registry_ref = lua_tointeger(L, -2);
+    // Allocate a handle for our entity
+    handle_t* id = lua_newuserdata(L, sizeof(handle_t));
+    *id = entity->id;
 
-    // Initialize (and return) board state
-    entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
-    board_entity_init(entity);
-    if ((entity->data = board_new(L)) == NULL) {
-        luaL_error(L, "Could not allocate new board.");
-        return 0;
-    }
-
-    // Set our entity properties
-    entity->id = entity_next;
-    entity->registry_ref = registry_ref;
-
-    // Apply methods to the entity
-    luaL_setmetatable(L, entity->config.metatable);
-
-    // Increment our next entity counter
-    lua_pushinteger(L, entity_next + 1);
-    lua_setfield(L, lua_upvalueindex(1), "entity_next");
-
+    // Designate as an entity handle
+    luaL_setmetatable(L, "handle_t");
     return 1;
-}
-
-/**
- * Lua: board_t finalizer.
- */
-static int boardscript_delete(lua_State* L) {
-    // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
-
-    entity_deinit(entity);
-    entity = NULL;
-
-    return 0;
 }
 
 /**
@@ -85,7 +65,7 @@ static int boardscript_delete(lua_State* L) {
  */
 static int boardscript_get(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Position to check
@@ -105,7 +85,7 @@ static int boardscript_get(lua_State* L) {
  */
 static int boardscript_get_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -131,7 +111,7 @@ static int boardscript_get_piece(lua_State* L) {
  */
 static int boardscript_set_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -143,11 +123,11 @@ static int boardscript_set_piece(lua_State* L) {
     index -= 1;
 
     // Parameter 3: Piece userdata
-    entity_t* pentity = luaL_checkudata(L, 3, "piece_t");
+    entity_t* pentity = entityscript_to_entity(L, 3, MINO_ENTITY_PIECE);
     piece_t* piece = pentity->data;
 
     int piece_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    board_set_piece(board, index, piece, piece_ref);
+    board_set_piece(board, index, pentity->id);
 
     return 0;
 }
@@ -157,7 +137,7 @@ static int boardscript_set_piece(lua_State* L) {
  */
 static int boardscript_unset_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -178,7 +158,7 @@ static int boardscript_unset_piece(lua_State* L) {
  */
 static int boardscript_get_pos(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -204,7 +184,7 @@ static int boardscript_get_pos(lua_State* L) {
  */
 static int boardscript_set_pos(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -238,7 +218,7 @@ static int boardscript_set_pos(lua_State* L) {
  */
 static int boardscript_get_rot(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -264,7 +244,7 @@ static int boardscript_get_rot(lua_State* L) {
  */
 static int boardscript_set_rot(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece index
@@ -293,7 +273,7 @@ static int boardscript_set_rot(lua_State* L) {
  */
 static int boardscript_test_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece name
@@ -307,14 +287,8 @@ static int boardscript_test_piece(lua_State* L) {
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
 
-    // Internal State 1: protos table
-    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, entity->registry_ref);
-    if (type != LUA_TTABLE) {
-        luaL_error(L, "missing internal state (registry_ref)");
-        return 0;
-    }
-
-    type = lua_getfield(L, -1, "proto_hash");
+    // Internal State 1: Prototype hash
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (proto_hash)");
         return 0;
@@ -341,7 +315,7 @@ static int boardscript_test_piece(lua_State* L) {
  */
 static int boardscript_test_piece_between(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece name
@@ -360,14 +334,8 @@ static int boardscript_test_piece_between(lua_State* L) {
     ok = script_to_vector(L, 5, &dst);
     luaL_argcheck(L, ok, 5, "invalid position");
 
-    // Internal State 1: protos table
-    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, entity->registry_ref);
-    if (type != LUA_TTABLE) {
-        luaL_error(L, "missing internal state (registry_ref)");
-        return 0;
-    }
-
-    type = lua_getfield(L, -1, "proto_hash");
+    // Internal State 1: Prototype hash
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (proto_hash)");
         return 0;
@@ -389,11 +357,11 @@ static int boardscript_test_piece_between(lua_State* L) {
 }
 
 /**
- * Lua: Test to see if a piece collides with a specific spot on the board.
+ * Lua: Lock a piece in place on the board.
  */
 static int boardscript_lock_piece(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Parameter 2: Piece name
@@ -407,14 +375,8 @@ static int boardscript_lock_piece(lua_State* L) {
     // Parameter 4: Rotation integer
     lua_Integer rot = luaL_checkinteger(L, 4);
 
-    // Internal State 1: protos table
-    int type = lua_rawgeti(L, LUA_REGISTRYINDEX, entity->registry_ref);
-    if (type != LUA_TTABLE) {
-        luaL_error(L, "missing internal state (registry_ref)");
-        return 0;
-    }
-
-    type = lua_getfield(L, -1, "proto_hash");
+    // Internal State 1: Prototype hash
+    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (proto_hash)");
         return 0;
@@ -439,7 +401,7 @@ static int boardscript_lock_piece(lua_State* L) {
  */
 static int boardscript_clear_lines(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "board_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_BOARD);
     board_t* board = entity->data;
 
     // Clear lines and return the number of lines cleared.
@@ -450,18 +412,7 @@ static int boardscript_clear_lines(lua_State* L) {
 
 int boardscript_openlib(lua_State* L) {
     static const luaL_Reg boardlib[] = {
-        { "new", boardscript_new },
-        { NULL, NULL }
-    };
-
-    luaL_newlib(L, boardlib);
-
-    // Create the board_t type
-    static const luaL_Reg board_meta[] = {
-        { "__gc", boardscript_delete },
-        { NULL, NULL }
-    };
-    static const luaL_Reg board_methods[] = {
+        { "create", boardscript_create },
         { "get", boardscript_get },
         { "get_piece", boardscript_get_piece },
         { "set_piece", boardscript_set_piece },
@@ -477,11 +428,6 @@ int boardscript_openlib(lua_State* L) {
         { NULL, NULL }
     };
 
-    luaL_newmetatable(L, "board_t"); // push meta
-    luaL_setfuncs(L, board_meta, 0);
-    luaL_newlib(L, board_methods); // push methods table
-    lua_setfield(L, -2, "__index"); // pop methods table
-    lua_pop(L, 1); // pop meta
-
+    luaL_newlib(L, boardlib);
     return 1;
 }

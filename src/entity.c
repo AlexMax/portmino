@@ -42,7 +42,7 @@ typedef struct entity_manager_s {
     /**
      * Next available entity ID
      */
-    uint64_t next_id;
+    handle_t next_id;
 } entity_manager_t;
 
 /**
@@ -134,8 +134,6 @@ bool entity_unserialize(entity_t* entity, serialize_t* ser, const buffer_t* buff
         mpack_reader_destroy(&reader);
         return false;
     }
-
-    entity->registry_ref = ser->registry_ref;
 
     mpack_done_array(&reader);
 
@@ -257,7 +255,7 @@ fail:
 /**
  * Get an entity from the entity manager by entity id
  */
-entity_t* entity_manager_get(entity_manager_t* manager, uint64_t id) {
+entity_t* entity_manager_get(entity_manager_t* manager, handle_t id) {
     khint_t it = kh_get(entities, manager->entities, id);
     if (it == kh_end(manager->entities)) {
         // Key does not exist in hashtable
@@ -270,7 +268,7 @@ entity_t* entity_manager_get(entity_manager_t* manager, uint64_t id) {
 /**
  * Destroy an entity inside the entity manager by entity id
  */
-void entity_manager_destroy(entity_manager_t* manager, uint64_t id) {
+void entity_manager_destroy(entity_manager_t* manager, handle_t id) {
     // Find the entity
     entity_t* entity = entity_manager_get(manager, id);
 

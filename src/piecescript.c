@@ -18,44 +18,35 @@
 #include "lauxlib.h"
 
 #include "entity.h"
+#include "entityscript.h"
 #include "piece.h"
 #include "proto.h"
 #include "script.h"
 
 /**
- * Lua: Initialize new board state.
+ * Lua: Initialize new piece state.
  */
-static int piecescript_new(lua_State* L) {
+static int piecescript_create(lua_State* L) {
     // Parameter 1: Piece configuration
     const char* piece_config = luaL_checkstring(L, 1);
 
-    // Internal State 1: Prototype hash
-    int type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
+    // Internal State 1: Entity manager
+    int type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
+    if (type != LUA_TLIGHTUSERDATA) {
+        luaL_error(L, "missing internal state (entity_manager)");
+        return 0;
+    }
+    entity_manager_t* manager = lua_touserdata(L, -1);
+
+    // Internal State 2: Prototype hash
+    type = lua_getfield(L, lua_upvalueindex(1), "proto_hash");
     if (type != LUA_TTABLE) {
         luaL_error(L, "missing internal state (proto_hash)");
         return 0;
     }
 
-    // Internal State 2: Registry ref
-    type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
-    if (type != LUA_TNUMBER) {
-        luaL_error(L, "missing internal state (registry_ref)");
-        return 0;
-    }
-
-    // Internal State 3: Next ID
-    type = lua_getfield(L, lua_upvalueindex(1), "entity_next");
-    if (type != LUA_TNUMBER) {
-        luaL_error(L, "missing internal state (entity_next)");
-        return 0;
-    }
-
-    // Get our entity data
-    uint32_t entity_next = lua_tointeger(L, -1);
-    int registry_ref = lua_tointeger(L, -2);
-
     // Get the piece configuration
-    lua_getfield(L, -3, piece_config);
+    lua_getfield(L, -1, piece_config);
     proto_t* proto = lua_touserdata(L, -1);
     if (proto == NULL || proto->type != MINO_PROTO_PIECE) {
         luaL_error(L, "invalid piece configuration");
@@ -63,39 +54,27 @@ static int piecescript_new(lua_State* L) {
     }
     piece_config_t* config = proto->data;
 
-    // Initialize (and return) board state
-    entity_t* entity = lua_newuserdata(L, sizeof(entity_t));
-    piece_entity_init(entity);
-    if ((entity->data = piece_new(config)) == NULL) {
-        luaL_error(L, "Could not allocate new piece.");
+    // Allocate the entity
+    entity_t* entity = entity_manager_create(manager);
+    if (entity == NULL) {
+        luaL_error(L, "could not allocate new entity");
         return 0;
     }
 
-    // Set our entity properties
-    entity->id = entity_next;
-    entity->registry_ref = registry_ref;
+    // Initialize the entity with random state
+    bool ok = piece_entity_init(entity, config);
+    if (ok == false) {
+        luaL_error(L, "could not initialize entity");
+        return 0;
+    }
 
-    // Apply methods to the entity
-    luaL_setmetatable(L, "piece_t");
+    // Allocate a handle for our entity
+    handle_t* id = lua_newuserdata(L, sizeof(handle_t));
+    *id = entity->id;
 
-    // Increment our next entity counter
-    lua_pushinteger(L, entity_next + 1);
-    lua_setfield(L, lua_upvalueindex(1), "entity_next");
-
+    // Designate as an entity handle
+    luaL_setmetatable(L, "handle_t");
     return 1;
-}
-
-/**
- * Lua: board_t finalizer.
- */
-static int piecescript_delete(lua_State* L) {
-    // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
-
-    entity_deinit(entity);
-    entity = NULL;
-
-    return 0;
 }
 
 /**
@@ -103,7 +82,7 @@ static int piecescript_delete(lua_State* L) {
  */
 static int piecescript_config_name(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_PIECE);
     piece_t* piece = entity->data;
 
     lua_pushstring(L, piece->config->name);
@@ -115,7 +94,7 @@ static int piecescript_config_name(lua_State* L) {
  */
 static int piecescript_config_spawn_pos(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_PIECE);
     piece_t* piece = entity->data;
 
     script_push_vector(L, &piece->config->spawn_pos);
@@ -127,7 +106,7 @@ static int piecescript_config_spawn_pos(lua_State* L) {
  */
 static int piecescript_config_spawn_rot(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_PIECE);
     piece_t* piece = entity->data;
 
     lua_pushinteger(L, piece->config->spawn_rot);
@@ -139,7 +118,7 @@ static int piecescript_config_spawn_rot(lua_State* L) {
  */
 static int piecescript_config_rot_count(lua_State* L) {
     // Parameter 1: Our userdata
-    entity_t* entity = luaL_checkudata(L, 1, "piece_t");
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_PIECE);
     piece_t* piece = entity->data;
 
     lua_pushinteger(L, piece->config->data_count);
@@ -151,18 +130,7 @@ static int piecescript_config_rot_count(lua_State* L) {
  */
 int piecescript_openlib(lua_State* L) {
     static const luaL_Reg piecelib[] = {
-        { "new", piecescript_new },
-        { NULL, NULL }
-    };
-
-    luaL_newlib(L, piecelib);
-
-    // Create the piece_t type
-    static const luaL_Reg piece_meta[] = {
-        { "__gc", piecescript_delete },
-        { NULL, NULL }
-    };
-    static const luaL_Reg piece_methods[] = {
+        { "create", piecescript_create },
         { "config_name", piecescript_config_name },
         { "config_spawn_pos", piecescript_config_spawn_pos },
         { "config_spawn_rot", piecescript_config_spawn_rot },
@@ -170,11 +138,6 @@ int piecescript_openlib(lua_State* L) {
         { NULL, NULL }
     };
 
-    luaL_newmetatable(L, "piece_t"); // push meta
-    luaL_setfuncs(L, piece_meta, 0);
-    luaL_newlib(L, piece_methods); // push methods table
-    lua_setfield(L, -2, "__index"); // pop methods table
-    lua_pop(L, 1); // pop meta
-
+    luaL_newlib(L, piecelib);
     return 1;
 }

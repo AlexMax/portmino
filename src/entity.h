@@ -31,7 +31,8 @@ typedef enum {
     MINO_ENTITY_NONE,
     MINO_ENTITY_RANDOM,
     MINO_ENTITY_PIECE,
-    MINO_ENTITY_BOARD
+    MINO_ENTITY_BOARD,
+    MINO_ENTITY_ANY = 0
 } entity_type_t;
 
 /**
@@ -52,11 +53,6 @@ typedef struct entity_config_s {
      * Type of entity.
      */
     entity_type_t type;
-
-    /**
-     * Metatable used for userdata.
-     */
-    const char* metatable;
 
     /**
      * Entity serializer.
@@ -81,12 +77,7 @@ typedef struct entity_s {
     /**
      * Entity unique id.
      */
-    uint32_t id;
-
-    /**
-     * Registry reference for entity.
-     */
-    int registry_ref;
+    handle_t id;
 
     /**
      * Opaque data member.
@@ -100,5 +91,5 @@ void entity_deinit(entity_t* entity);
 entity_manager_t* entity_manager_new(void);
 void entity_manager_delete(entity_manager_t* manager);
 entity_t* entity_manager_create(entity_manager_t* manager);
-entity_t* entity_manager_get(entity_manager_t* manager, uint64_t id);
-void entity_manager_destroy(entity_manager_t* manager, uint64_t id);
+entity_t* entity_manager_get(entity_manager_t* manager, handle_t id);
+void entity_manager_destroy(entity_manager_t* manager, handle_t id);

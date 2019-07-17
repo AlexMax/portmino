@@ -171,13 +171,9 @@ bool random_entity_init(entity_t* entity, uint32_t* seed) {
         return false;
     }
 
-    // Configuration
     entity->config.type = MINO_ENTITY_RANDOM;
-    entity->config.metatable = "random_t";
     entity->config.serialize = wrapserialize;
     entity->config.destruct = wrapdelete;
-
-    // Setup the entity
     entity->data = random;
 
     return true;

@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lauxlib.h"
 #include "mpack.h"
 
 #include "entity.h"
@@ -31,15 +30,13 @@
 /**
  * Create a new board structure.
  */
-board_t* board_new(lua_State* L) {
+board_t* board_new(void) {
     board_t* board = NULL;
 
     if ((board = calloc(1, sizeof(*board))) == NULL) {
         error_push_allocerr();
         goto fail;
     }
-
-    board->lua = L;
 
     // Define our configuration
     board->config.width = 10;
@@ -58,8 +55,7 @@ board_t* board_new(lua_State* L) {
 
     // Initialize board pieces
     for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
-        board->pieces[i].piece_ref = LUA_NOREF;
-        board->pieces[i].piece = NULL;
+        board->pieces[i].handle = handle_empty();
         board->pieces[i].pos = vec2i_zero();
         board->pieces[i].rot = 0;
         board->pieces[i].alpha = 255;
@@ -114,18 +110,18 @@ uint8_t board_get(board_t* board, vec2i_t pos) {
 /**
  * Get a piece reference from the board by index.
  */
-int board_get_piece_ref(board_t* board, size_t index) {
+handle_t board_get_piece_ref(board_t* board, size_t index) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
-        return LUA_NOREF;
+        return handle_empty();
     }
 
-    if (board->pieces[index].piece == NULL) {
+    if (board->pieces[index].handle == handle_empty()) {
         // No piece exists here.
-        return LUA_NOREF;
+        return handle_empty();
     }
 
-    return board->pieces[index].piece_ref;
+    return board->pieces[index].handle;
 }
 
 /**
@@ -134,21 +130,29 @@ int board_get_piece_ref(board_t* board, size_t index) {
  * Piece spawns with default spawn point and rotation.  If a piece exists
  * at that index, deletes it first.
  */
-bool board_set_piece(board_t* board, size_t index, piece_t* piece, int piece_ref) {
+bool board_set_piece(board_t* board, size_t index, handle_t handle) {
     if (index >= MAX_BOARD_PIECES) {
         // Out of range board piece.
         return false;
     }
 
-    if (board->pieces[index].piece != NULL) {
+    if (board->pieces[index].handle != handle_empty()) {
         // We have a piece here already.  Unref it.
         if (board_unset_piece(board, index) == false) {
             return false;
         }
     }
 
-    board->pieces[index].piece_ref = piece_ref;
-    board->pieces[index].piece = piece;
+    // Grab the piece from the manager so we can set its initial pos/rot
+    entity_t* entity = entity_manager_get(board->manager, handle);
+    if (entity == NULL) {
+        return false;
+    } else if (entity->config.type != MINO_ENTITY_PIECE) {
+        return false;
+    }
+    piece_t* piece = entity->data;
+
+    board->pieces[index].handle = handle;
     board->pieces[index].pos = piece->config->spawn_pos;
     board->pieces[index].rot = piece->config->spawn_rot;
 
@@ -164,14 +168,12 @@ bool board_unset_piece(board_t* board, size_t index) {
         return false;
     }
 
-    if (board->pieces[index].piece == NULL) {
+    if (board->pieces[index].handle == handle_empty()) {
         // It's unset already.
         return true;
     }
 
-    luaL_unref(board->lua, LUA_REGISTRYINDEX, board->pieces[index].piece_ref);
-    board->pieces[index].piece_ref = LUA_NOREF;
-    board->pieces[index].piece = NULL;
+    board->pieces[index].handle = handle_empty();
     board->pieces[index].pos = vec2i_zero();
     board->pieces[index].rot = 0;
 
@@ -190,7 +192,7 @@ boardpiece_t* board_get_boardpiece(board_t* board, size_t index) {
         return NULL;
     }
 
-    if (board->pieces[index].piece == NULL) {
+    if (board->pieces[index].handle == handle_empty()) {
         // Not a valid piece, return no data.
         return NULL;
     }
@@ -427,11 +429,16 @@ static void wrapdelete(void* ptr) {
 /**
  * Initialize an entity with random config
  */
-void board_entity_init(entity_t* entity) {
-    memset(entity, 0x00, sizeof(*entity));
+bool board_entity_init(entity_t* entity, entity_manager_t* manager) {
+    board_t* board = board_new();
+    if (board == NULL) {
+        return false;
+    }
 
     entity->config.type = MINO_ENTITY_BOARD;
-    entity->config.metatable = "board_t";
     entity->config.serialize = wrapserialize;
     entity->config.destruct = wrapdelete;
+    entity->data = board;
+
+    return true;
 }

@@ -20,6 +20,7 @@
 #include "lauxlib.h"
 
 #include "entity.h"
+#include "entityscript.h"
 #include "random.h"
 
 #include "script.h"
@@ -32,20 +33,12 @@ static int randomscript_create(lua_State* L) {
     int seed_type = lua_type(L, 1);
     luaL_argcheck(L, (seed_type == LUA_TNUMBER || seed_type == LUA_TNIL), 1, "invalid seed");
 
-    // Internal State 1: Registry reference
-    int type = lua_getfield(L, lua_upvalueindex(1), "registry_ref");
-    if (type != LUA_TNUMBER) {
-        luaL_error(L, "missing internal state (registry_ref)");
-        return 0;
-    }
-
-    // Internal State 2: Entity manager
-    type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
+    // Internal State 1: Entity manager
+    int type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
     if (type != LUA_TLIGHTUSERDATA) {
         luaL_error(L, "missing internal state (entity_manager)");
         return 0;
     }
-
     entity_manager_t* manager = lua_touserdata(L, -1);
 
     // Allocate the entity
@@ -69,7 +62,7 @@ static int randomscript_create(lua_State* L) {
     }
 
     // Allocate a handle for our entity
-    uint64_t* id = lua_newuserdata(L, sizeof(uint64_t));
+    handle_t* id = lua_newuserdata(L, sizeof(handle_t));
     *id = entity->id;
 
     // Designate as an entity handle
@@ -81,24 +74,8 @@ static int randomscript_create(lua_State* L) {
  * Lua: Get a random number with a maximum value
  */
 static int randomscript_number(lua_State* L) {
-    // Internal State 1: Entity manager
-    int type = lua_getfield(L, lua_upvalueindex(1), "entity_manager");
-    if (type != LUA_TLIGHTUSERDATA) {
-        luaL_error(L, "missing internal state (entity_manager)");
-        return 0;
-    }
-    entity_manager_t* manager = lua_touserdata(L, -1);
-
     // Parameter 1: Our handle
-    uint64_t* id = luaL_checkudata(L, 1, "handle_t");
-    entity_t* entity = entity_manager_get(manager, *id);
-    if (entity == NULL) {
-        luaL_error(L, "entity not found");
-        return 0;
-    } else if (entity->config.type != MINO_ENTITY_RANDOM) {
-        luaL_error(L, "entity is not a random entity");
-        return 0;
-    }
+    entity_t* entity = entityscript_to_entity(L, 1, MINO_ENTITY_RANDOM);
     random_t* random = entity->data;
 
     // Parameter 2: Integer random number range

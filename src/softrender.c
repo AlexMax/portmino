@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "board.h"
+#include "entity.h"
 #include "error.h"
 #include "piece.h"
 #include "render.h"
@@ -155,22 +156,27 @@ static void softrender_draw_board(vec2i_t pos, const board_t* board) {
     // Draw pieces, if any.  The normal piece is drawn after the ghost piece
     // so it gets drawn over top of the ghost in case of overlap.
     for (size_t i = 0;i < MAX_BOARD_PIECES;i++) {
-        if (board->pieces[i].piece != NULL) {
+        if (board->pieces[i].handle != handle_empty()) {
             const boardpiece_t* bpiece = &board->pieces[i];
+            entity_t* entity = entity_manager_get(board->manager, bpiece->handle);
+            if (entity == NULL || entity->config.type != MINO_ENTITY_PIECE) {
+                continue;
+            }
+            piece_t* piece = entity->data;
 
-            size_t i = bpiece->rot * bpiece->piece->config->data_size;
-            size_t end = i + bpiece->piece->config->data_size;
+            size_t i = bpiece->rot * piece->config->data_size;
+            size_t end = i + piece->config->data_size;
             for (int j = 0;i < end;i++, j++) {
                 // What type of block are we rendering?
-                uint8_t btype = bpiece->piece->config->data[i];
+                uint8_t btype = piece->config->data[i];
                 if (!btype) {
                     continue;
                 }
                 picture_t* bpic = softblock_get(g_block, --btype);
 
                 // What is the actual (x, y) coordinate of the block?
-                int ix = bpiece->pos.x + (j % bpiece->piece->config->width);
-                int iy = bpiece->pos.y + (j / bpiece->piece->config->width);
+                int ix = bpiece->pos.x + (j % piece->config->width);
+                int iy = bpiece->pos.y + (j / piece->config->width);
                 iy -= board->config.height - board->config.visible_height;
 
                 if (iy < 0) {

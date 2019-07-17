@@ -73,6 +73,18 @@
 #endif
 
 /**
+ * Handle type
+ */
+typedef uint64_t handle_t;
+
+/**
+ * An empty handle
+ */
+static inline handle_t handle_empty(void) {
+    return 0;
+}
+
+/**
  * Vector type of two integers
  */
 typedef struct {

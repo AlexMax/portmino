@@ -472,7 +472,7 @@ static bool unserialize_flat(serialize_t* ser, mpack_node_t* node) {
             }
 
             // We use a different metatable for every possible entity type.
-            luaL_setmetatable(ser->lua, entity->config.metatable);
+            //luaL_setmetatable(ser->lua, entity->config.metatable);
             break;
         }
         default:
